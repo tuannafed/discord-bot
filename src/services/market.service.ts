@@ -44,12 +44,10 @@ export class MarketService {
   }
 
   async scanByMarketCap(minCap: number, maxCap: number, limit: number): Promise<CoinMarketData[]> {
-    const [coins, bybitSymbols] = await Promise.all([
-      this.provider.getTopCoins(500),
-      this.provider.getBybitSymbols(),
-    ]);
+    const coins = await this.provider.getBybitFuturesWithMarketCap();
     return coins
-      .filter((c) => c.marketCap >= minCap && c.marketCap <= maxCap && bybitSymbols.has(c.symbol.toUpperCase()))
+      .filter((c) => c.marketCap >= minCap && c.marketCap <= maxCap)
+      .sort((a, b) => b.marketCap - a.marketCap)
       .slice(0, limit);
   }
 }
