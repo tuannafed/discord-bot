@@ -27,6 +27,14 @@ export function formatChangeEmoji(change: number): string {
   return change >= 0 ? '📈' : '📉';
 }
 
+export function formatSupply(supply: number | null | undefined): string {
+  if (supply == null) return '∞';
+  if (supply >= 1_000_000_000) return `${(supply / 1_000_000_000).toFixed(2)}B`;
+  if (supply >= 1_000_000) return `${(supply / 1_000_000).toFixed(2)}M`;
+  if (supply >= 1_000) return `${(supply / 1_000).toFixed(2)}K`;
+  return supply.toLocaleString('en-US');
+}
+
 /** Fixed-width price, right-padded to 10 chars */
 export function formatPriceFixed(price: number): string {
   return formatPrice(price).padEnd(10);

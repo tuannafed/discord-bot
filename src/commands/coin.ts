@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { MarketService } from '../services/market.service.js';
-import { formatPrice, formatMarketCap, formatChange } from '../utils/format.js';
+import { formatPrice, formatMarketCap, formatChange, formatSupply } from '../utils/format.js';
 
 let marketService: MarketService;
 
@@ -32,10 +32,13 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     .setColor(coin.priceChangePercentage24h >= 0 ? 0x00cc66 : 0xff4444)
     .setDescription(
       '```\n' +
-      `Price  : ${formatPrice(coin.currentPrice)}\n` +
-      `MCap   : ${formatMarketCap(coin.marketCap)}\n` +
-      `Rank   : #${coin.marketCapRank}\n` +
-      `24h    : ${arrow} ${formatChange(coin.priceChangePercentage24h)}\n` +
+      `Price    : ${formatPrice(coin.currentPrice)}\n` +
+      `MCap     : ${formatMarketCap(coin.marketCap)}\n` +
+      `Rank     : #${coin.marketCapRank}\n` +
+      `24h      : ${arrow} ${formatChange(coin.priceChangePercentage24h)}\n` +
+      `Circ.    : ${formatSupply(coin.circulatingSupply)}\n` +
+      `Total    : ${formatSupply(coin.totalSupply)}\n` +
+      `Max      : ${formatSupply(coin.maxSupply)}\n` +
       '```'
     )
     .setFooter({ text: 'Data from Bybit + CoinMarketCap' })

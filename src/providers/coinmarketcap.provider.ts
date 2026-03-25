@@ -16,6 +16,9 @@ interface CmcCoinData {
   name: string;
   symbol: string;
   cmc_rank: number;
+  circulating_supply: number;
+  total_supply: number;
+  max_supply: number | null;
   quote: { USD: CmcQuote };
 }
 
@@ -69,6 +72,9 @@ export class CoinMarketCapProvider implements CryptoProvider {
         marketCap: coin.quote.USD.market_cap,
         marketCapRank: coin.cmc_rank,
         priceChangePercentage24h: coin.quote.USD.percent_change_24h,
+        circulatingSupply: coin.circulating_supply,
+        totalSupply: coin.total_supply,
+        maxSupply: coin.max_supply,
       }));
     } catch (error) {
       logger.error('CoinMarketCap getMarketData failed', error);
@@ -91,6 +97,9 @@ export class CoinMarketCapProvider implements CryptoProvider {
         marketCap: coin.quote.USD.market_cap,
         marketCapRank: coin.cmc_rank,
         priceChangePercentage24h: coin.quote.USD.percent_change_24h,
+        circulatingSupply: coin.circulating_supply,
+        totalSupply: coin.total_supply,
+        maxSupply: coin.max_supply,
       }));
     } catch (error) {
       logger.error('CoinMarketCap getTopCoins failed', error);
@@ -113,6 +122,9 @@ export class CoinMarketCapProvider implements CryptoProvider {
         marketCap: coin.quote.USD.market_cap,
         marketCapRank: coin.cmc_rank,
         priceChangePercentage24h: coin.quote.USD.percent_change_24h,
+        circulatingSupply: coin.circulating_supply,
+        totalSupply: coin.total_supply,
+        maxSupply: coin.max_supply,
       }));
     } catch (error) {
       logger.error('CoinMarketCap getTopGainers failed', error);
