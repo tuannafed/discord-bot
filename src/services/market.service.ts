@@ -20,21 +20,33 @@ export class MarketService {
   }
 
   async getTopCoins(limit: number): Promise<CoinMarketData[]> {
-    return this.provider.getTopCoins(limit);
+    const [coins, bybitSymbols] = await Promise.all([
+      this.provider.getTopCoins(limit * 5),
+      this.provider.getBybitSymbols(),
+    ]);
+    return coins
+      .filter((c) => bybitSymbols.has(c.symbol.toUpperCase()))
+      .slice(0, limit);
   }
 
   async getTopGainers(limit: number): Promise<CoinMarketData[]> {
-    const gainers = await this.provider.getTopGainers(limit * 4);
+    const [gainers, bybitSymbols] = await Promise.all([
+      this.provider.getTopGainers(limit * 10),
+      this.provider.getBybitSymbols(),
+    ]);
     return gainers
-      .filter((c) => c.priceChangePercentage24h > 0)
+      .filter((c) => c.priceChangePercentage24h > 0 && bybitSymbols.has(c.symbol.toUpperCase()))
       .sort((a, b) => b.priceChangePercentage24h - a.priceChangePercentage24h)
       .slice(0, limit);
   }
 
   async getTopLosers(limit: number): Promise<CoinMarketData[]> {
-    const coins = await this.provider.getTopCoins(limit * 4);
+    const [coins, bybitSymbols] = await Promise.all([
+      this.provider.getTopCoins(limit * 10),
+      this.provider.getBybitSymbols(),
+    ]);
     return coins
-      .filter((c) => c.priceChangePercentage24h < 0)
+      .filter((c) => c.priceChangePercentage24h < 0 && bybitSymbols.has(c.symbol.toUpperCase()))
       .sort((a, b) => a.priceChangePercentage24h - b.priceChangePercentage24h)
       .slice(0, limit);
   }
