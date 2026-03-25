@@ -9,17 +9,35 @@ export function init(service: MarketService): void {
   marketService = service;
 }
 
+const TIMEFRAME_LABEL: Record<string, string> = {
+  '15': '15m',
+  '60': '1h',
+  '240': '4h',
+  'D': '24h',
+};
+
 export const data = new SlashCommandBuilder()
   .setName('movers')
-  .setDescription('Top gainers and losers in the last 24h')
+  .setDescription('Top gainers and losers by timeframe')
+  .addStringOption((opt) =>
+    opt
+      .setName('timeframe')
+      .setDescription('Timeframe for % change (default: 24h)')
+      .addChoices(
+        { name: '15 minutes', value: '15' },
+        { name: '1 hour',     value: '60' },
+        { name: '4 hours',    value: '240' },
+        { name: '24 hours',   value: 'D' }
+      )
+  )
   .addStringOption((opt) =>
     opt
       .setName('type')
       .setDescription('Show gainers, losers, or both (default: both)')
       .addChoices(
-        { name: 'Both', value: 'both' },
+        { name: 'Both',    value: 'both' },
         { name: 'Gainers', value: 'gainers' },
-        { name: 'Losers', value: 'losers' }
+        { name: 'Losers',  value: 'losers' }
       )
   )
   .addIntegerOption((opt) =>
@@ -39,28 +57,34 @@ function buildLines(coins: CoinMarketData[]): string {
 }
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
+  const timeframe = interaction.options.getString('timeframe') ?? 'D';
   const type = interaction.options.getString('type') ?? 'both';
   const limit = interaction.options.getInteger('limit') ?? 5;
+  const label = TIMEFRAME_LABEL[timeframe];
 
+  // 15m/1h kline requires fetching per-symbol — warn user it may take a moment
   await interaction.deferReply();
+
+  // For 24h use cached futures data, otherwise fetch kline
+  const interval = timeframe === 'D' ? undefined : timeframe;
 
   const embed = new EmbedBuilder()
     .setColor(0x5865f2)
-    .setFooter({ text: 'Data from Bybit + CoinMarketCap' })
+    .setFooter({ text: `Timeframe: ${label} · Data from Bybit + CoinMarketCap` })
     .setTimestamp();
 
   if (type === 'gainers' || type === 'both') {
-    const gainers = await marketService.getTopGainers(limit);
+    const gainers = await marketService.getTopGainers(limit, interval);
     embed.addFields({
-      name: `📈 Top ${limit} Gainers (24h)`,
+      name: `📈 Top ${limit} Gainers (${label})`,
       value: gainers.length > 0 ? buildLines(gainers) : 'No data available',
     });
   }
 
   if (type === 'losers' || type === 'both') {
-    const losers = await marketService.getTopLosers(limit);
+    const losers = await marketService.getTopLosers(limit, interval);
     embed.addFields({
-      name: `📉 Top ${limit} Losers (24h)`,
+      name: `📉 Top ${limit} Losers (${label})`,
       value: losers.length > 0 ? buildLines(losers) : 'No data available',
     });
   }

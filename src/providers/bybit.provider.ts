@@ -109,6 +109,49 @@ export class BybitProvider implements Pick<CryptoProvider, 'getMarketData'> {
     return tickers.map((t) => t.symbol.toUpperCase());
   }
 
+  /**
+   * For each USDT perpetual symbol, fetch the last 2 kline candles at the given interval
+   * and return % change = (currentClose - prevClose) / prevClose * 100.
+   * interval: '15' = 15m, '60' = 1h, '240' = 4h, 'D' = 1d
+   */
+  async getAllFuturesKlineChange(interval: string): Promise<Map<string, number>> {
+    // Fetch all tickers first to get the symbol list
+    const tickers = await this.getAllFuturesTickers();
+    const result = new Map<string, number>();
+
+    // Batch requests in parallel with concurrency limit to avoid rate limiting
+    const BATCH = 20;
+    for (let i = 0; i < tickers.length; i += BATCH) {
+      const batch = tickers.slice(i, i + BATCH);
+      await Promise.all(
+        batch.map(async (ticker) => {
+          try {
+            const symbol = ticker.symbol.toUpperCase() + 'USDT';
+            const resp = await this.client.get<{
+              retCode: number;
+              result: { list: string[][] };
+            }>('/v5/market/kline', {
+              params: { category: 'linear', symbol, interval, limit: 2 },
+            });
+            const list = resp.data.result?.list;
+            // list[0] = latest candle, list[1] = previous candle
+            // each candle: [openTime, open, high, low, close, volume, turnover]
+            if (list && list.length === 2) {
+              const currentClose = parseFloat(list[0][4]);
+              const prevClose = parseFloat(list[1][4]);
+              if (prevClose > 0) {
+                result.set(ticker.symbol.toLowerCase(), ((currentClose - prevClose) / prevClose) * 100);
+              }
+            }
+          } catch {
+            // skip failed symbols silently
+          }
+        })
+      );
+    }
+    return result;
+  }
+
   /** Bybit doesn't support coin listing — not applicable */
   async getCoinList(): Promise<CoinListItem[]> {
     throw new Error('getCoinList not supported by Bybit provider');

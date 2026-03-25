@@ -141,6 +141,35 @@ export class CryptoDataProvider implements CryptoProvider {
     return result;
   }
 
+  /**
+   * Returns Bybit futures enriched with CMC market cap,
+   * but with priceChangePercentage overridden from kline data for the given interval.
+   * interval: '15' = 15m, '60' = 1h, '240' = 4h, 'D' = 1d
+   */
+  async getBybitFuturesWithKlineChange(interval: string): Promise<CoinMarketData[]> {
+    const cacheKey = `bybit_kline_${interval}`;
+    const cached = this.marketCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) return cached.data;
+
+    const [base, klineMap] = await Promise.all([
+      this.getBybitFuturesWithMarketCap(),
+      this.bybit.getAllFuturesKlineChange(interval),
+    ]);
+
+    const result = base.map((coin) => {
+      const klineChange = klineMap.get(coin.symbol.toLowerCase());
+      if (klineChange !== undefined) {
+        return { ...coin, priceChangePercentage24h: klineChange };
+      }
+      return coin;
+    });
+
+    // Short TTL for intraday intervals (15m/1h), normal for longer
+    const ttl = interval === '15' || interval === '60' ? 60_000 : MARKET_CACHE_TTL_MS;
+    this.marketCache.set(cacheKey, { data: result, expiresAt: Date.now() + ttl });
+    return result;
+  }
+
   /** Invalidate all caches (e.g. after symbol resolution miss) */
   clearCache(): void {
     this.priceCache.clear();
