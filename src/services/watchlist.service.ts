@@ -1,17 +1,23 @@
-import { WatchlistRepository } from '../repositories/watchlist.repository.js';
 import { WatchItem } from '../types/watchlist.js';
 import { resolveSymbolToId } from '../utils/symbol-resolver.js';
 import { CryptoDataProvider } from '../providers/crypto-data.provider.js';
 import { nowIso } from '../utils/time.js';
 
+export interface IWatchlistRepository {
+  findByGuild(guildId: string): Promise<WatchItem[]> | WatchItem[];
+  findOne(guildId: string, symbol: string): Promise<WatchItem | undefined> | WatchItem | undefined;
+  add(item: WatchItem): Promise<void> | void;
+  remove(guildId: string, symbol: string): Promise<boolean> | boolean;
+}
+
 export class WatchlistService {
   constructor(
-    private readonly repo: WatchlistRepository,
+    private readonly repo: IWatchlistRepository,
     private readonly provider: CryptoDataProvider
   ) {}
 
   async addWatch(guildId: string, symbol: string, userId: string): Promise<'added' | 'exists' | 'not_found'> {
-    const existing = this.repo.findOne(guildId, symbol);
+    const existing = await this.repo.findOne(guildId, symbol);
     if (existing) return 'exists';
 
     const coinId = await resolveSymbolToId(symbol, this.provider);
@@ -20,19 +26,19 @@ export class WatchlistService {
     const item: WatchItem = {
       guildId,
       symbol: symbol.toLowerCase(),
-      coinId: symbol.toLowerCase(), // use symbol as id since CMC uses symbols
+      coinId: symbol.toLowerCase(),
       createdBy: userId,
       createdAt: nowIso(),
     };
-    this.repo.add(item);
+    await this.repo.add(item);
     return 'added';
   }
 
-  removeWatch(guildId: string, symbol: string): boolean {
+  async removeWatch(guildId: string, symbol: string): Promise<boolean> {
     return this.repo.remove(guildId, symbol);
   }
 
-  getWatchlist(guildId: string): WatchItem[] {
+  async getWatchlist(guildId: string): Promise<WatchItem[]> {
     return this.repo.findByGuild(guildId);
   }
 }

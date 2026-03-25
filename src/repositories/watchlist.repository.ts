@@ -1,8 +1,8 @@
-import path from 'path';
 import { JsonDb } from './json-db.js';
 import { WatchItem, WatchlistDb } from '../types/watchlist.js';
+import { dataPath } from '../utils/data-path.js';
 
-const DB_PATH = path.resolve(process.cwd(), 'src/data/watchlists.json');
+const DB_PATH = dataPath('watchlists.json');
 const DEFAULT_DATA: WatchlistDb = { items: [] };
 
 export class WatchlistRepository {

@@ -23,7 +23,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     return;
   }
 
-  const removed = watchlistService.removeWatch(guildId, symbol);
+  const removed = await watchlistService.removeWatch(guildId, symbol);
 
   if (removed) {
     await interaction.reply(`Removed **${symbol.toUpperCase()}** from the watchlist.`);

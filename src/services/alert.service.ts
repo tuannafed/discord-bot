@@ -1,4 +1,3 @@
-import { AlertRepository } from '../repositories/alert.repository.js';
 import { AlertRule, AlertMetric, AlertCondition } from '../types/alert.js';
 import { resolveSymbolToId } from '../utils/symbol-resolver.js';
 import { CryptoDataProvider } from '../providers/crypto-data.provider.js';
@@ -15,9 +14,18 @@ interface AddAlertParams {
   userId: string;
 }
 
+export interface IAlertRepository {
+  findAll(): Promise<AlertRule[]> | AlertRule[];
+  findByGuild(guildId: string): Promise<AlertRule[]> | AlertRule[];
+  findById(id: string): Promise<AlertRule | undefined> | AlertRule | undefined;
+  add(alert: AlertRule): Promise<void> | void;
+  update(alert: AlertRule): Promise<void> | void;
+  remove(id: string): Promise<boolean> | boolean;
+}
+
 export class AlertService {
   constructor(
-    private readonly repo: AlertRepository,
+    private readonly repo: IAlertRepository,
     private readonly provider: CryptoDataProvider
   ) {}
 
@@ -40,24 +48,26 @@ export class AlertService {
       createdAt: nowIso(),
     };
 
-    this.repo.add(alert);
+    await this.repo.add(alert);
     return alert;
   }
 
-  getAlerts(guildId: string): AlertRule[] {
+  async getAlerts(guildId: string): Promise<AlertRule[]> {
     return this.repo.findByGuild(guildId);
   }
 
-  getAllActiveAlerts(): AlertRule[] {
-    return this.repo.findAll().filter((a) => a.isActive);
+  async getAllActiveAlerts(): Promise<AlertRule[]> {
+    const all = await this.repo.findAll();
+    return all.filter((a) => a.isActive);
   }
 
-  updateAlert(alert: AlertRule): void {
-    this.repo.update(alert);
+  async updateAlert(alert: AlertRule): Promise<void> {
+    await this.repo.update(alert);
   }
 
-  removeAlert(id: string, guildId: string): boolean {
-    const alert = this.repo.findAll().find((a) => a.id === id && a.guildId === guildId);
+  async removeAlert(id: string, guildId: string): Promise<boolean> {
+    const all = await this.repo.findAll();
+    const alert = all.find((a) => a.id === id && a.guildId === guildId);
     if (!alert) return false;
     return this.repo.remove(id);
   }

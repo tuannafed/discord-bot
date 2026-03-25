@@ -38,7 +38,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   }
 
   const statusFilter = (interaction.options.getString('status') ?? 'tracking') as CandidateStatus;
-  const all = candidateService.getCandidates(guildId);
+  const all = await candidateService.getCandidates(guildId);
   const candidates = all.filter((c) => c.status === statusFilter);
 
   if (candidates.length === 0) {

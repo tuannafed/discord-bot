@@ -1,4 +1,3 @@
-import { CandidateRepository } from '../repositories/candidate.repository.js';
 import { Candidate, CandidateStatus } from '../types/candidate.js';
 import { CryptoDataProvider } from '../providers/crypto-data.provider.js';
 import { env } from '../config/env.js';
@@ -6,21 +5,31 @@ import { generateId } from '../utils/ids.js';
 import { nowIso, addDays, isExpired } from '../utils/time.js';
 import { logger } from '../utils/logger.js';
 
+export interface ICandidateRepository {
+  findAll(): Promise<Candidate[]> | Candidate[];
+  findByGuild(guildId: string): Promise<Candidate[]> | Candidate[];
+  findByStatus(status: CandidateStatus): Promise<Candidate[]> | Candidate[];
+  findByCoinId(coinId: string): Promise<Candidate | undefined> | Candidate | undefined;
+  add(candidate: Candidate): Promise<void> | void;
+  update(candidate: Candidate): Promise<void> | void;
+  remove(id: string): Promise<boolean> | boolean;
+}
+
 export class CandidateService {
   constructor(
-    private readonly repo: CandidateRepository,
+    private readonly repo: ICandidateRepository,
     private readonly provider: CryptoDataProvider
   ) {}
 
-  getCandidates(guildId: string): Candidate[] {
+  async getCandidates(guildId: string): Promise<Candidate[]> {
     return this.repo.findByGuild(guildId);
   }
 
-  getCandidatesByStatus(status: CandidateStatus): Candidate[] {
+  async getCandidatesByStatus(status: CandidateStatus): Promise<Candidate[]> {
     return this.repo.findByStatus(status);
   }
 
-  removeCandidate(id: string): boolean {
+  async removeCandidate(id: string): Promise<boolean> {
     return this.repo.remove(id);
   }
 
@@ -39,7 +48,7 @@ export class CandidateService {
         continue;
       }
 
-      const existing = this.repo.findByCoinId(coin.symbol);
+      const existing = await this.repo.findByCoinId(coin.symbol);
       if (existing) continue;
 
       const candidate: Candidate = {
@@ -62,7 +71,7 @@ export class CandidateService {
         lastCheckedAt: null,
       };
 
-      this.repo.add(candidate);
+      await this.repo.add(candidate);
       added++;
     }
 
@@ -73,10 +82,10 @@ export class CandidateService {
   async runUpdateJob(): Promise<{ hitTarget: number; expired: number }> {
     logger.info('Running candidate update job');
 
-    const tracking = this.repo.findByStatus('tracking');
+    const tracking = await this.repo.findByStatus('tracking');
     if (tracking.length === 0) return { hitTarget: 0, expired: 0 };
 
-    const symbols = tracking.map((c) => c.symbol.toUpperCase());
+    const symbols = tracking.map((c: Candidate) => c.symbol.toUpperCase());
     const marketData = await this.provider.getMarketData(symbols);
     const marketMap = new Map(marketData.map((m) => [m.symbol.toLowerCase(), m]));
 
@@ -87,7 +96,7 @@ export class CandidateService {
       const now = nowIso();
 
       if (isExpired(candidate.trackingExpiresAt)) {
-        this.repo.update({ ...candidate, status: 'expired', lastCheckedAt: now });
+        await this.repo.update({ ...candidate, status: 'expired', lastCheckedAt: now });
         expired++;
         continue;
       }
@@ -103,10 +112,10 @@ export class CandidateService {
       };
 
       if (market.marketCap >= candidate.targetMarketCap) {
-        this.repo.update({ ...updatedCandidate, status: 'hit_target' });
+        await this.repo.update({ ...updatedCandidate, status: 'hit_target' });
         hitTarget++;
       } else {
-        this.repo.update(updatedCandidate);
+        await this.repo.update(updatedCandidate);
       }
     }
 

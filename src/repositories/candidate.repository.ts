@@ -1,8 +1,8 @@
-import path from 'path';
 import { JsonDb } from './json-db.js';
 import { Candidate, CandidateDb, CandidateStatus } from '../types/candidate.js';
+import { dataPath } from '../utils/data-path.js';
 
-const DB_PATH = path.resolve(process.cwd(), 'src/data/candidates.json');
+const DB_PATH = dataPath('candidates.json');
 const DEFAULT_DATA: CandidateDb = { candidates: [] };
 
 export class CandidateRepository {

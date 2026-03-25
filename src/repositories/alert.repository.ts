@@ -1,8 +1,8 @@
-import path from 'path';
 import { JsonDb } from './json-db.js';
 import { AlertRule, AlertDb } from '../types/alert.js';
+import { dataPath } from '../utils/data-path.js';
 
-const DB_PATH = path.resolve(process.cwd(), 'src/data/alerts.json');
+const DB_PATH = dataPath('alerts.json');
 const DEFAULT_DATA: AlertDb = { alerts: [] };
 
 export class AlertRepository {

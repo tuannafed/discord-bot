@@ -20,7 +20,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     return;
   }
 
-  const alerts = alertService.getAlerts(guildId);
+  const alerts = await alertService.getAlerts(guildId);
 
   if (alerts.length === 0) {
     await interaction.reply('No alerts set. Use `/alert-add` to create one.');

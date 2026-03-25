@@ -14,6 +14,9 @@ const envSchema = z.object({
   // Bybit (optional — used to enrich real-time prices)
   BYBIT_API_KEY: z.string().optional(),
 
+  DATA_DIR: z.string().optional(),
+  DATABASE_URL: z.string().optional(),
+
   ALERT_COOLDOWN_MINUTES: z.coerce.number().int().positive().default(60),
   CANDIDATE_TARGET_MARKET_CAP: z.coerce.number().positive().default(1_000_000_000),
   CANDIDATE_TRACKING_DAYS: z.coerce.number().int().positive().default(7),

@@ -33,21 +33,36 @@ export class PollingService {
   }
 
   private async runAlertCheck(): Promise<void> {
-    const alerts = this.alertService.getAllActiveAlerts();
+    const alerts = await this.alertService.getAllActiveAlerts();
+    logger.info(`Alert check: ${alerts.length} active alert(s)`);
     if (alerts.length === 0) return;
 
     const symbols = [...new Set(alerts.map((a) => a.symbol.toUpperCase()))];
-    const marketData = await this.provider.getMarketData(symbols);
+    let marketData;
+    try {
+      marketData = await this.provider.getMarketData(symbols);
+    } catch (err) {
+      logger.error('Alert check: failed to fetch market data', err);
+      return;
+    }
     const marketMap = new Map(marketData.map((m) => [m.symbol.toLowerCase(), m]));
+    logger.info(`Alert check: fetched market data for ${marketData.length}/${symbols.length} symbols`);
 
     for (const alert of alerts) {
       const market = marketMap.get(alert.symbol.toLowerCase());
-      if (!market) continue;
+      if (!market) {
+        logger.warn(`Alert check: no market data for symbol "${alert.symbol}" (alert ${alert.id})`);
+        continue;
+      }
 
       const value = alert.metric === 'price' ? market.currentPrice : market.marketCap;
       const triggered =
         (alert.condition === 'above' && value >= alert.threshold) ||
         (alert.condition === 'below' && value <= alert.threshold);
+
+      logger.info(
+        `Alert ${alert.id}: ${alert.symbol} ${alert.metric}=${value} ${alert.condition} ${alert.threshold} → triggered=${triggered}`
+      );
 
       if (!triggered) continue;
 
@@ -55,7 +70,10 @@ export class PollingService {
         !alert.lastTriggeredAt ||
         minutesSince(alert.lastTriggeredAt) >= env.ALERT_COOLDOWN_MINUTES;
 
-      if (!cooldownPassed) continue;
+      if (!cooldownPassed) {
+        logger.info(`Alert ${alert.id}: cooldown not passed (last triggered ${alert.lastTriggeredAt})`);
+        continue;
+      }
 
       try {
         const channel = await this.client.channels.fetch(alert.channelId);
@@ -70,8 +88,9 @@ export class PollingService {
               `${alert.metric} is ${alert.condition} ${alert.metric === 'price' ? formatPrice(alert.threshold) : formatMarketCap(alert.threshold)}.\n` +
               `Current ${alert.metric}: **${valueStr}**`
           );
+          logger.info(`Alert ${alert.id}: notification sent`);
         }
-        this.alertService.updateAlert({ ...alert, lastTriggeredAt: nowIso() });
+        await this.alertService.updateAlert({ ...alert, lastTriggeredAt: nowIso() });
       } catch (err) {
         logger.error(`Failed to send alert ${alert.id}`, err);
       }
@@ -87,7 +106,7 @@ export class PollingService {
       try {
         const channel = await this.client.channels.fetch(env.CANDIDATE_ALERT_CHANNEL_ID);
         if (channel instanceof TextChannel) {
-          const candidates = this.candidateService.getCandidatesByStatus('hit_target');
+          const candidates = await this.candidateService.getCandidatesByStatus('hit_target');
           const recentHits = candidates.filter(
             (c) => c.lastCheckedAt && minutesSince(c.lastCheckedAt) < 60
           );

@@ -5,14 +5,18 @@ import { logger } from './utils/logger.js';
 
 import { CryptoDataProvider } from './providers/crypto-data.provider.js';
 import { MarketService } from './services/market.service.js';
-import { WatchlistService } from './services/watchlist.service.js';
-import { AlertService } from './services/alert.service.js';
-import { CandidateService } from './services/candidate.service.js';
+import { WatchlistService, IWatchlistRepository } from './services/watchlist.service.js';
+import { AlertService, IAlertRepository } from './services/alert.service.js';
+import { CandidateService, ICandidateRepository } from './services/candidate.service.js';
 import { PollingService } from './services/polling.service.js';
 
 import { WatchlistRepository } from './repositories/watchlist.repository.js';
 import { AlertRepository } from './repositories/alert.repository.js';
 import { CandidateRepository } from './repositories/candidate.repository.js';
+import { PgWatchlistRepository } from './repositories/pg-watchlist.repository.js';
+import { PgAlertRepository } from './repositories/pg-alert.repository.js';
+import { PgCandidateRepository } from './repositories/pg-candidate.repository.js';
+import { getPool, runMigrations } from './db/pg-client.js';
 
 import { buildCommands } from './commands/index.js';
 import { registerReadyEvent } from './events/ready.js';
@@ -23,10 +27,24 @@ async function main(): Promise<void> {
     intents: [GatewayIntentBits.Guilds],
   });
 
-  // Repositories
-  const watchlistRepo = new WatchlistRepository();
-  const alertRepo = new AlertRepository();
-  const candidateRepo = new CandidateRepository();
+  // Repositories — use PostgreSQL when DATABASE_URL is set, else JSON files
+  let watchlistRepo: IWatchlistRepository;
+  let alertRepo: IAlertRepository;
+  let candidateRepo: ICandidateRepository;
+
+  if (env.DATABASE_URL) {
+    logger.info('Using PostgreSQL for storage');
+    const pool = getPool();
+    await runMigrations();
+    watchlistRepo = new PgWatchlistRepository(pool);
+    alertRepo = new PgAlertRepository(pool);
+    candidateRepo = new PgCandidateRepository(pool);
+  } else {
+    logger.info('Using JSON file storage');
+    watchlistRepo = new WatchlistRepository();
+    alertRepo = new AlertRepository();
+    candidateRepo = new CandidateRepository();
+  }
 
   // Providers
   const cryptoProvider = new CryptoDataProvider();

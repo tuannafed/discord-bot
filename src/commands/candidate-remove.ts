@@ -16,7 +16,7 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   const id = interaction.options.getString('id', true);
-  const removed = candidateService.removeCandidate(id);
+  const removed = await candidateService.removeCandidate(id);
 
   if (removed) {
     await interaction.reply(`Candidate \`${id}\` removed.`);

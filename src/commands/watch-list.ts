@@ -23,14 +23,14 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     return;
   }
 
-  const items = watchlistService.getWatchlist(guildId);
+  await interaction.deferReply();
+
+  const items = await watchlistService.getWatchlist(guildId);
 
   if (items.length === 0) {
-    await interaction.reply('Watchlist is empty. Use `/watch-add` to add coins.');
+    await interaction.editReply('Watchlist is empty. Use `/watch-add` to add coins.');
     return;
   }
-
-  await interaction.deferReply();
 
   const symbols = items.map((i) => i.symbol.toUpperCase());
   const marketData = await provider.getMarketData(symbols);
