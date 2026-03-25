@@ -12,10 +12,10 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       {
         name: 'Market Data',
         value: [
-          '`/coin symbol:<symbol>` — Price, market cap, 24h change for a coin',
+          '`/coin symbol:<symbol>` — Price, MCap, rank, 24h, supply info',
           '`/top [limit]` — Top coins by market cap (default 10, max 25)',
-          '`/movers [type] [limit]` — Top gainers/losers by 24h change',
-          '`/scan min_cap:<usd> max_cap:<usd> [limit]` — Find Bybit-listed coins in a market cap range',
+          '`/movers [timeframe] [type] [limit]` — Top gainers/losers (15m / 1h / 4h / 24h)',
+          '`/scan min_cap:<usd> max_cap:<usd> [limit]` — Bybit-listed coins in a market cap range',
         ].join('\n'),
       },
       {
@@ -51,9 +51,11 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       value: [
         '`/coin symbol:btc`',
         '`/top limit:20`',
-        '`/movers type:gainers limit:10`',
+        '`/movers timeframe:15 minutes type:gainers limit:10`',
+        '`/movers timeframe:1 hour type:both`',
         '`/scan min_cap:70000000 max_cap:100000000`',
         '`/alert-add symbol:eth metric:price condition:above threshold:5000`',
+        '`/alert-remove id:abc123`',
       ].join('\n'),
     })
     .setFooter({ text: 'Data from Bybit + CoinMarketCap' })

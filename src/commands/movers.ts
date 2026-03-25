@@ -69,8 +69,9 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const interval = timeframe === 'D' ? undefined : timeframe;
 
   const embed = new EmbedBuilder()
+    .setTitle(`Top Movers — ${label}`)
     .setColor(0x5865f2)
-    .setFooter({ text: `Timeframe: ${label} · Data from Bybit + CoinMarketCap` })
+    .setFooter({ text: 'Data from Bybit + CoinMarketCap' })
     .setTimestamp();
 
   if (type === 'gainers' || type === 'both') {
