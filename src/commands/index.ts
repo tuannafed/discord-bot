@@ -17,6 +17,7 @@ import * as candidateList from './candidate-list.js';
 import * as candidateRemove from './candidate-remove.js';
 import * as movers from './movers.js';
 import * as scan from './scan.js';
+import * as help from './help.js';
 
 export interface Command {
   data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder;
@@ -55,6 +56,7 @@ export function buildCommands(
     candidateRemove,
     movers,
     scan,
+    help,
   ];
 
   const map = new Map<string, Command>();
@@ -78,5 +80,6 @@ export function getCommandBuilders(): (SlashCommandBuilder | SlashCommandOptions
     candidateRemove.data,
     movers.data,
     scan.data,
+    help.data,
   ];
 }
