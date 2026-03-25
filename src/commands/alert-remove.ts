@@ -24,7 +24,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
 
   const id = interaction.options.getString('id', true).trim();
 
-  const removed = alertService.removeAlert(id, guildId);
+  const removed = await alertService.removeAlert(id, guildId);
 
   if (!removed) {
     await interaction.reply({

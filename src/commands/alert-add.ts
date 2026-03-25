@@ -31,12 +31,17 @@ export const data = new SlashCommandBuilder()
       .setDescription('Trigger condition')
       .setRequired(true)
       .addChoices(
-        { name: 'Above', value: 'above' },
-        { name: 'Below', value: 'below' }
+        { name: 'Above (fixed value)', value: 'above' },
+        { name: 'Below (fixed value)', value: 'below' },
+        { name: 'Change Up % (from now)', value: 'change_up' },
+        { name: 'Change Down % (from now)', value: 'change_down' }
       )
   )
   .addNumberOption((opt) =>
-    opt.setName('threshold').setDescription('Threshold value in USD').setRequired(true)
+    opt
+      .setName('threshold')
+      .setDescription('USD value for above/below — OR % for change_up/change_down (e.g. 3 = 3%)')
+      .setRequired(true)
   );
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
@@ -50,9 +55,16 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const symbol = interaction.options.getString('symbol', true);
   const metric = interaction.options.getString('metric', true) as AlertMetric;
   const condition = interaction.options.getString('condition', true) as AlertCondition;
-  const threshold = interaction.options.getNumber('threshold', true);
+  const thresholdInput = interaction.options.getNumber('threshold', true);
 
   await interaction.deferReply();
+
+  const isChangePct = condition === 'change_up' || condition === 'change_down';
+
+  if (isChangePct && (thresholdInput < 1 || thresholdInput > 100)) {
+    await interaction.editReply('Change % must be between 1 and 100.');
+    return;
+  }
 
   const alert = await alertService.addAlert({
     guildId,
@@ -60,7 +72,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     symbol,
     metric,
     condition,
-    threshold,
+    threshold: thresholdInput,
     userId: interaction.user.id,
   });
 
@@ -69,9 +81,25 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     return;
   }
 
-  const thresholdStr = metric === 'price' ? formatPrice(threshold) : formatMarketCap(threshold);
+  let confirmMsg: string;
+  if (isChangePct) {
+    const dir = condition === 'change_up' ? '📈 up' : '📉 down';
+    const baseStr = metric === 'price'
+      ? formatPrice(alert.baseValue ?? 0)
+      : formatMarketCap(alert.baseValue ?? 0);
+    const targetStr = metric === 'price'
+      ? formatPrice(alert.threshold)
+      : formatMarketCap(alert.threshold);
+    confirmMsg =
+      `Alert set: **${symbol.toUpperCase()}** ${metric} ${dir} **${thresholdInput}%**\n` +
+      `Base: ${baseStr} → Target: **${targetStr}**\n` +
+      `Alert ID: \`${alert.id}\``;
+  } else {
+    const thresholdStr = metric === 'price' ? formatPrice(alert.threshold) : formatMarketCap(alert.threshold);
+    confirmMsg =
+      `Alert set: **${symbol.toUpperCase()}** ${metric} ${condition} **${thresholdStr}**\n` +
+      `Alert ID: \`${alert.id}\``;
+  }
 
-  await interaction.editReply(
-    `Alert set: **${symbol.toUpperCase()}** ${metric} ${condition} **${thresholdStr}**\nAlert ID: \`${alert.id}\``
-  );
+  await interaction.editReply(confirmMsg);
 }

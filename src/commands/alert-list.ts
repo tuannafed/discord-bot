@@ -28,11 +28,25 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   }
 
   const lines = alerts.map((alert, i) => {
-    const thresholdStr =
-      alert.metric === 'price' ? formatPrice(alert.threshold) : formatMarketCap(alert.threshold);
     const status = alert.isActive ? '✓' : '✗';
+    let conditionStr: string;
+    if ((alert.condition === 'change_up' || alert.condition === 'change_down') && alert.changePct != null) {
+      const dir = alert.condition === 'change_up' ? '📈 +' : '📉 -';
+      const baseStr = alert.metric === 'price'
+        ? formatPrice(alert.baseValue ?? alert.threshold)
+        : formatMarketCap(alert.baseValue ?? alert.threshold);
+      const targetStr = alert.metric === 'price'
+        ? formatPrice(alert.threshold)
+        : formatMarketCap(alert.threshold);
+      conditionStr = `${dir}${alert.changePct}% (${baseStr} → ${targetStr})`;
+    } else {
+      const thresholdStr = alert.metric === 'price'
+        ? formatPrice(alert.threshold)
+        : formatMarketCap(alert.threshold);
+      conditionStr = `${alert.condition} ${thresholdStr}`;
+    }
     return (
-      `${String(i + 1).padStart(2)}. **${alert.symbol.toUpperCase()}** ${alert.metric} ${alert.condition} ${thresholdStr} [${status}]\n` +
+      `${String(i + 1).padStart(2)}. **${alert.symbol.toUpperCase()}** ${alert.metric} ${conditionStr} [${status}]\n` +
       `    ID: \`${alert.id}\``
     );
   });

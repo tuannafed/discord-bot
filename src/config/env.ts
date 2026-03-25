@@ -16,6 +16,7 @@ const envSchema = z.object({
 
   DATA_DIR: z.string().optional(),
   DATABASE_URL: z.string().optional(),
+  DATABASE_SSL_REJECT_UNAUTHORIZED: z.coerce.boolean().default(true),
 
   ALERT_COOLDOWN_MINUTES: z.coerce.number().int().positive().default(60),
   CANDIDATE_TARGET_MARKET_CAP: z.coerce.number().positive().default(1_000_000_000),

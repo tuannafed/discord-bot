@@ -33,6 +33,22 @@ export class AlertService {
     const coinId = await resolveSymbolToId(params.symbol, this.provider);
     if (!coinId) return null;
 
+    const isChangePct = params.condition === 'change_up' || params.condition === 'change_down';
+    let threshold = params.threshold;
+    let baseValue: number | undefined;
+
+    if (isChangePct) {
+      // fetch current value to compute absolute threshold
+      const [coin] = await this.provider.getMarketData([params.symbol]);
+      if (!coin) return null;
+
+      baseValue = params.metric === 'price' ? coin.currentPrice : coin.marketCap;
+      const multiplier = params.condition === 'change_up'
+        ? 1 + params.threshold / 100
+        : 1 - params.threshold / 100;
+      threshold = baseValue * multiplier;
+    }
+
     const alert: AlertRule = {
       id: generateId(),
       guildId: params.guildId,
@@ -41,7 +57,9 @@ export class AlertService {
       coinId: params.symbol.toLowerCase(),
       metric: params.metric,
       condition: params.condition,
-      threshold: params.threshold,
+      threshold,
+      baseValue,
+      changePct: isChangePct ? params.threshold : undefined,
       lastTriggeredAt: null,
       isActive: true,
       createdBy: params.userId,

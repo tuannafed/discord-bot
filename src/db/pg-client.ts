@@ -7,14 +7,27 @@ export function getPool(): Pool {
   if (!pool) {
     pool = new Pool({
       connectionString: env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false },
+      ssl: { rejectUnauthorized: env.DATABASE_SSL_REJECT_UNAUTHORIZED },
     });
   }
   return pool;
 }
 
+export async function closePool(): Promise<void> {
+  if (pool) {
+    await pool.end();
+    pool = null;
+  }
+}
+
 export async function runMigrations(): Promise<void> {
   const db = getPool();
+  // Add new columns if they don't exist yet (safe to run multiple times)
+  await db.query(`
+    ALTER TABLE alerts ADD COLUMN IF NOT EXISTS base_value  DOUBLE PRECISION;
+    ALTER TABLE alerts ADD COLUMN IF NOT EXISTS change_pct  DOUBLE PRECISION;
+  `).catch(() => { /* table may not exist yet — will be created below */ });
+
   await db.query(`
     CREATE TABLE IF NOT EXISTS watchlist (
       guild_id     TEXT NOT NULL,
@@ -34,6 +47,8 @@ export async function runMigrations(): Promise<void> {
       metric              TEXT NOT NULL,
       condition           TEXT NOT NULL,
       threshold           DOUBLE PRECISION NOT NULL,
+      base_value          DOUBLE PRECISION,
+      change_pct          DOUBLE PRECISION,
       last_triggered_at   TEXT,
       is_active           BOOLEAN NOT NULL DEFAULT TRUE,
       created_by          TEXT NOT NULL,

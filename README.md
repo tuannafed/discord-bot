@@ -8,7 +8,7 @@ Discord bot for tracking crypto coins by market cap and daily growth. Built with
 - Per-guild watchlists
 - Price and market cap alerts with cooldown
 - Auto-discovery of top gainers with target market cap tracking
-- Multi-timeframe movers (15m / 1h / 4h / 24h) ranked by price or market cap
+- Multi-timeframe price & cap change for individual coins (`/coin`) and movers (`/movers`)
 
 ## Commands
 
@@ -18,24 +18,36 @@ Health check.
 ---
 
 ### `/coin`
-Price, market cap, rank, 24h change, and supply info for a coin.
+Price, market cap, rank, change over a chosen timeframe, and supply info for a coin.
 
-| Param | Type | Required | Description |
-|---|---|---|---|
-| `symbol` | string | Yes | Coin symbol (e.g. `btc`, `eth`) |
+| Param | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `symbol` | string | Yes | — | Coin symbol (e.g. `btc`, `eth`) |
+| `timeframe` | choice | No | *(CMC 24h)* | `15 minutes` / `1 hour` / `4 hours` / `24 hours` |
 
-**Example:** `/coin symbol:btc`
-
-**Output:**
+**Examples:**
 ```
-Price    : $67,234.00
-MCap     : $1.3T
-Rank     : #1
-24h      : ▲ +2.15%
-Circ.    : 19.70M
-Total    : 21.00M
-Max      : 21.00M
+/coin symbol:btc
+/coin symbol:eth timeframe:1 hour
 ```
+
+**Output (with timeframe):**
+```
+Price    : $0.3970
+Prev 1h  : $0.3800
+Price 1h : ▲ +4.47%
+
+MCap     : $176.8M
+Prev 1h  : $169.2M
+Cap  1h  : ▲ +4.47%
+
+Rank     : #145
+Circ.    : 450.0M
+Total    : 500.0M
+Max      : ∞
+```
+
+> **Note:** `15m / 1h / 4h` fetch kline data from Bybit (~2–5s). Default (no timeframe) uses CoinMarketCap 24h data.
 
 ---
 
@@ -127,10 +139,17 @@ Create an alert that fires when price or market cap crosses a threshold. Alert i
 |---|---|---|---|
 | `symbol` | string | Yes | Coin symbol |
 | `metric` | choice | Yes | `price` or `market_cap` |
-| `condition` | choice | Yes | `above` or `below` |
-| `threshold` | number | Yes | Threshold value in USD |
+| `condition` | choice | Yes | `above` / `below` (fixed USD) or `change_up` / `change_down` (% from now) |
+| `threshold` | number | Yes | USD value for `above`/`below` — OR percent (1–100) for `change_up`/`change_down` |
 
-**Example:** `/alert-add symbol:btc metric:price condition:above threshold:100000`
+**Examples:**
+```
+/alert-add symbol:btc metric:price condition:above threshold:100000
+/alert-add symbol:eth metric:price condition:change_up threshold:3
+/alert-add symbol:sol metric:market_cap condition:change_down threshold:5
+```
+
+> **`change_up` / `change_down`:** Takes the current price/cap at the moment you run the command and sets the target at `±N%`. E.g. if ETH is $3000 and you set `change_up 3`, the alert fires when ETH reaches $3090.
 
 ---
 

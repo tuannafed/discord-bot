@@ -70,6 +70,20 @@ async function main(): Promise<void> {
   registerInteractionCreateEvent(client, commands);
 
   await client.login(env.DISCORD_TOKEN);
+
+  const shutdown = async (signal: string): Promise<void> => {
+    logger.info(`Received ${signal}, shutting down gracefully`);
+    pollingService.stop();
+    client.destroy();
+    if (env.DATABASE_URL) {
+      const { closePool } = await import('./db/pg-client.js');
+      await closePool();
+    }
+    process.exit(0);
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 main().catch((err) => {

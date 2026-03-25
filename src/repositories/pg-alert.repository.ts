@@ -2,7 +2,7 @@ import { Pool } from 'pg';
 import { AlertRule } from '../types/alert.js';
 
 const SELECT =
-  'id, guild_id AS "guildId", channel_id AS "channelId", symbol, coin_id AS "coinId", metric, condition, threshold, last_triggered_at AS "lastTriggeredAt", is_active AS "isActive", created_by AS "createdBy", created_at AS "createdAt"';
+  'id, guild_id AS "guildId", channel_id AS "channelId", symbol, coin_id AS "coinId", metric, condition, threshold, base_value AS "baseValue", change_pct AS "changePct", last_triggered_at AS "lastTriggeredAt", is_active AS "isActive", created_by AS "createdBy", created_at AS "createdAt"';
 
 export class PgAlertRepository {
   constructor(private readonly db: Pool) {}
@@ -30,12 +30,13 @@ export class PgAlertRepository {
 
   async add(alert: AlertRule): Promise<void> {
     await this.db.query(
-      `INSERT INTO alerts (id, guild_id, channel_id, symbol, coin_id, metric, condition, threshold, last_triggered_at, is_active, created_by, created_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+      `INSERT INTO alerts (id, guild_id, channel_id, symbol, coin_id, metric, condition, threshold, base_value, change_pct, last_triggered_at, is_active, created_by, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
       [
         alert.id, alert.guildId, alert.channelId, alert.symbol, alert.coinId,
-        alert.metric, alert.condition, alert.threshold, alert.lastTriggeredAt,
-        alert.isActive, alert.createdBy, alert.createdAt,
+        alert.metric, alert.condition, alert.threshold,
+        alert.baseValue ?? null, alert.changePct ?? null,
+        alert.lastTriggeredAt, alert.isActive, alert.createdBy, alert.createdAt,
       ]
     );
   }

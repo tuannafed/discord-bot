@@ -9,6 +9,8 @@ import { minutesSince, nowIso } from '../utils/time.js';
 import { formatPrice, formatMarketCap, formatChange } from '../utils/format.js';
 
 export class PollingService {
+  private tasks: cron.ScheduledTask[] = [];
+
   constructor(
     private readonly client: Client,
     private readonly alertService: AlertService,
@@ -17,19 +19,31 @@ export class PollingService {
   ) {}
 
   start(): void {
-    cron.schedule('*/5 * * * *', () => {
-      this.runAlertCheck().catch((err) => logger.error('Alert check failed', err));
-    });
+    this.tasks.push(
+      cron.schedule('*/5 * * * *', () => {
+        this.runAlertCheck().catch((err) => logger.error('Alert check failed', err));
+      })
+    );
 
-    cron.schedule('0 */6 * * *', () => {
-      this.runCandidateUpdate().catch((err) => logger.error('Candidate update failed', err));
-    });
+    this.tasks.push(
+      cron.schedule('0 */6 * * *', () => {
+        this.runCandidateUpdate().catch((err) => logger.error('Candidate update failed', err));
+      })
+    );
 
-    cron.schedule('0 8 * * *', () => {
-      this.runCandidateDiscovery().catch((err) => logger.error('Candidate discovery failed', err));
-    });
+    this.tasks.push(
+      cron.schedule('0 8 * * *', () => {
+        this.runCandidateDiscovery().catch((err) => logger.error('Candidate discovery failed', err));
+      })
+    );
 
     logger.info('Polling service started');
+  }
+
+  stop(): void {
+    this.tasks.forEach((t) => t.stop());
+    this.tasks = [];
+    logger.info('Polling service stopped');
   }
 
   private async runAlertCheck(): Promise<void> {
@@ -78,16 +92,32 @@ export class PollingService {
       try {
         const channel = await this.client.channels.fetch(alert.channelId);
         if (channel instanceof TextChannel) {
-          const valueStr =
+          const currentStr =
             alert.metric === 'price'
               ? formatPrice(market.currentPrice)
               : formatMarketCap(market.marketCap);
 
-          await channel.send(
-            `**Alert:** ${market.name} (${market.symbol.toUpperCase()}) ` +
-              `${alert.metric} is ${alert.condition} ${alert.metric === 'price' ? formatPrice(alert.threshold) : formatMarketCap(alert.threshold)}.\n` +
-              `Current ${alert.metric}: **${valueStr}**`
-          );
+          let msg: string;
+          if ((alert.condition === 'change_up' || alert.condition === 'change_down') && alert.changePct != null) {
+            const dir = alert.condition === 'change_up' ? '📈 up' : '📉 down';
+            const baseStr = alert.metric === 'price'
+              ? formatPrice(alert.baseValue ?? alert.threshold)
+              : formatMarketCap(alert.baseValue ?? alert.threshold);
+            msg =
+              `**Alert:** ${market.name} (${market.symbol.toUpperCase()}) ` +
+              `${alert.metric} moved ${dir} **${alert.changePct}%**\n` +
+              `Base: ${baseStr} → Current: **${currentStr}**`;
+          } else {
+            const thresholdStr = alert.metric === 'price'
+              ? formatPrice(alert.threshold)
+              : formatMarketCap(alert.threshold);
+            msg =
+              `**Alert:** ${market.name} (${market.symbol.toUpperCase()}) ` +
+              `${alert.metric} is ${alert.condition} ${thresholdStr}.\n` +
+              `Current ${alert.metric}: **${currentStr}**`;
+          }
+
+          await channel.send(msg);
           logger.info(`Alert ${alert.id}: notification sent`);
         }
         await this.alertService.updateAlert({ ...alert, lastTriggeredAt: nowIso() });

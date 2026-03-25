@@ -2,6 +2,7 @@
 
 | Status | ID | Title | Type | Phase | Created | Updated |
 |--------|----|-------|------|-------|---------|---------|
+| [~] | track-001-security-review | Security Review & Code Audit | chore | ba | 2026-03-25 | 2026-03-25 |
 
 <!--
 Status symbols:

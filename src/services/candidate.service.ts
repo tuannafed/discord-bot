@@ -29,7 +29,10 @@ export class CandidateService {
     return this.repo.findByStatus(status);
   }
 
-  async removeCandidate(id: string): Promise<boolean> {
+  async removeCandidate(id: string, guildId: string): Promise<boolean> {
+    const all = await this.repo.findAll();
+    const candidate = all.find((c) => c.id === id);
+    if (!candidate || candidate.guildId !== guildId) return false;
     return this.repo.remove(id);
   }
 
