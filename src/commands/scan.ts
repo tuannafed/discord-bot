@@ -55,15 +55,12 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
 
   const lines = coins.map((coin, i) => {
     const emoji = formatChangeEmoji(coin.priceChangePercentage24h);
-    return (
-      `**${i + 1}. ${coin.name}** (${coin.symbol.toUpperCase()})\n` +
-      `Price: ${formatPrice(coin.currentPrice)} | MCap: ${formatMarketCap(coin.marketCap)} | 24h: ${emoji} ${formatChange(coin.priceChangePercentage24h)}`
-    );
+    return `\`${String(i + 1).padStart(2)}.\` **${coin.symbol.toUpperCase()}** ${formatPrice(coin.currentPrice)} · ${formatMarketCap(coin.marketCap)} · ${emoji} ${formatChange(coin.priceChangePercentage24h)}`;
   });
 
   const embed = new EmbedBuilder()
     .setTitle(`Coins with Market Cap ${formatMarketCap(minCap)} – ${formatMarketCap(maxCap)}`)
-    .setDescription(lines.join('\n\n'))
+    .setDescription(lines.join('\n'))
     .setColor(0x1abc9c)
     .setFooter({ text: `${coins.length} result${coins.length !== 1 ? 's' : ''} · Bybit-listed coins only · Market cap from CoinMarketCap` })
     .setTimestamp();

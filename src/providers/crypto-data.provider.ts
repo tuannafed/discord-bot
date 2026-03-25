@@ -108,30 +108,37 @@ export class CryptoDataProvider implements CryptoProvider {
   }
 
   /**
-   * Returns all Bybit futures tickers enriched with CMC market cap.
-   * Bybit is source of truth for price and 24h%; CMC fills in marketCap and rank.
+   * Returns all Bybit futures tickers enriched with CMC global market cap.
+   * - Bybit: source of truth for price and 24h% (exchange real-time)
+   * - CMC listings/latest: source of truth for marketCap and rank (global, all exchanges)
    */
   async getBybitFuturesWithMarketCap(): Promise<CoinMarketData[]> {
-    const bybitTickers = await this.bybit.getAllFuturesTickers();
+    const cacheKey = 'bybit_futures_with_mcap';
+    const cached = this.marketCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) return cached.data;
 
-    const symbols = bybitTickers.map((t) => t.symbol.toUpperCase());
-    let cmcMap = new Map<string, CoinMarketData>();
-    try {
-      const cmcData = await this.cmc.getMarketData(symbols);
-      cmcMap = new Map(cmcData.map((c) => [c.symbol.toUpperCase(), c]));
-    } catch (err) {
-      logger.warn('CMC enrichment failed for futures tickers', err);
-    }
+    const [bybitTickers, cmcListings] = await Promise.all([
+      this.bybit.getAllFuturesTickers(),
+      this.cmc.getTopCoins(500),
+    ]);
 
-    return bybitTickers.map((ticker) => {
-      const cmc = cmcMap.get(ticker.symbol.toUpperCase());
-      return {
-        ...ticker,
-        name: cmc?.name ?? ticker.symbol.toUpperCase(),
-        marketCap: cmc?.marketCap ?? 0,
-        marketCapRank: cmc?.marketCapRank ?? 0,
-      };
-    });
+    const bybitSet = new Set(bybitTickers.map((t) => t.symbol.toUpperCase()));
+    const bybitMap = new Map(bybitTickers.map((t) => [t.symbol.toUpperCase(), t]));
+
+    // CMC as base for name/marketCap/rank, Bybit overrides price and 24h%
+    const result = cmcListings
+      .filter((c) => bybitSet.has(c.symbol.toUpperCase()))
+      .map((c) => {
+        const bybit = bybitMap.get(c.symbol.toUpperCase());
+        return {
+          ...c,
+          currentPrice: bybit?.currentPrice ?? c.currentPrice,
+          priceChangePercentage24h: bybit?.priceChangePercentage24h ?? c.priceChangePercentage24h,
+        };
+      });
+
+    this.marketCache.set(cacheKey, { data: result, expiresAt: Date.now() + MARKET_CACHE_TTL_MS });
+    return result;
   }
 
   /** Invalidate all caches (e.g. after symbol resolution miss) */
