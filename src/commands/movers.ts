@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { MarketService } from '../services/market.service.js';
 import { CoinMarketData } from '../types/coin.js';
-import { formatPriceFixed, formatMarketCapFixed, formatChangeFixed } from '../utils/format.js';
+import { formatPrice, formatMarketCap, formatChangeFixed } from '../utils/format.js';
 
 let marketService: MarketService;
 
@@ -19,6 +19,15 @@ const TIMEFRAME_LABEL: Record<string, string> = {
 export const data = new SlashCommandBuilder()
   .setName('movers')
   .setDescription('Top gainers and losers by timeframe')
+  .addStringOption((opt) =>
+    opt
+      .setName('metric')
+      .setDescription('What to rank by (default: price)')
+      .addChoices(
+        { name: 'Price',      value: 'price' },
+        { name: 'Market Cap', value: 'cap' }
+      )
+  )
   .addStringOption((opt) =>
     opt
       .setName('timeframe')
@@ -48,28 +57,46 @@ export const data = new SlashCommandBuilder()
       .setMaxValue(10)
   );
 
-function buildLines(coins: CoinMarketData[]): string {
+function buildPriceLines(coins: CoinMarketData[], label: string): string {
+  const header = `${'#'.padEnd(3)} ${'SYM'.padEnd(6)} ${'PREV ' + label}  ${'NOW'.padEnd(10)} ${'CHG'.padStart(7)}`;
+  const sep = '-'.repeat(header.length);
   const rows = coins.map((coin, i) => {
+    const prev = coin.prevPrice != null ? formatPrice(coin.prevPrice) : '—';
+    const now = formatPrice(coin.currentPrice);
     const arrow = coin.priceChangePercentage24h >= 0 ? '▲' : '▼';
-    return `${String(i + 1).padStart(2)}. ${coin.symbol.toUpperCase().padEnd(5)} ${formatPriceFixed(coin.currentPrice)} ${formatMarketCapFixed(coin.marketCap)} ${arrow}${formatChangeFixed(coin.priceChangePercentage24h)}`;
+    return `${String(i + 1).padStart(2)}. ${coin.symbol.toUpperCase().padEnd(6)} ${prev.padEnd(10)} ${now.padEnd(10)} ${arrow}${formatChangeFixed(coin.priceChangePercentage24h)}`;
   });
-  return '```\n' + rows.join('\n') + '\n```';
+  return '```\n' + header + '\n' + sep + '\n' + rows.join('\n') + '\n```';
+}
+
+function buildCapLines(coins: CoinMarketData[], label: string): string {
+  const header = `${'#'.padEnd(3)} ${'SYM'.padEnd(6)} ${'PREV ' + label}  ${'NOW'.padEnd(8)} ${'CHG'.padStart(7)}`;
+  const sep = '-'.repeat(header.length);
+  const rows = coins.map((coin, i) => {
+    const prev = coin.prevMarketCap != null ? formatMarketCap(coin.prevMarketCap) : '—';
+    const now = formatMarketCap(coin.marketCap);
+    const arrow = coin.priceChangePercentage24h >= 0 ? '▲' : '▼';
+    return `${String(i + 1).padStart(2)}. ${coin.symbol.toUpperCase().padEnd(6)} ${prev.padEnd(8)} ${now.padEnd(8)} ${arrow}${formatChangeFixed(coin.priceChangePercentage24h)}`;
+  });
+  return '```\n' + header + '\n' + sep + '\n' + rows.join('\n') + '\n```';
 }
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
+  const metric = interaction.options.getString('metric') ?? 'price';
   const timeframe = interaction.options.getString('timeframe') ?? 'D';
   const type = interaction.options.getString('type') ?? 'both';
   const limit = interaction.options.getInteger('limit') ?? 5;
   const label = TIMEFRAME_LABEL[timeframe];
 
-  // 15m/1h kline requires fetching per-symbol — warn user it may take a moment
   await interaction.deferReply();
 
-  // For 24h use cached futures data, otherwise fetch kline
   const interval = timeframe === 'D' ? undefined : timeframe;
+  const buildLines = metric === 'cap'
+    ? (coins: CoinMarketData[]) => buildCapLines(coins, label)
+    : (coins: CoinMarketData[]) => buildPriceLines(coins, label);
 
   const embed = new EmbedBuilder()
-    .setTitle(`Top Movers — ${label}`)
+    .setTitle(`Top Movers — ${label} (${metric === 'cap' ? 'Market Cap' : 'Price'})`)
     .setColor(0x5865f2)
     .setFooter({ text: 'Data from Bybit + CoinMarketCap' })
     .setTimestamp();

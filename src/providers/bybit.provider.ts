@@ -114,12 +114,10 @@ export class BybitProvider implements Pick<CryptoProvider, 'getMarketData'> {
    * and return % change = (currentClose - prevClose) / prevClose * 100.
    * interval: '15' = 15m, '60' = 1h, '240' = 4h, 'D' = 1d
    */
-  async getAllFuturesKlineChange(interval: string): Promise<Map<string, number>> {
-    // Fetch all tickers first to get the symbol list
+  async getAllFuturesKlineChange(interval: string): Promise<Map<string, { pct: number; prev: number; current: number }>> {
     const tickers = await this.getAllFuturesTickers();
-    const result = new Map<string, number>();
+    const result = new Map<string, { pct: number; prev: number; current: number }>();
 
-    // Batch requests in parallel with concurrency limit to avoid rate limiting
     const BATCH = 20;
     for (let i = 0; i < tickers.length; i += BATCH) {
       const batch = tickers.slice(i, i + BATCH);
@@ -137,10 +135,14 @@ export class BybitProvider implements Pick<CryptoProvider, 'getMarketData'> {
             // list[0] = latest candle, list[1] = previous candle
             // each candle: [openTime, open, high, low, close, volume, turnover]
             if (list && list.length === 2) {
-              const currentClose = parseFloat(list[0][4]);
-              const prevClose = parseFloat(list[1][4]);
-              if (prevClose > 0) {
-                result.set(ticker.symbol.toLowerCase(), ((currentClose - prevClose) / prevClose) * 100);
+              const current = parseFloat(list[0][4]);
+              const prev = parseFloat(list[1][4]);
+              if (prev > 0) {
+                result.set(ticker.symbol.toLowerCase(), {
+                  pct: ((current - prev) / prev) * 100,
+                  prev,
+                  current,
+                });
               }
             }
           } catch {

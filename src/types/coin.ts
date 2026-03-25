@@ -9,6 +9,8 @@ export interface CoinMarketData {
   circulatingSupply?: number;
   totalSupply?: number;
   maxSupply?: number | null;
+  prevPrice?: number;       // price at start of timeframe (from kline)
+  prevMarketCap?: number;   // mcap at start of timeframe (from kline, estimated)
 }
 
 export interface CoinListItem {

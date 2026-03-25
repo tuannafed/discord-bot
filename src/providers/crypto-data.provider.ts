@@ -157,9 +157,16 @@ export class CryptoDataProvider implements CryptoProvider {
     ]);
 
     const result = base.map((coin) => {
-      const klineChange = klineMap.get(coin.symbol.toLowerCase());
-      if (klineChange !== undefined) {
-        return { ...coin, priceChangePercentage24h: klineChange };
+      const kline = klineMap.get(coin.symbol.toLowerCase());
+      if (kline !== undefined) {
+        // Estimate prevMarketCap using the price ratio
+        const priceRatio = kline.prev > 0 ? kline.prev / coin.currentPrice : 1;
+        return {
+          ...coin,
+          priceChangePercentage24h: kline.pct,
+          prevPrice: kline.prev,
+          prevMarketCap: coin.marketCap * priceRatio,
+        };
       }
       return coin;
     });
