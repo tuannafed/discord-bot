@@ -16,6 +16,7 @@ import * as alertList from './alert-list.js';
 import * as candidateList from './candidate-list.js';
 import * as candidateRemove from './candidate-remove.js';
 import * as movers from './movers.js';
+import * as scan from './scan.js';
 
 export interface Command {
   data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder;
@@ -39,6 +40,7 @@ export function buildCommands(
   candidateList.init(candidateService);
   candidateRemove.init(candidateService);
   movers.init(marketService);
+  scan.init(marketService);
 
   const commands: Command[] = [
     ping,
@@ -52,6 +54,7 @@ export function buildCommands(
     candidateList,
     candidateRemove,
     movers,
+    scan,
   ];
 
   const map = new Map<string, Command>();
@@ -74,5 +77,6 @@ export function getCommandBuilders(): (SlashCommandBuilder | SlashCommandOptions
     candidateList.data,
     candidateRemove.data,
     movers.data,
+    scan.data,
   ];
 }

@@ -101,6 +101,12 @@ export class CryptoDataProvider implements CryptoProvider {
     return data;
   }
 
+  /** Returns set of symbols available on Bybit (USDT pairs) */
+  async getBybitSymbols(): Promise<Set<string>> {
+    const symbols = await this.bybit.getAllSymbols();
+    return new Set(symbols);
+  }
+
   /** Invalidate all caches (e.g. after symbol resolution miss) */
   clearCache(): void {
     this.priceCache.clear();

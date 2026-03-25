@@ -101,6 +101,20 @@ View coins being tracked for target market cap.
 
 ---
 
+### `/scan`
+Find coins within a market cap range. Only shows coins listed on Bybit. Market cap data from CoinMarketCap (scans top 500).
+
+| Param | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `min_cap` | number | Yes | — | Minimum market cap in USD |
+| `max_cap` | number | Yes | — | Maximum market cap in USD |
+| `limit` | integer | No | `10` | Max results to show (1–25) |
+
+**Example:** `/scan min_cap:70000000 max_cap:100000000`
+→ Finds Bybit-listed coins with market cap between $70M and $100M.
+
+---
+
 ### `/candidate-remove`
 Remove a candidate from tracking.
 

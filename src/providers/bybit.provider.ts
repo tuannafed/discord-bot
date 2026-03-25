@@ -72,6 +72,26 @@ export class BybitProvider implements Pick<CryptoProvider, 'getMarketData'> {
     }
   }
 
+  /** Returns all USDT spot symbols available on Bybit */
+  async getAllSymbols(): Promise<string[]> {
+    try {
+      const response = await this.client.get<BybitTickersResponse>('/v5/market/tickers', {
+        params: { category: 'spot' },
+      });
+
+      if (response.data.retCode !== 0) {
+        throw new Error(`Bybit API error: ${response.data.retMsg}`);
+      }
+
+      return response.data.result.list
+        .filter((t) => t.symbol.endsWith('USDT'))
+        .map((t) => t.symbol.slice(0, -4).toUpperCase());
+    } catch (error) {
+      logger.error('Bybit getAllSymbols failed', error);
+      throw new Error('Failed to fetch symbol list from Bybit');
+    }
+  }
+
   /** Bybit doesn't support coin listing — not applicable */
   async getCoinList(): Promise<CoinListItem[]> {
     throw new Error('getCoinList not supported by Bybit provider');

@@ -38,4 +38,14 @@ export class MarketService {
       .sort((a, b) => a.priceChangePercentage24h - b.priceChangePercentage24h)
       .slice(0, limit);
   }
+
+  async scanByMarketCap(minCap: number, maxCap: number, limit: number): Promise<CoinMarketData[]> {
+    const [coins, bybitSymbols] = await Promise.all([
+      this.provider.getTopCoins(500),
+      this.provider.getBybitSymbols(),
+    ]);
+    return coins
+      .filter((c) => c.marketCap >= minCap && c.marketCap <= maxCap && bybitSymbols.has(c.symbol.toUpperCase()))
+      .slice(0, limit);
+  }
 }
