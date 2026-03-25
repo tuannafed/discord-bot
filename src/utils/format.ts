@@ -10,10 +10,10 @@ export function formatPrice(price: number): string {
 
 export function formatMarketCap(marketCap: number): string {
   if (marketCap >= 1_000_000_000) {
-    return `$${(marketCap / 1_000_000_000).toFixed(2)}B`;
+    return `$${(marketCap / 1_000_000_000).toFixed(1)}B`;
   }
   if (marketCap >= 1_000_000) {
-    return `$${(marketCap / 1_000_000).toFixed(2)}M`;
+    return `$${(marketCap / 1_000_000).toFixed(1)}M`;
   }
   return `$${marketCap.toLocaleString('en-US')}`;
 }
@@ -32,9 +32,9 @@ export function formatPriceFixed(price: number): string {
   return formatPrice(price).padEnd(10);
 }
 
-/** Fixed-width market cap, right-padded to 8 chars */
+/** Fixed-width market cap, right-padded to 7 chars */
 export function formatMarketCapFixed(marketCap: number): string {
-  return formatMarketCap(marketCap).padEnd(8);
+  return formatMarketCap(marketCap).padEnd(7);
 }
 
 /** Fixed-width change, left-padded to 7 chars */
