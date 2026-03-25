@@ -27,13 +27,13 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     return;
   }
 
-  const lines = alerts.map((alert) => {
+  const lines = alerts.map((alert, i) => {
     const thresholdStr =
       alert.metric === 'price' ? formatPrice(alert.threshold) : formatMarketCap(alert.threshold);
-    const status = alert.isActive ? 'Active' : 'Inactive';
+    const status = alert.isActive ? '✓' : '✗';
     return (
-      `**${alert.symbol.toUpperCase()}** — ${alert.metric} ${alert.condition} ${thresholdStr} [${status}]\n` +
-      `ID: \`${alert.id}\``
+      `${String(i + 1).padStart(2)}. **${alert.symbol.toUpperCase()}** ${alert.metric} ${alert.condition} ${thresholdStr} [${status}]\n` +
+      `    ID: \`${alert.id}\``
     );
   });
 

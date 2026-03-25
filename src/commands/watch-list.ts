@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { WatchlistService } from '../services/watchlist.service.js';
 import { CryptoDataProvider } from '../providers/crypto-data.provider.js';
-import { formatPrice, formatMarketCap, formatChange, formatChangeEmoji } from '../utils/format.js';
+import { formatPrice, formatMarketCap, formatChange } from '../utils/format.js';
 
 let watchlistService: WatchlistService;
 let provider: CryptoDataProvider;
@@ -38,18 +38,16 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
 
   const lines = items.map((item) => {
     const market = marketMap.get(item.symbol.toLowerCase());
-    if (!market) return `**${item.symbol.toUpperCase()}** — data unavailable`;
+    if (!market) return `${item.symbol.toUpperCase().padEnd(5)} — unavailable`;
 
-    const emoji = formatChangeEmoji(market.priceChangePercentage24h);
-    return (
-      `**${market.name}** (${market.symbol.toUpperCase()})\n` +
-      `Price: ${formatPrice(market.currentPrice)} | MCap: ${formatMarketCap(market.marketCap)} | 24h: ${emoji} ${formatChange(market.priceChangePercentage24h)}`
-    );
+    const arrow = market.priceChangePercentage24h >= 0 ? '▲' : '▼';
+    const chg = formatChange(market.priceChangePercentage24h);
+    return `${market.symbol.toUpperCase().padEnd(5)} ${formatPrice(market.currentPrice).padEnd(10)} ${formatMarketCap(market.marketCap).padEnd(7)} ${arrow}${chg.padStart(7)}`;
   });
 
   const embed = new EmbedBuilder()
     .setTitle('Watchlist')
-    .setDescription(lines.join('\n\n'))
+    .setDescription('```\n' + lines.join('\n') + '\n```')
     .setColor(0x5865f2)
     .setFooter({ text: 'Data from Bybit + CoinMarketCap' })
     .setTimestamp();

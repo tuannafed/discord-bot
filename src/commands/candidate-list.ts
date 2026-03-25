@@ -47,11 +47,11 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   }
 
   const lines = candidates.slice(0, 20).map((c) => {
+    const arrow = c.discoveredChange24h >= 0 ? '▲' : '▼';
     return (
-      `**${c.name}** (${c.symbol.toUpperCase()}) — ${STATUS_EMOJI[c.status]}\n` +
-      `Price: ${formatPrice(c.currentPrice)} | MCap: ${formatMarketCap(c.currentMarketCap)} | Target: ${formatMarketCap(c.targetMarketCap)}\n` +
-      `Discovered: ${formatChange(c.discoveredChange24h)} 24h at ${formatMarketCap(c.discoveredMarketCap)}\n` +
-      `ID: \`${c.id}\``
+      `**${c.symbol.toUpperCase()}** ${STATUS_EMOJI[c.status]}\n` +
+      `\`${formatPrice(c.currentPrice).padEnd(10)} ${formatMarketCap(c.currentMarketCap).padEnd(7)} → ${formatMarketCap(c.targetMarketCap)}\`\n` +
+      `Disc: ${arrow}${formatChange(c.discoveredChange24h)} at ${formatMarketCap(c.discoveredMarketCap)} · ID: \`${c.id}\``
     );
   });
 
