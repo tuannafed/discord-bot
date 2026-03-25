@@ -72,11 +72,11 @@ export class BybitProvider implements Pick<CryptoProvider, 'getMarketData'> {
     }
   }
 
-  /** Returns all USDT spot symbols available on Bybit */
+  /** Returns all USDT perpetual futures symbols available on Bybit (linear category) */
   async getAllSymbols(): Promise<string[]> {
     try {
       const response = await this.client.get<BybitTickersResponse>('/v5/market/tickers', {
-        params: { category: 'spot' },
+        params: { category: 'linear' },
       });
 
       if (response.data.retCode !== 0) {
