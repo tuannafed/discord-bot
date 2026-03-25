@@ -36,7 +36,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       { name: 'Rank', value: `#${coin.marketCapRank}`, inline: true },
       { name: '24h Change', value: `${emoji} ${formatChange(coin.priceChangePercentage24h)}`, inline: true }
     )
-    .setFooter({ text: 'Data from CoinGecko' })
+    .setFooter({ text: 'Data from Bybit + CoinMarketCap' })
     .setTimestamp();
 
   await interaction.editReply({ embeds: [embed] });

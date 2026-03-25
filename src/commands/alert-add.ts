@@ -65,7 +65,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   });
 
   if (!alert) {
-    await interaction.editReply(`Coin **${symbol.toUpperCase()}** not found on CoinGecko.`);
+    await interaction.editReply(`Coin **${symbol.toUpperCase()}** not found on CoinMarketCap.`);
     return;
   }
 

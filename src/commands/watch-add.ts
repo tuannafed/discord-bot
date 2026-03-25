@@ -30,7 +30,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   if (result === 'exists') {
     await interaction.editReply(`**${symbol.toUpperCase()}** is already in the watchlist.`);
   } else if (result === 'not_found') {
-    await interaction.editReply(`Coin **${symbol.toUpperCase()}** not found on CoinGecko.`);
+    await interaction.editReply(`Coin **${symbol.toUpperCase()}** not found on CoinMarketCap.`);
   } else {
     await interaction.editReply(`Added **${symbol.toUpperCase()}** to the watchlist.`);
   }
