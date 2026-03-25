@@ -55,4 +55,10 @@ export class AlertService {
   updateAlert(alert: AlertRule): void {
     this.repo.update(alert);
   }
+
+  removeAlert(id: string, guildId: string): boolean {
+    const alert = this.repo.findAll().find((a) => a.id === id && a.guildId === guildId);
+    if (!alert) return false;
+    return this.repo.remove(id);
+  }
 }

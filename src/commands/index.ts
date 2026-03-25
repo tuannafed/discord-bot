@@ -13,6 +13,7 @@ import * as watchRemove from './watch-remove.js';
 import * as watchList from './watch-list.js';
 import * as alertAdd from './alert-add.js';
 import * as alertList from './alert-list.js';
+import * as alertRemove from './alert-remove.js';
 import * as candidateList from './candidate-list.js';
 import * as candidateRemove from './candidate-remove.js';
 import * as movers from './movers.js';
@@ -38,6 +39,7 @@ export function buildCommands(
   watchList.init(watchlistService, provider);
   alertAdd.init(alertService);
   alertList.init(alertService);
+  alertRemove.init(alertService);
   candidateList.init(candidateService);
   candidateRemove.init(candidateService);
   movers.init(marketService);
@@ -52,6 +54,7 @@ export function buildCommands(
     watchList,
     alertAdd,
     alertList,
+    alertRemove,
     candidateList,
     candidateRemove,
     movers,
@@ -76,6 +79,7 @@ export function getCommandBuilders(): (SlashCommandBuilder | SlashCommandOptions
     watchList.data,
     alertAdd.data,
     alertList.data,
+    alertRemove.data,
     candidateList.data,
     candidateRemove.data,
     movers.data,

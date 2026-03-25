@@ -31,6 +31,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
         value: [
           '`/alert-add symbol:<symbol> metric:<price|market_cap> condition:<above|below> threshold:<usd>` — Create an alert',
           '`/alert-list` — View active alerts',
+          '`/alert-remove id:<id>` — Remove an alert by ID',
         ].join('\n'),
       },
       {
