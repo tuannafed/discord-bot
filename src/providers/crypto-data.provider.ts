@@ -177,6 +177,14 @@ export class CryptoDataProvider implements CryptoProvider {
     return result;
   }
 
+  /** Fetch kline % change for a single coin symbol at the given interval */
+  async getCoinKlineChange(
+    symbol: string,
+    interval: string,
+  ): Promise<{ pct: number; prev: number; current: number } | null> {
+    return this.bybit.getKlineChange(symbol, interval);
+  }
+
   /** Invalidate all caches (e.g. after symbol resolution miss) */
   clearCache(): void {
     this.priceCache.clear();

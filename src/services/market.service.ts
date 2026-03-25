@@ -47,6 +47,13 @@ export class MarketService {
       .slice(0, limit);
   }
 
+  async getCoinKlineChange(
+    symbol: string,
+    interval: string,
+  ): Promise<{ pct: number; prev: number; current: number } | null> {
+    return this.provider.getCoinKlineChange(symbol, interval);
+  }
+
   async scanByMarketCap(minCap: number, maxCap: number, limit: number): Promise<CoinMarketData[]> {
     const coins = await this.provider.getBybitFuturesWithMarketCap();
     return coins

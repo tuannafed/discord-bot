@@ -154,6 +154,36 @@ export class BybitProvider implements Pick<CryptoProvider, 'getMarketData'> {
     return result;
   }
 
+  /**
+   * Fetch kline change for a single symbol.
+   * Returns { pct, prev, current } or null if unavailable.
+   */
+  async getKlineChange(
+    symbol: string,
+    interval: string,
+  ): Promise<{ pct: number; prev: number; current: number } | null> {
+    try {
+      const bybitSymbol = symbol.toUpperCase() + 'USDT';
+      const resp = await this.client.get<{
+        retCode: number;
+        result: { list: string[][] };
+      }>('/v5/market/kline', {
+        params: { category: 'linear', symbol: bybitSymbol, interval, limit: 2 },
+      });
+      const list = resp.data.result?.list;
+      if (list && list.length === 2) {
+        const current = parseFloat(list[0][4]);
+        const prev = parseFloat(list[1][4]);
+        if (prev > 0) {
+          return { pct: ((current - prev) / prev) * 100, prev, current };
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
   /** Bybit doesn't support coin listing — not applicable */
   async getCoinList(): Promise<CoinListItem[]> {
     throw new Error('getCoinList not supported by Bybit provider');
