@@ -101,10 +101,37 @@ export class CryptoDataProvider implements CryptoProvider {
     return data;
   }
 
-  /** Returns set of symbols available on Bybit (USDT pairs) */
+  /** Returns set of futures symbols available on Bybit */
   async getBybitSymbols(): Promise<Set<string>> {
     const symbols = await this.bybit.getAllSymbols();
     return new Set(symbols);
+  }
+
+  /**
+   * Returns all Bybit futures tickers enriched with CMC market cap.
+   * Bybit is source of truth for price and 24h%; CMC fills in marketCap and rank.
+   */
+  async getBybitFuturesWithMarketCap(): Promise<CoinMarketData[]> {
+    const bybitTickers = await this.bybit.getAllFuturesTickers();
+
+    const symbols = bybitTickers.map((t) => t.symbol.toUpperCase());
+    let cmcMap = new Map<string, CoinMarketData>();
+    try {
+      const cmcData = await this.cmc.getMarketData(symbols);
+      cmcMap = new Map(cmcData.map((c) => [c.symbol.toUpperCase(), c]));
+    } catch (err) {
+      logger.warn('CMC enrichment failed for futures tickers', err);
+    }
+
+    return bybitTickers.map((ticker) => {
+      const cmc = cmcMap.get(ticker.symbol.toUpperCase());
+      return {
+        ...ticker,
+        name: cmc?.name ?? ticker.symbol.toUpperCase(),
+        marketCap: cmc?.marketCap ?? 0,
+        marketCapRank: cmc?.marketCapRank ?? 0,
+      };
+    });
   }
 
   /** Invalidate all caches (e.g. after symbol resolution miss) */

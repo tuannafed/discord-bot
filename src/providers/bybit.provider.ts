@@ -72,8 +72,8 @@ export class BybitProvider implements Pick<CryptoProvider, 'getMarketData'> {
     }
   }
 
-  /** Returns all USDT perpetual futures symbols available on Bybit (linear category) */
-  async getAllSymbols(): Promise<string[]> {
+  /** Returns all USDT perpetual futures tickers from Bybit (linear category) */
+  async getAllFuturesTickers(): Promise<CoinMarketData[]> {
     try {
       const response = await this.client.get<BybitTickersResponse>('/v5/market/tickers', {
         params: { category: 'linear' },
@@ -85,11 +85,28 @@ export class BybitProvider implements Pick<CryptoProvider, 'getMarketData'> {
 
       return response.data.result.list
         .filter((t) => t.symbol.endsWith('USDT'))
-        .map((t) => t.symbol.slice(0, -4).toUpperCase());
+        .map((t) => {
+          const symbol = t.symbol.slice(0, -4).toUpperCase();
+          return {
+            id: symbol.toLowerCase(),
+            symbol: symbol.toLowerCase(),
+            name: symbol,
+            currentPrice: parseFloat(t.lastPrice),
+            marketCap: 0,
+            marketCapRank: 0,
+            priceChangePercentage24h: parseFloat(t.price24hPcnt) * 100,
+          } satisfies CoinMarketData;
+        });
     } catch (error) {
-      logger.error('Bybit getAllSymbols failed', error);
-      throw new Error('Failed to fetch symbol list from Bybit');
+      logger.error('Bybit getAllFuturesTickers failed', error);
+      throw new Error('Failed to fetch futures tickers from Bybit');
     }
+  }
+
+  /** Returns all USDT perpetual futures symbols available on Bybit (linear category) */
+  async getAllSymbols(): Promise<string[]> {
+    const tickers = await this.getAllFuturesTickers();
+    return tickers.map((t) => t.symbol.toUpperCase());
   }
 
   /** Bybit doesn't support coin listing — not applicable */
