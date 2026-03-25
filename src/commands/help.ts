@@ -6,58 +6,63 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   const embed = new EmbedBuilder()
-    .setTitle('Crypto Tracker — Commands')
+    .setTitle('📊 Crypto Tracker — Commands')
     .setColor(0x5865f2)
+    .setDescription('All commands are slash commands. Optional params shown in `[brackets]`.')
     .addFields(
       {
-        name: 'Market Data',
+        name: '💹 Market Data',
         value: [
-          '`/coin symbol:<symbol>` — Price, MCap, rank, 24h, supply info',
-          '`/top [limit]` — Top coins by market cap (default 10, max 25)',
-          '`/movers [timeframe] [type] [limit]` — Top gainers/losers (15m / 1h / 4h / 24h)',
-          '`/scan min_cap:<usd> max_cap:<usd> [limit]` — Bybit-listed coins in a market cap range',
+          '`/coin` `symbol` — Price, MCap, rank, 24h change, supply',
+          '`/top` `[limit]` — Top coins by market cap *(Bybit-listed)*',
+          '`/movers` `[metric]` `[timeframe]` `[type]` `[limit]`',
+          '> Gainers & losers · price or cap · 15m / 1h / 4h / 24h',
+          '`/scan` `min_cap` `max_cap` `[limit]` — Coins in a cap range',
         ].join('\n'),
       },
       {
-        name: 'Watchlist',
+        name: '👁 Watchlist',
         value: [
-          '`/watch-add symbol:<symbol>` — Add a coin to the guild watchlist',
-          '`/watch-remove symbol:<symbol>` — Remove a coin from the watchlist',
-          '`/watch-list` — View watchlist with live prices',
+          '`/watch-add` `symbol` — Add coin to watchlist',
+          '`/watch-remove` `symbol` — Remove coin from watchlist',
+          '`/watch-list` — View watchlist with live prices & 24h change',
         ].join('\n'),
       },
       {
-        name: 'Alerts',
+        name: '🔔 Alerts',
         value: [
-          '`/alert-add symbol:<symbol> metric:<price|market_cap> condition:<above|below> threshold:<usd>` — Create an alert',
-          '`/alert-list` — View active alerts',
-          '`/alert-remove id:<id>` — Remove an alert by ID',
+          '`/alert-add` `symbol` `metric` `condition` `threshold`',
+          '> Fires when price or market cap crosses a threshold',
+          '`/alert-list` — View all active alerts (with IDs)',
+          '`/alert-remove` `id` — Delete an alert',
         ].join('\n'),
       },
       {
-        name: 'Candidates',
+        name: '🎯 Candidates',
         value: [
-          '`/candidate-list [status]` — View tracked candidates (tracking / hit_target / expired)',
-          '`/candidate-remove id:<id>` — Remove a candidate',
+          '`/candidate-list` `[status]` — `tracking` / `hit_target` / `expired`',
+          '`/candidate-remove` `id` — Remove a candidate',
         ].join('\n'),
       },
       {
-        name: 'Other',
-        value: '`/ping` — Health check',
+        name: '⚙️ Other',
+        value: '`/ping` — Health check\n`/help` — Show this message',
+      },
+      {
+        name: '📌 Examples',
+        value: [
+          '```',
+          '/coin symbol:btc',
+          '/top limit:20',
+          '/movers metric:price timeframe:15 minutes type:gainers limit:10',
+          '/movers metric:cap timeframe:1 hour',
+          '/scan min_cap:70000000 max_cap:100000000',
+          '/alert-add symbol:eth metric:price condition:above threshold:5000',
+          '/alert-remove id:abc123',
+          '```',
+        ].join('\n'),
       },
     )
-    .addFields({
-      name: 'Examples',
-      value: [
-        '`/coin symbol:btc`',
-        '`/top limit:20`',
-        '`/movers timeframe:15 minutes type:gainers limit:10`',
-        '`/movers timeframe:1 hour type:both`',
-        '`/scan min_cap:70000000 max_cap:100000000`',
-        '`/alert-add symbol:eth metric:price condition:above threshold:5000`',
-        '`/alert-remove id:abc123`',
-      ].join('\n'),
-    })
     .setFooter({ text: 'Data from Bybit + CoinMarketCap' })
     .setTimestamp();
 
