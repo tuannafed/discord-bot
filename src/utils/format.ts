@@ -26,3 +26,19 @@ export function formatChange(change: number): string {
 export function formatChangeEmoji(change: number): string {
   return change >= 0 ? '📈' : '📉';
 }
+
+/** Fixed-width price for table alignment (right-padded to 12 chars) */
+export function formatPriceFixed(price: number): string {
+  return formatPrice(price).padEnd(12);
+}
+
+/** Fixed-width market cap for table alignment (right-padded to 10 chars) */
+export function formatMarketCapFixed(marketCap: number): string {
+  return formatMarketCap(marketCap).padEnd(10);
+}
+
+/** Fixed-width change for table alignment (left-padded sign, fixed 2 decimals, padded to 9 chars) */
+export function formatChangeFixed(change: number): string {
+  const sign = change >= 0 ? '+' : '';
+  return `${sign}${change.toFixed(2)}%`.padStart(8);
+}

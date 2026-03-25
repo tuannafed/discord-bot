@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { MarketService } from '../services/market.service.js';
 import { CoinMarketData } from '../types/coin.js';
-import { formatPrice, formatMarketCap, formatChange, formatChangeEmoji } from '../utils/format.js';
+import { formatPriceFixed, formatMarketCapFixed, formatChangeFixed, formatChangeEmoji } from '../utils/format.js';
 
 let marketService: MarketService;
 
@@ -34,7 +34,7 @@ function buildLines(coins: CoinMarketData[]): string {
   return coins
     .map((coin, i) => {
       const emoji = formatChangeEmoji(coin.priceChangePercentage24h);
-      return `\`${String(i + 1).padStart(2)}.\` **${coin.symbol.toUpperCase()}** 💰${formatPrice(coin.currentPrice)} · 📊${formatMarketCap(coin.marketCap)} · ${emoji} ${formatChange(coin.priceChangePercentage24h)}`;
+      return `\`${String(i + 1).padStart(2)}.\` **${coin.symbol.toUpperCase().padEnd(6)}** 💰\`${formatPriceFixed(coin.currentPrice)}\` 📊\`${formatMarketCapFixed(coin.marketCap)}\` ${emoji}\`${formatChangeFixed(coin.priceChangePercentage24h)}\``;
     })
     .join('\n');
 }
