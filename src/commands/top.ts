@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { MarketService } from '../services/market.service.js';
-import { formatPriceFixed, formatMarketCapFixed, formatChangeFixed, formatChangeEmoji } from '../utils/format.js';
+import { formatPriceFixed, formatMarketCapFixed, formatChangeFixed } from '../utils/format.js';
 
 let marketService: MarketService;
 
@@ -27,13 +27,13 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const coins = await marketService.getTopCoins(limit);
 
   const lines = coins.map((coin, i) => {
-    const emoji = formatChangeEmoji(coin.priceChangePercentage24h);
-    return `\`${String(i + 1).padStart(2)}.\` **${coin.symbol.toUpperCase().padEnd(6)}** 💰\`${formatPriceFixed(coin.currentPrice)}\` 📊\`${formatMarketCapFixed(coin.marketCap)}\` ${emoji}\`${formatChangeFixed(coin.priceChangePercentage24h)}\``;
+    const arrow = coin.priceChangePercentage24h >= 0 ? '▲' : '▼';
+    return `${String(i + 1).padStart(2)}. ${coin.symbol.toUpperCase().padEnd(7)} ${formatPriceFixed(coin.currentPrice)} ${formatMarketCapFixed(coin.marketCap)} ${arrow}${formatChangeFixed(coin.priceChangePercentage24h)}`;
   });
 
   const embed = new EmbedBuilder()
     .setTitle(`Top ${limit} Coins by Market Cap`)
-    .setDescription(lines.join('\n'))
+    .setDescription('```\n' + lines.join('\n') + '\n```')
     .setColor(0x5865f2)
     .setFooter({ text: 'Data from Bybit + CoinMarketCap' })
     .setTimestamp();
