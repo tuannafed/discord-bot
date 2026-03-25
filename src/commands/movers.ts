@@ -34,7 +34,7 @@ function buildLines(coins: CoinMarketData[]): string {
   return coins
     .map((coin, i) => {
       const emoji = formatChangeEmoji(coin.priceChangePercentage24h);
-      return `\`${String(i + 1).padStart(2)}.\` **${coin.symbol.toUpperCase()}** ${formatPrice(coin.currentPrice)} · ${formatMarketCap(coin.marketCap)} · ${emoji} ${formatChange(coin.priceChangePercentage24h)}`;
+      return `\`${String(i + 1).padStart(2)}.\` **${coin.symbol.toUpperCase()}** 💰${formatPrice(coin.currentPrice)} · 📊${formatMarketCap(coin.marketCap)} · ${emoji} ${formatChange(coin.priceChangePercentage24h)}`;
     })
     .join('\n');
 }
