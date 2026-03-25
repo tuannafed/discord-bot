@@ -5,9 +5,12 @@ let pool: Pool | null = null;
 
 export function getPool(): Pool {
   if (!pool) {
+    const connectionString = env.DATABASE_URL!;
+    // Railway internal postgres URLs don't need SSL; external ones use self-signed certs
+    const needsSsl = connectionString.includes('railway.app') || connectionString.includes('sslmode=require');
     pool = new Pool({
-      connectionString: env.DATABASE_URL,
-      ssl: { rejectUnauthorized: env.DATABASE_SSL_REJECT_UNAUTHORIZED },
+      connectionString,
+      ssl: needsSsl ? { rejectUnauthorized: false } : false,
     });
   }
   return pool;
