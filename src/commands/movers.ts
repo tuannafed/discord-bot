@@ -57,11 +57,16 @@ export const data = new SlashCommandBuilder()
       .setMaxValue(10)
   );
 
+function getPrev(current: number, pct: number): number {
+  return pct === -100 ? 0 : current / (1 + pct / 100);
+}
+
 function buildPriceLines(coins: CoinMarketData[], label: string): string {
   const header = `${'#'.padEnd(3)} ${'SYM'.padEnd(6)} ${'PREV ' + label}  ${'NOW'.padEnd(10)} ${'CHG'.padStart(7)}`;
   const sep = '-'.repeat(header.length);
   const rows = coins.map((coin, i) => {
-    const prev = coin.prevPrice != null ? formatPrice(coin.prevPrice) : '—';
+    const prevVal = coin.prevPrice ?? getPrev(coin.currentPrice, coin.priceChangePercentage24h);
+    const prev = formatPrice(prevVal);
     const now = formatPrice(coin.currentPrice);
     const arrow = coin.priceChangePercentage24h >= 0 ? '▲' : '▼';
     return `${String(i + 1).padStart(2)}. ${coin.symbol.toUpperCase().padEnd(6)} ${prev.padEnd(10)} ${now.padEnd(10)} ${arrow}${formatChangeFixed(coin.priceChangePercentage24h)}`;
@@ -73,7 +78,8 @@ function buildCapLines(coins: CoinMarketData[], label: string): string {
   const header = `${'#'.padEnd(3)} ${'SYM'.padEnd(6)} ${'PREV ' + label}  ${'NOW'.padEnd(8)} ${'CHG'.padStart(7)}`;
   const sep = '-'.repeat(header.length);
   const rows = coins.map((coin, i) => {
-    const prev = coin.prevMarketCap != null ? formatMarketCap(coin.prevMarketCap) : '—';
+    const prevVal = coin.prevMarketCap ?? getPrev(coin.marketCap, coin.priceChangePercentage24h);
+    const prev = formatMarketCap(prevVal);
     const now = formatMarketCap(coin.marketCap);
     const arrow = coin.priceChangePercentage24h >= 0 ? '▲' : '▼';
     return `${String(i + 1).padStart(2)}. ${coin.symbol.toUpperCase().padEnd(6)} ${prev.padEnd(8)} ${now.padEnd(8)} ${arrow}${formatChangeFixed(coin.priceChangePercentage24h)}`;
