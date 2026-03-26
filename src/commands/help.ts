@@ -19,6 +19,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
           '`/movers` `[metric]` `[timeframe]` `[type]` `[limit]`',
           '> Gainers & losers · price or cap · 15m / 1h / 4h / 24h',
           '`/scan` `min_cap` `max_cap` `[limit]` — Coins in a cap range',
+          '`/unlock` `symbol` — Token supply & unlock overview (circ / locked / max)',
         ].join('\n'),
       },
       {
@@ -64,6 +65,8 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
           '/alert-add symbol:btc metric:price condition:change_up threshold:3',
           '/alert-add symbol:eth metric:market_cap condition:change_down threshold:5',
           '/alert-remove id:abc123',
+          '/unlock symbol:apt',
+          '/unlock symbol:arb',
           '```',
         ].join('\n'),
       },

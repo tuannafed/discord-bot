@@ -18,6 +18,7 @@ import * as candidateList from './candidate-list.js';
 import * as candidateRemove from './candidate-remove.js';
 import * as movers from './movers.js';
 import * as scan from './scan.js';
+import * as unlock from './unlock.js';
 import * as help from './help.js';
 
 export interface Command {
@@ -44,6 +45,7 @@ export function buildCommands(
   candidateRemove.init(candidateService);
   movers.init(marketService);
   scan.init(marketService);
+  unlock.init(marketService);
 
   const commands: Command[] = [
     ping,
@@ -59,6 +61,7 @@ export function buildCommands(
     candidateRemove,
     movers,
     scan,
+    unlock,
     help,
   ];
 
@@ -84,6 +87,7 @@ export function getCommandBuilders(): (SlashCommandBuilder | SlashCommandOptions
     candidateRemove.data,
     movers.data,
     scan.data,
+    unlock.data,
     help.data,
   ];
 }
