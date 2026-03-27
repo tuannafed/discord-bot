@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction, AutocompleteInteraction } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, AutocompleteInteraction, MessageFlags} from 'discord.js';
 import { AlertService } from '../services/alert.service.js';
 
 let alertService: AlertService;
@@ -30,7 +30,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const guildId = interaction.guildId;
 
   if (!guildId) {
-    await interaction.reply({ content: 'This command must be used in a server.', ephemeral: true });
+    await interaction.reply({ content: 'This command must be used in a server.', flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -41,10 +41,10 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   if (!removed) {
     await interaction.reply({
       content: `Alert \`${id}\` not found or does not belong to this server.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
 
-  await interaction.reply({ content: `✅ Đã xoá alert \`${id.slice(0, 8)}\`.`, ephemeral: true });
+  await interaction.reply({ content: `✅ Đã xoá alert \`${id.slice(0, 8)}\`.`, flags: MessageFlags.Ephemeral });
 }

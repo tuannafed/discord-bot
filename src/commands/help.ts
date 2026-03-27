@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder, MessageFlags} from 'discord.js';
 
 export const data = new SlashCommandBuilder()
   .setName('help')
@@ -94,5 +94,5 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     .setFooter({ text: 'Dữ liệu từ Bybit + CoinMarketCap' })
     .setTimestamp();
 
-  await interaction.reply({ embeds: [embed], ephemeral: true });
+  await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
 }

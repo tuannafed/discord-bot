@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, MessageFlags} from 'discord.js';
 import { CandidateService } from '../services/candidate.service.js';
 
 let candidateService: CandidateService;
@@ -18,7 +18,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const guildId = interaction.guildId;
 
   if (!guildId) {
-    await interaction.reply({ content: 'This command must be used in a server.', ephemeral: true });
+    await interaction.reply({ content: 'This command must be used in a server.', flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -26,11 +26,11 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const removed = await candidateService.removeCandidate(id, guildId);
 
   if (removed) {
-    await interaction.reply({ content: `Candidate \`${id}\` removed.`, ephemeral: true });
+    await interaction.reply({ content: `Candidate \`${id}\` removed.`, flags: MessageFlags.Ephemeral });
   } else {
     await interaction.reply({
       content: `Candidate \`${id}\` not found or does not belong to this server.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 }

@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, MessageFlags} from 'discord.js';
 import { WatchlistService } from '../services/watchlist.service.js';
 
 let watchlistService: WatchlistService;
@@ -19,7 +19,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const guildId = interaction.guildId;
 
   if (!guildId) {
-    await interaction.reply({ content: 'This command must be used in a server.', ephemeral: true });
+    await interaction.reply({ content: 'This command must be used in a server.', flags: MessageFlags.Ephemeral });
     return;
   }
 

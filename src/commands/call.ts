@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder, MessageFlags} from 'discord.js';
 import { CallService } from '../services/call.service.js';
 import { parseDecimalInput } from '../utils/format.js';
 
@@ -47,7 +47,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const leverage = interaction.options.getInteger('leverage') ?? 20;
 
   if (isNaN(price) || price <= 0) {
-    await interaction.reply({ content: '❌ Giá call không hợp lệ. Vui lòng nhập số dương (vd: 0.27 hoặc 0,27).', ephemeral: true });
+    await interaction.reply({ content: '❌ Giá call không hợp lệ. Vui lòng nhập số dương (vd: 0.27 hoặc 0,27).', flags: MessageFlags.Ephemeral });
     return;
   }
 

@@ -2,8 +2,7 @@ import {
   SlashCommandBuilder,
   ChatInputCommandInteraction,
   EmbedBuilder,
-  AutocompleteInteraction,
-} from 'discord.js';
+  AutocompleteInteraction, MessageFlags} from 'discord.js';
 import { CallService } from '../services/call.service.js';
 import { parseDecimalInput } from '../utils/format.js';
 
@@ -63,14 +62,14 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const targetUser = interaction.options.getUser('user');
 
   if (isNaN(entry) || entry <= 0) {
-    await interaction.reply({ content: '❌ Giá entry không hợp lệ. Vui lòng nhập số dương (vd: 0.27 hoặc 0,27).', ephemeral: true });
+    await interaction.reply({ content: '❌ Giá entry không hợp lệ. Vui lòng nhập số dương (vd: 0.27 hoặc 0,27).', flags: MessageFlags.Ephemeral });
     return;
   }
 
   const userId = targetUser?.id ?? interaction.user.id;
   const username = targetUser?.username ?? interaction.user.username;
 
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   const result = await callService.joinCall({
     callId,

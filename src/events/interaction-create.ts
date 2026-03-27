@@ -1,4 +1,4 @@
-import { Client, Events, ChatInputCommandInteraction } from 'discord.js';
+import { Client, Events, ChatInputCommandInteraction, MessageFlags} from 'discord.js';
 import { Command } from '../commands/index.js';
 import { logger } from '../utils/logger.js';
 
@@ -25,7 +25,7 @@ export function registerInteractionCreateEvent(
 
     if (!command) {
       logger.warn(`Unknown command: ${interaction.commandName}`);
-      await interaction.reply({ content: 'Unknown command.', ephemeral: true });
+      await interaction.reply({ content: 'Unknown command.', flags: MessageFlags.Ephemeral });
       return;
     }
 
@@ -38,7 +38,7 @@ export function registerInteractionCreateEvent(
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply(errorMessage).catch(() => undefined);
       } else {
-        await interaction.reply({ content: errorMessage, ephemeral: true }).catch(() => undefined);
+        await interaction.reply({ content: errorMessage, flags: MessageFlags.Ephemeral }).catch(() => undefined);
       }
     }
   });

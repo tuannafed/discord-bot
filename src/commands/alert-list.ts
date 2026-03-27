@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder, MessageFlags} from 'discord.js';
 import { AlertService } from '../services/alert.service.js';
 import { formatPrice, formatMarketCap } from '../utils/format.js';
 
@@ -16,7 +16,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const guildId = interaction.guildId;
 
   if (!guildId) {
-    await interaction.reply({ content: 'This command must be used in a server.', ephemeral: true });
+    await interaction.reply({ content: 'This command must be used in a server.', flags: MessageFlags.Ephemeral });
     return;
   }
 

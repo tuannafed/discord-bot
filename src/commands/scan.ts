@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder, MessageFlags} from 'discord.js';
 import { MarketService } from '../services/market.service.js';
 import { formatMarketCap, formatPriceFixed, formatMarketCapFixed, formatChangeFixed } from '../utils/format.js';
 
@@ -37,7 +37,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const limit = interaction.options.getInteger('limit') ?? 10;
 
   if (minCap >= maxCap) {
-    await interaction.reply({ content: '`min_cap` must be less than `max_cap`.', ephemeral: true });
+    await interaction.reply({ content: '`min_cap` must be less than `max_cap`.', flags: MessageFlags.Ephemeral });
     return;
   }
 

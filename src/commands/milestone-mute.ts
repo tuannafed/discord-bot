@@ -1,8 +1,7 @@
 import {
   SlashCommandBuilder,
   ChatInputCommandInteraction,
-  AutocompleteInteraction,
-} from 'discord.js';
+  AutocompleteInteraction, MessageFlags} from 'discord.js';
 import { CallService } from '../services/call.service.js';
 
 let callService: CallService;
@@ -34,7 +33,7 @@ export async function autocomplete(interaction: AutocompleteInteraction): Promis
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   const callId = interaction.options.getString('call_id', true);
 
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   const result = await callService.muteMilestone(callId, interaction.user.id);
 

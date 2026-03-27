@@ -1,4 +1,5 @@
 import { TextChannel, Client, EmbedBuilder } from 'discord.js';
+import { logger } from './logger.js';
 
 export const MILESTONES      = [100, 200, 300, 500, 1000];
 export const LOSS_MILESTONES = [-100, -200, -300, -500, -1000];
@@ -48,7 +49,10 @@ export async function sendMilestoneNotification(
   try {
     const channel = await client.channels.fetch(channelId);
     if (!channel || !channel.isTextBased()) return;
-    if (params.guildId && 'guildId' in channel && channel.guildId !== params.guildId) return;
+    if (params.guildId && 'guildId' in channel && channel.guildId !== params.guildId) {
+      logger.warn(`Milestone blocked: channel ${channelId} guildId=${('guildId' in channel) ? channel.guildId : 'n/a'} !== expected ${params.guildId}`);
+      return;
+    }
 
     const cfg = MILESTONE_CONFIG[params.milestone];
     const sign = params.pnlPct >= 0 ? '+' : '';
@@ -67,7 +71,7 @@ export async function sendMilestoneNotification(
       .setTimestamp();
 
     await (channel as TextChannel).send({ embeds: [embed] });
-  } catch {
-    // không block flow chính nếu notification fail
+  } catch (err) {
+    logger.error('sendMilestoneNotification failed', err);
   }
 }

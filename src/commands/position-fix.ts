@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, MessageFlags} from 'discord.js';
 import { CallService } from '../services/call.service.js';
 
 let callService: CallService;
@@ -12,7 +12,7 @@ export const data = new SlashCommandBuilder()
   .setDescription('Xóa các position bị dup do caller lỡ join lại kèo của chính mình');
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   const removed = await callService.fixCallerDuplicatePositions(interaction.guildId!);
 

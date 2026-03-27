@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, MessageFlags} from 'discord.js';
 import { AlertService } from '../services/alert.service.js';
 import { AlertMetric, AlertCondition } from '../types/alert.js';
 import { formatPrice, formatMarketCap, parseDecimalInput } from '../utils/format.js';
@@ -48,7 +48,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const guildId = interaction.guildId;
 
   if (!guildId) {
-    await interaction.reply({ content: 'This command must be used in a server.', ephemeral: true });
+    await interaction.reply({ content: 'This command must be used in a server.', flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -59,7 +59,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const thresholdInput = parseDecimalInput(thresholdRaw);
 
   if (isNaN(thresholdInput) || thresholdInput <= 0) {
-    await interaction.reply({ content: '❌ Threshold không hợp lệ. Vui lòng nhập số dương (vd: 0.27 hoặc 0,27).', ephemeral: true });
+    await interaction.reply({ content: '❌ Threshold không hợp lệ. Vui lòng nhập số dương (vd: 0.27 hoặc 0,27).', flags: MessageFlags.Ephemeral });
     return;
   }
 
