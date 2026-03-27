@@ -239,18 +239,24 @@ export class CallService {
     call: Call,
     currentPrice: number,
   ): Promise<number[]> {
-    const MILESTONES = [100, 200, 300, 500, 1000];
+    const MILESTONES      = [100, 200, 300, 500, 1000];
+    const LOSS_MILESTONES = [-100, -200, -300, -500, -1000];
 
     const rawPct = call.direction === 'long'
       ? ((currentPrice - position.entryPrice) / position.entryPrice) * 100
       : ((position.entryPrice - currentPrice) / position.entryPrice) * 100;
     const pnl = rawPct * position.leverage;
 
-    // Find the current milestone band (highest milestone crossed right now)
-    // e.g. pnl=230% → currentBand=200, pnl=80% → currentBand=null
+    // Find the current milestone band
+    // Profit: highest crossed (e.g. 230% → 200), Loss: lowest crossed (e.g. -250% → -200)
     let currentBand: number | null = null;
     for (const m of MILESTONES) {
       if (pnl >= m) currentBand = m;
+    }
+    if (currentBand === null) {
+      for (const m of LOSS_MILESTONES) {
+        if (pnl <= m) currentBand = m;
+      }
     }
 
     const isCaller = position.id.startsWith('caller-');

@@ -8,6 +8,7 @@ import {
 import { CallService } from '../services/call.service.js';
 import { formatPrice } from '../utils/format.js';
 import { getMilestoneHit, sendMilestoneNotification } from '../utils/pnl-milestone.js';
+import { getClMessage } from '../utils/trade-messages.js';
 import { startCloseReminder } from '../utils/close-reminder.js';
 
 let callService: CallService;
@@ -71,15 +72,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const dirEmoji = call.direction === 'long' ? '📈 LONG' : '📉 SHORT';
   const isCaller = call.calledById === userId;
 
-  const condolence = pnlPct <= -500
-    ? '💀 Thanh lý rồi bro ơi...'
-    : pnlPct <= -200
-    ? '😭 Đau quá!'
-    : pnlPct <= -50
-    ? '😢 Tiếc thật!'
-    : pnlPct < 0
-    ? '😔 Lần sau nhé!'
-    : '😅 May mà kịp cắt!';
+  const condolence = getClMessage(pnlPct);
 
   const embed = new EmbedBuilder()
     .setTitle(`❌ Cut Loss — ${call.symbol} ${dirEmoji}`)

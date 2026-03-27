@@ -8,6 +8,7 @@ import {
 import { CallService } from '../services/call.service.js';
 import { formatPrice } from '../utils/format.js';
 import { getMilestoneHit, sendMilestoneNotification } from '../utils/pnl-milestone.js';
+import { getTpMessage } from '../utils/trade-messages.js';
 import { startCloseReminder } from '../utils/close-reminder.js';
 
 let callService: CallService;
@@ -71,15 +72,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const dirEmoji = call.direction === 'long' ? '📈 LONG' : '📉 SHORT';
   const isCaller = call.calledById === userId;
 
-  const congrats = pnlPct >= 500
-    ? '🏆 Huyền thoại! x' + (1 + pnlPct / 100).toFixed(1)
-    : pnlPct >= 200
-    ? '🚀 Cháy lắm! x' + (1 + pnlPct / 100).toFixed(1)
-    : pnlPct >= 100
-    ? '🎉 Tuyệt vời! x' + (1 + pnlPct / 100).toFixed(1)
-    : pnlPct >= 0
-    ? '✅ Chốt lời ngon!'
-    : '😅 Lần sau nhé!';
+  const congrats = getTpMessage(pnlPct);
 
   const embed = new EmbedBuilder()
     .setTitle(`✅ Take Profit — ${call.symbol} ${dirEmoji}`)

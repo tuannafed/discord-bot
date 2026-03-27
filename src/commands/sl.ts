@@ -8,6 +8,7 @@ import {
 import { CallService } from '../services/call.service.js';
 import { formatPrice } from '../utils/format.js';
 import { getMilestoneHit, sendMilestoneNotification } from '../utils/pnl-milestone.js';
+import { getSlMessage } from '../utils/trade-messages.js';
 import { startCloseReminder } from '../utils/close-reminder.js';
 
 let callService: CallService;
@@ -71,10 +72,14 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const dirEmoji = call.direction === 'long' ? '📈 LONG' : '📉 SHORT';
   const isCaller = call.calledById === userId;
 
+  const slComment = getSlMessage(pnlPct);
+
   const embed = new EmbedBuilder()
     .setTitle(`🛑 Stop Loss — ${call.symbol} ${dirEmoji}`)
     .setColor(0xe67e22)
     .setDescription([
+      slComment,
+      ``,
       `**Entry:** ${formatPrice(position.entryPrice)}`,
       `**Close Price:** ${formatPrice(currentPrice)}`,
       `**P&L:** ${sign}${pnlPct.toFixed(2)}%`,
