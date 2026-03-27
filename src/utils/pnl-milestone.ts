@@ -70,11 +70,20 @@ export async function sendMilestoneNotification(
       .setDescription(`<@${params.userId}> ${action}`)
       .setTimestamp();
 
-    await (channel as TextChannel).send({ embeds: [embed] });
+    try {
+      await (channel as TextChannel).send({ embeds: [embed] });
+    } catch (embedErr: unknown) {
+      const code = (embedErr as { code?: number })?.code;
+      if (code === 50004) {
+        // Missing Embed Links permission — fallback to plain text
+        await (channel as TextChannel).send(`${cfg.emoji} **${cfg.title}** — <@${params.userId}> ${action}`);
+      } else {
+        throw embedErr;
+      }
+    }
   } catch (err: unknown) {
     const code = (err as { code?: number })?.code;
     if (code === 50001 || code === 10003) {
-      // Missing Access or Unknown Channel — bot not in that server/channel, skip silently
       logger.warn(`Milestone notification skipped for channel ${channelId}: ${(err as Error).message}`);
     } else {
       logger.error('sendMilestoneNotification failed', err);
