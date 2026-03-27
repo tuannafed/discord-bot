@@ -3,14 +3,18 @@ import {
   ChatInputCommandInteraction,
   EmbedBuilder,
   AutocompleteInteraction,
+  Client,
 } from 'discord.js';
 import { CallService } from '../services/call.service.js';
 import { formatPrice } from '../utils/format.js';
+import { getMilestoneHit, sendMilestoneNotification } from '../utils/pnl-milestone.js';
 
 let callService: CallService;
+let discordClient: Client;
 
-export function init(service: CallService): void {
+export function init(service: CallService, client: Client): void {
   callService = service;
+  discordClient = client;
 }
 
 export const data = new SlashCommandBuilder()
@@ -69,4 +73,16 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     .setTimestamp();
 
   await interaction.editReply({ embeds: [embed] });
+
+  const milestone = getMilestoneHit(pnlPct);
+  if (milestone !== null) {
+    const dirEmoji = call.direction === 'long' ? '📈 LONG' : '📉 SHORT';
+    await sendMilestoneNotification(discordClient, interaction.channelId, {
+      userId: interaction.user.id,
+      symbol: call.symbol,
+      direction: dirEmoji,
+      pnlPct,
+      milestone,
+    });
+  }
 }

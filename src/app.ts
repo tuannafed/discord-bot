@@ -69,6 +69,7 @@ async function main(): Promise<void> {
     candidateService,
     cryptoProvider,
     callService!,
+    client,
   );
 
   // Events

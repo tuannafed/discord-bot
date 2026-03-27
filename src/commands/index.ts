@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, AutocompleteInteraction, SlashCommandBuilder, SlashCommandOptionsOnlyBuilder } from 'discord.js';
+import { ChatInputCommandInteraction, AutocompleteInteraction, SlashCommandBuilder, SlashCommandOptionsOnlyBuilder, Client } from 'discord.js';
 import { MarketService } from '../services/market.service.js';
 import { WatchlistService } from '../services/watchlist.service.js';
 import { AlertService } from '../services/alert.service.js';
@@ -44,6 +44,7 @@ export function buildCommands(
   candidateService: CandidateService,
   provider: CryptoDataProvider,
   callService: CallService,
+  client: Client,
 ): Map<string, Command> {
   coin.init(marketService);
   top.init(marketService);
@@ -61,8 +62,8 @@ export function buildCommands(
   call.init(callService);
   follow.init(callService);
   positions.init(callService, marketService);
-  tp.init(callService);
-  cl.init(callService);
+  tp.init(callService, client);
+  cl.init(callService, client);
   callClose.init(callService);
   callDelete.init(callService);
   callUpdate.init(callService);

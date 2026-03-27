@@ -103,6 +103,32 @@ export class BybitProvider implements Pick<CryptoProvider, 'getMarketData'> {
     }
   }
 
+  /** Fetch futures (linear) prices for specific symbols. Returns Map<SYMBOL, price> */
+  async getFuturesPrices(symbols: string[]): Promise<Map<string, number>> {
+    if (symbols.length === 0) return new Map();
+    try {
+      const response = await this.client.get<BybitTickersResponse>('/v5/market/tickers', {
+        params: { category: 'linear' },
+      });
+      if (response.data.retCode !== 0) {
+        throw new Error(`Bybit API error: ${response.data.retMsg}`);
+      }
+      const upper = new Set(symbols.map((s) => s.toUpperCase()));
+      const result = new Map<string, number>();
+      for (const t of response.data.result.list) {
+        if (!t.symbol.endsWith('USDT')) continue;
+        const sym = t.symbol.slice(0, -4).toUpperCase();
+        if (upper.has(sym)) {
+          result.set(sym, parseFloat(t.lastPrice));
+        }
+      }
+      return result;
+    } catch (error) {
+      logger.error('Bybit getFuturesPrices failed', error);
+      return new Map();
+    }
+  }
+
   /** Returns all USDT perpetual futures symbols available on Bybit (linear category) */
   async getAllSymbols(): Promise<string[]> {
     const tickers = await this.getAllFuturesTickers();

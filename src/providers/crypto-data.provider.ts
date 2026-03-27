@@ -185,10 +185,9 @@ export class CryptoDataProvider implements CryptoProvider {
     return this.bybit.getKlineChange(symbol, interval);
   }
 
-  /** Fetch live prices directly from Bybit spot — no cache */
+  /** Fetch live prices from Bybit futures (linear) — no cache */
   async getLivePrices(symbols: string[]): Promise<Map<string, number>> {
-    const data = await this.bybit.getMarketData(symbols);
-    return new Map(data.map((d) => [d.symbol.toUpperCase(), d.currentPrice]));
+    return this.bybit.getFuturesPrices(symbols);
   }
 
   /** Invalidate all caches (e.g. after symbol resolution miss) */

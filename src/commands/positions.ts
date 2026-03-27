@@ -12,11 +12,12 @@ export function init(cService: CallService, mService: MarketService): void {
   marketService = mService;
 }
 
-function calcPnl(pos: Position, call: CallWithPositions, currentPrice: number): { pct: number; status: string } {
+function calcPnl(pos: Position, call: CallWithPositions, currentPrice: number): { pct: number; status: string } | { status: 'na' } {
   if (pos.closedAt !== null) {
     const pct = pos.pnlPct ?? 0;
     return { pct, status: pos.closeType === 'tp' ? 'TP' : 'CL' };
   }
+  if (currentPrice <= 0) return { status: 'na' };
   const pct = call.direction === 'long'
     ? ((currentPrice - pos.entryPrice) / pos.entryPrice) * 100
     : ((pos.entryPrice - currentPrice) / pos.entryPrice) * 100;
@@ -35,19 +36,22 @@ function buildTable(positions: Position[], call: CallWithPositions, currentPrice
   const sep = '-'.repeat(header.length);
 
   const rows = allRows.map((pos, i) => {
-    const label = pos.isCall ? '👑' : String(i).padStart(2);
-    if (pos.isCall) {
-      return `${label}  ${pos.username.padEnd(NAME_W)}  ${'(caller)'.padStart(10)}`;
+    const label = String(i + 1).padStart(2);
+    const pnlResult = calcPnl(pos, call, currentPrice);
+    let pnlStr: string;
+    if (pnlResult.status === 'na') {
+      pnlStr = 'N/A';
+    } else {
+      const { pct, status } = pnlResult as { pct: number; status: string };
+      const sign = pct >= 0 ? '+' : '';
+      pnlStr = status === 'TP'
+        ? `${sign}${pct.toFixed(2)}% TP`
+        : status === 'CL'
+          ? `${sign}${pct.toFixed(2)}% CL`
+          : `${sign}${pct.toFixed(2)}%`;
     }
-    const { pct, status } = calcPnl(pos, call, currentPrice);
-    const sign = pct >= 0 ? '+' : '';
-    const pnlStr = status === 'TP'
-      ? `${sign}${pct.toFixed(2)}% TP`
-      : status === 'CL'
-        ? `${sign}${pct.toFixed(2)}% CL`
-        : `${sign}${pct.toFixed(2)}%`;
     const entry = `$${pos.entryPrice.toLocaleString('en-US')}`;
-    return ` ${label}  ${pos.username.padEnd(NAME_W)}  ${entry.padStart(10)}  ${pnlStr}`;
+    return `${label}  ${pos.username.padEnd(NAME_W)}  ${entry.padStart(10)}  ${pnlStr}`;
   });
   return '```\n' + [header, sep, ...rows].join('\n') + '\n```';
 }

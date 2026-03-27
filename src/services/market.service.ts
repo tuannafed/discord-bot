@@ -56,8 +56,20 @@ export class MarketService {
 
   async getLivePrices(symbols: string[]): Promise<Map<string, number>> {
     if (symbols.length === 0) return new Map();
-    const results = await this.provider.getLivePrices(symbols);
-    return results;
+    const bybitPrices = await this.provider.getLivePrices(symbols);
+
+    // Fallback to CMC for symbols not found on Bybit spot
+    const missing = symbols.filter((s) => !bybitPrices.has(s.toUpperCase()));
+    if (missing.length > 0) {
+      const cmcData = await this.provider.getMarketData(missing).catch(() => []);
+      for (const coin of cmcData) {
+        if (coin.currentPrice > 0) {
+          bybitPrices.set(coin.symbol.toUpperCase(), coin.currentPrice);
+        }
+      }
+    }
+
+    return bybitPrices;
   }
 
   async scanByMarketCap(minCap: number, maxCap: number, limit: number): Promise<CoinMarketData[]> {

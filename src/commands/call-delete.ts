@@ -55,7 +55,6 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       { name: 'Call Price', value: `$${call.callPrice.toLocaleString('en-US')}`, inline: true },
       { name: 'Deleted by', value: `<@${interaction.user.id}>`, inline: true },
     )
-    .setDescription('Kèo và tất cả positions liên quan đã bị xóa khỏi DB.')
     .setTimestamp();
 
   await interaction.editReply({ embeds: [embed] });
