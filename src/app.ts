@@ -56,10 +56,11 @@ async function main(): Promise<void> {
   const watchlistService = new WatchlistService(watchlistRepo, cryptoProvider);
   const alertService = new AlertService(alertRepo, cryptoProvider);
   const candidateService = new CandidateService(candidateRepo, cryptoProvider);
-  const pollingService = new PollingService(client, alertService, candidateService, cryptoProvider);
 
   const callRepo = env.DATABASE_URL ? new PgCallRepository(getPool()) : undefined;
   const callService = callRepo ? new CallService(callRepo, marketService) : undefined;
+
+  const pollingService = new PollingService(client, alertService, candidateService, cryptoProvider, callService);
 
   // Commands
   const commands = buildCommands(
