@@ -31,6 +31,13 @@ export class PgCallRepository {
     return r.rows;
   }
 
+  async findAllActiveCalls(): Promise<Call[]> {
+    const r = await this.db.query<Call>(
+      `SELECT ${CALL_SELECT} FROM calls WHERE status = 'active' ORDER BY called_at DESC`
+    );
+    return r.rows;
+  }
+
   async findAllCalls(guildId: string): Promise<Call[]> {
     const r = await this.db.query<Call>(
       `SELECT ${CALL_SELECT} FROM calls WHERE guild_id = $1 ORDER BY called_at DESC`,
@@ -146,7 +153,7 @@ export class PgCallRepository {
     }>(
       `SELECT
         p.id, p.call_id AS "callId", p.guild_id AS "guildId", p.user_id AS "userId",
-        p.username, p.entry_price AS "entryPrice", p.joined_at AS "joinedAt",
+        p.username, p.entry_price AS "entryPrice", p.leverage, p.joined_at AS "joinedAt",
         p.closed_at AS "closedAt", p.close_type AS "closeType", p.close_price AS "closePrice",
         p.pnl_pct AS "pnlPct", p.notified_milestones AS "notifiedMilestones",
         c.id AS "cId", c.guild_id AS "cGuildId", c.channel_id AS "cChannelId",

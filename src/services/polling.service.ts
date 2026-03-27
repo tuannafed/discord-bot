@@ -136,10 +136,34 @@ export class PollingService {
   private async runMilestoneCheck(): Promise<void> {
     if (!this.callService) return;
 
-    const entries = await this.callService.getAllOpenPositionsWithCalls();
+    const followerEntries = await this.callService.getAllOpenPositionsWithCalls();
+
+    // Build caller synthetic entries from active calls (caller has no DB position)
+    const repo = this.callService.getRepo();
+    const activeCalls = await repo.findAllActiveCalls();
+    const callerEntries: { position: import('../types/call.js').Position; call: import('../types/call.js').Call }[] = activeCalls.map((call) => ({
+      position: {
+        id: `caller-${call.id}`,
+        callId: call.id,
+        guildId: call.guildId,
+        userId: call.calledById,
+        username: call.calledBy,
+        entryPrice: call.callPrice,
+        leverage: call.leverage,
+        joinedAt: call.calledAt,
+        closedAt: null,
+        closeType: null,
+        closePrice: null,
+        pnlPct: null,
+        notifiedMilestones: '',
+      },
+      call,
+    }));
+
+    const entries = [...followerEntries, ...callerEntries];
     if (entries.length === 0) return;
 
-    logger.info(`Milestone check: ${entries.length} open position(s)`);
+    logger.info(`Milestone check: ${entries.length} open position(s) (${followerEntries.length} followers + ${callerEntries.length} callers)`);
 
     const symbols = [...new Set(entries.map((e) => e.call.symbol.toUpperCase()))];
     let priceMap: Map<string, number>;
@@ -168,6 +192,7 @@ export class PollingService {
           direction: call.direction,
           pnlPct: pnl,
           milestone,
+          live: true,
         });
         logger.info(`Milestone ${milestone}% fired for position ${position.id} (${position.username})`);
       }

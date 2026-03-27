@@ -28,6 +28,7 @@ export async function sendMilestoneNotification(
     direction: string;
     pnlPct: number;
     milestone: number;
+    live?: boolean; // true = đang giữ lệnh, false/undefined = vừa chốt
   }
 ): Promise<void> {
   try {
@@ -36,13 +37,17 @@ export async function sendMilestoneNotification(
 
     const cfg = MILESTONE_CONFIG[params.milestone];
     const sign = params.pnlPct >= 0 ? '+' : '';
+    const dirLabel = params.direction === 'long' || params.direction === 'short'
+      ? (params.direction === 'long' ? '📈 LONG' : '📉 SHORT')
+      : params.direction;
+    const action = params.live
+      ? `đang giữ lệnh **${params.symbol} ${dirLabel}** với P&L **${sign}${params.pnlPct.toFixed(2)}%** 🔥`
+      : `vừa chốt **${params.symbol} ${dirLabel}** với P&L **${sign}${params.pnlPct.toFixed(2)}%** 🤑`;
 
     const embed = new EmbedBuilder()
       .setTitle(`${cfg.emoji} ${cfg.title}`)
       .setColor(cfg.color)
-      .setDescription(
-        `<@${params.userId}> vừa chốt **${params.symbol} ${params.direction}** với P&L **${sign}${params.pnlPct.toFixed(2)}%** 🤑`
-      )
+      .setDescription(`<@${params.userId}> ${action}`)
       .setTimestamp();
 
     await (channel as TextChannel).send({ embeds: [embed] });

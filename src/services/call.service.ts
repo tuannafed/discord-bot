@@ -4,6 +4,10 @@ import { MarketService } from './market.service.js';
 import { Call, CallWithPositions, Position, CloseType } from '../types/call.js';
 
 export class CallService {
+  // In-memory milestone state for callers (no DB position row)
+  // key: callId, value: last notified band (e.g. 100, 200)
+  private readonly callerMilestones = new Map<string, number>();
+
   constructor(
     private readonly repo: PgCallRepository,
     private readonly marketService: MarketService,
@@ -163,6 +167,7 @@ export class CallService {
     const closedAt = new Date().toISOString();
     await this.repo.autoCloseOpenPositions(call.id, closedAt, currentPrice, call.direction);
     await this.repo.closeCall(call.id);
+    this.callerMilestones.delete(call.id);
 
     const positions = await this.repo.findPositionsByCall(call.id);
     const closedCount = positions.filter((p) => p.closedAt === closedAt).length;
@@ -206,6 +211,7 @@ export class CallService {
     const call = await this.repo.findCallById(callId);
     if (!call) return { error: 'Kèo không tồn tại.' };
     await this.repo.deleteCall(callId);
+    this.callerMilestones.delete(callId);
     return { call };
   }
 
@@ -228,15 +234,21 @@ export class CallService {
       if (pnl >= m) currentBand = m;
     }
 
-    // lastNotified: the band we last sent a notification for (stored as single number or empty)
-    const lastNotified = position.notifiedMilestones
-      ? parseInt(position.notifiedMilestones, 10)
-      : null;
+    // lastNotified: the band we last sent a notification for
+    // Caller synthetic positions use in-memory map (id starts with 'caller-')
+    const isCaller = position.id.startsWith('caller-');
+    const lastNotified = isCaller
+      ? (this.callerMilestones.get(position.callId) ?? null)
+      : (position.notifiedMilestones ? parseInt(position.notifiedMilestones, 10) : null);
 
     // Fire if we're in a band AND it differs from the last notified band
     if (currentBand === null || currentBand === lastNotified) return [];
 
-    await this.repo.updateNotifiedMilestones(position.id, String(currentBand));
+    if (isCaller) {
+      this.callerMilestones.set(position.callId, currentBand);
+    } else {
+      await this.repo.updateNotifiedMilestones(position.id, String(currentBand));
+    }
     return [currentBand];
   }
 
