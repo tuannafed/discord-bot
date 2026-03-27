@@ -25,7 +25,7 @@ function calcPnl(pos: Position, call: CallWithPositions, currentPrice: number): 
   return { pct, status: 'open' };
 }
 
-function buildTable(positions: Position[], call: CallWithPositions, currentPrice: number): string {
+function buildContent(positions: Position[], call: CallWithPositions, currentPrice: number): string {
   const callerRow: Position = {
     id: '', callId: call.id, guildId: call.guildId, userId: call.calledById,
     username: call.calledBy, entryPrice: call.callPrice, leverage: call.leverage,
@@ -35,43 +35,39 @@ function buildTable(positions: Position[], call: CallWithPositions, currentPrice
   const allRows = [callerRow, ...positions];
 
   const NAME_W = 8;
-  const header = `${'Name'.padEnd(NAME_W)}  ${'Entry'.padStart(7)}  Lev  PnL`;
-  const sep = '-'.repeat(header.length);
 
-  const rows = allRows.map((pos) => {
-    const pnlResult = calcPnl(pos, call, currentPrice);
-
-    let pnlStr: string;
-    let isPositive: boolean | null = null;
-
-    if (pnlResult.status === 'na') {
-      pnlStr = 'N/A';
-    } else {
-      const { pct, status } = pnlResult as { pct: number; status: string };
-      const sign = pct >= 0 ? '+' : '';
-      isPositive = pct >= 0;
-      pnlStr = status === 'TP'
-        ? `${sign}${pct.toFixed(2)}% TP`
-        : status === 'CL'
-          ? `${sign}${pct.toFixed(2)}% CL`
-          : `${sign}${pct.toFixed(2)}%`;
-    }
-
+  // Info table (no PnL)
+  const tableHeader = `${'Name'.padEnd(NAME_W)}  ${'Entry'.padStart(7)}  Lev`;
+  const tableSep = '-'.repeat(tableHeader.length);
+  const tableRows = allRows.map((pos) => {
     const name = pos.username.length > NAME_W ? pos.username.slice(0, NAME_W) : pos.username.padEnd(NAME_W);
     const price = pos.entryPrice < 1
       ? `$${pos.entryPrice.toFixed(3)}`
       : `$${pos.entryPrice.toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}`;
-    const lev = String(pos.leverage).padEnd(4);
-    const line = `${name}  ${price.padStart(7)}  ${lev} ${pnlStr}`;
+    return `${name}  ${price.padStart(7)}  ${pos.leverage}`;
+  });
+  const table = '```\n' + [tableHeader, tableSep, ...tableRows].join('\n') + '\n```';
 
-    // ANSI colors: green=32, red=31, reset=0
-    if (isPositive === null) return line;
-    return isPositive
-      ? `\u001b[32m${line}\u001b[0m`
-      : `\u001b[31m${line}\u001b[0m`;
+  // PnL list with emoji
+  const pnlLines = allRows.map((pos) => {
+    const pnlResult = calcPnl(pos, call, currentPrice);
+    const name = pos.username.length > NAME_W ? pos.username.slice(0, NAME_W) : pos.username.padEnd(NAME_W);
+
+    if (pnlResult.status === 'na') {
+      return `⬜ ${name}  N/A`;
+    }
+    const { pct, status } = pnlResult as { pct: number; status: string };
+    const sign = pct >= 0 ? '+' : '';
+    const emoji = pct >= 0 ? '🟢' : '🔴';
+    const pnlStr = status === 'TP'
+      ? `${sign}${pct.toFixed(2)}% TP`
+      : status === 'CL'
+        ? `${sign}${pct.toFixed(2)}% CL`
+        : `${sign}${pct.toFixed(2)}%`;
+    return `${emoji} ${name}  **${pnlStr}**`;
   });
 
-  return '```ansi\n' + [header, sep, ...rows].join('\n') + '\n```';
+  return table + '\n' + pnlLines.join('\n');
 }
 
 export const data = new SlashCommandBuilder()
@@ -99,14 +95,14 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   for (const call of callsWithPositions) {
     const currentPrice = priceMap.get(call.symbol) ?? 0;
     const dirEmoji = call.direction === 'long' ? '📈 LONG' : '📉 SHORT';
-    const priceStr = currentPrice > 0 ? `\n**Market Price Now: ${formatPrice(currentPrice)}**` : '';
+    const priceStr = currentPrice > 0 ? ` · **${formatPrice(currentPrice)}**` : '';
+    const fieldName = `${call.symbol} ${dirEmoji} x${call.leverage}${priceStr}`;
 
-    const fieldName = `**${call.symbol}** ${dirEmoji} x${call.leverage}`;
-    const fieldValue = priceStr + (call.positions.length === 0
-      ? '\n_Chưa có ai join_'
-      : '\n' + buildTable(call.positions, call, currentPrice));
-
-    embed.addFields({ name: fieldName, value: fieldValue });
+    if (call.positions.length === 0) {
+      embed.addFields({ name: fieldName, value: '_Chưa có ai join_' });
+    } else {
+      embed.addFields({ name: fieldName, value: buildContent(call.positions, call, currentPrice) });
+    }
   }
 
   await interaction.editReply({ embeds: [embed] });
