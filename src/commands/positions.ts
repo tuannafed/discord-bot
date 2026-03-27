@@ -36,40 +36,29 @@ function buildContent(positions: Position[], call: CallWithPositions, currentPri
 
   const NAME_W = 8;
 
-  // Info table (no PnL)
-  const tableHeader = `#   ${'Name'.padEnd(NAME_W)}  ${'Entry'.padStart(7)}  Lev`;
-  const tableSep = '-'.repeat(tableHeader.length);
-  const tableRows = allRows.map((pos, i) => {
-    const label = String(i + 1).padStart(2);
-    const name = pos.username.length > NAME_W ? pos.username.slice(0, NAME_W) : pos.username.padEnd(NAME_W);
-    const price = pos.entryPrice < 1
-      ? `$${pos.entryPrice.toFixed(3)}`
-      : `$${pos.entryPrice.toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}`;
-    return `${label}  ${name}  ${price.padStart(7)}  ${pos.leverage}`;
-  });
-  const table = '```\n' + [tableHeader, tableSep, ...tableRows].join('\n') + '\n```';
-
-  // PnL list with emoji
-  const pnlLines = allRows.map((pos, i) => {
+  const lines = allRows.map((pos, i) => {
     const pnlResult = calcPnl(pos, call, currentPrice);
-    const label = String(i + 1).padStart(2);
-    const name = pos.username.length > NAME_W ? pos.username.slice(0, NAME_W) : pos.username.padEnd(NAME_W);
+    const label = i + 1;
+    const name = pos.username.length > NAME_W ? pos.username.slice(0, NAME_W) : pos.username;
+    const price = `$${pos.entryPrice.toFixed(4)}`;
 
-    if (pnlResult.status === 'na') {
-      return `⬜ ${label}  ${name}  N/A`;
+    let emoji = '⬜';
+    let pnlStr = 'N/A';
+    if (pnlResult.status !== 'na') {
+      const { pct, status } = pnlResult as { pct: number; status: string };
+      const sign = pct >= 0 ? '+' : '';
+      emoji = pct >= 0 ? '🟢' : '🔴';
+      pnlStr = status === 'TP'
+        ? `${sign}${pct.toFixed(2)}% TP`
+        : status === 'CL'
+          ? `${sign}${pct.toFixed(2)}% CL`
+          : `${sign}${pct.toFixed(2)}%`;
     }
-    const { pct, status } = pnlResult as { pct: number; status: string };
-    const sign = pct >= 0 ? '+' : '';
-    const emoji = pct >= 0 ? '🟢' : '🔴';
-    const pnlStr = status === 'TP'
-      ? `${sign}${pct.toFixed(2)}% TP`
-      : status === 'CL'
-        ? `${sign}${pct.toFixed(2)}% CL`
-        : `${sign}${pct.toFixed(2)}%`;
-    return `${emoji} ${label}  ${name}  **${pnlStr}**`;
+
+    return `${emoji} **${label}. ${name}** · ${price} x${pos.leverage} · **${pnlStr}**`;
   });
 
-  return table + '\n' + pnlLines.join('\n');
+  return lines.join('\n');
 }
 
 export const data = new SlashCommandBuilder()
