@@ -75,7 +75,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     .setTitle(`🛑 Stop Loss — ${call.symbol} ${dirEmoji}`)
     .setColor(0xe67e22)
     .addFields(
-      { name: 'Symbol', value: `${call.symbol} ${dirEmoji}`, inline: true },
+      { name: 'Symbol', value: call.symbol, inline: true },
       { name: 'Entry', value: formatPrice(position.entryPrice), inline: true },
       { name: 'Close Price', value: formatPrice(currentPrice), inline: true },
       { name: 'P&L', value: `**${sign}${pnlPct.toFixed(2)}%**`, inline: true },
