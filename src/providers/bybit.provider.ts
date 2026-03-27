@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import { CryptoProvider } from './crypto-provider.interface.js';
 import { CoinMarketData, CoinListItem } from '../types/coin.js';
-import { LinearFundingSnapshot } from '../types/funding.js';
+import { LinearFundingSnapshot, FundingSettledPeriod } from '../types/funding.js';
 import { logger } from '../utils/logger.js';
 
 interface BybitTicker {
@@ -16,6 +16,14 @@ interface BybitTickersResponse {
   retMsg: string;
   result: {
     list: BybitTicker[];
+  };
+}
+
+interface BybitFundingHistoryResponse {
+  retCode: number;
+  retMsg: string;
+  result: {
+    list: { symbol: string; fundingRate: string; fundingRateTimestamp: string }[];
   };
 }
 
@@ -224,14 +232,28 @@ export class BybitProvider implements Pick<CryptoProvider, 'getMarketData'> {
     const base = symbol.replace(/USDT$/i, '').toUpperCase();
     const bybitSymbol = `${base}USDT`;
     try {
-      const response = await this.client.get<BybitTickersResponse>('/v5/market/tickers', {
-        params: { category: 'linear', symbol: bybitSymbol },
-      });
-      if (response.data.retCode !== 0) {
-        logger.warn(`Bybit funding: ${response.data.retMsg} (${bybitSymbol})`);
+      const histListPromise = this.client
+        .get<BybitFundingHistoryResponse>('/v5/market/funding/history', {
+          params: { category: 'linear', symbol: bybitSymbol, limit: 2 },
+        })
+        .then((h) => (h.data.retCode === 0 ? h.data.result.list ?? [] : []))
+        .catch((err) => {
+          logger.warn(`Bybit funding history failed (${bybitSymbol})`, err);
+          return [];
+        });
+
+      const [tickRes, histList] = await Promise.all([
+        this.client.get<BybitTickersResponse>('/v5/market/tickers', {
+          params: { category: 'linear', symbol: bybitSymbol },
+        }),
+        histListPromise,
+      ]);
+
+      if (tickRes.data.retCode !== 0) {
+        logger.warn(`Bybit funding: ${tickRes.data.retMsg} (${bybitSymbol})`);
         return null;
       }
-      const first = response.data.result.list[0];
+      const first = tickRes.data.result.list[0];
       if (!first) return null;
       const row = first as BybitTicker & {
         fundingRate?: string;
@@ -246,6 +268,23 @@ export class BybitProvider implements Pick<CryptoProvider, 'getMarketData'> {
       const nextMs = parseInt(row.nextFundingTime ?? '0', 10);
       const intervalH = Math.max(1, parseInt(row.fundingIntervalHour ?? '8', 10) || 8);
 
+      const parseHistoryRow = (item: {
+        fundingRate: string;
+        fundingRateTimestamp: string;
+      }): FundingSettledPeriod | undefined => {
+        const ts = parseInt(item.fundingRateTimestamp, 10);
+        if (!Number.isFinite(ts) || ts <= 0) return undefined;
+        return { fundingRate: parseFloat(item.fundingRate), settledAt: new Date(ts) };
+      };
+
+      let lastSettled: FundingSettledPeriod | undefined;
+      let priorSettled: FundingSettledPeriod | undefined;
+      if (histList.length > 0) {
+        const [a, b] = histList;
+        lastSettled = a ? parseHistoryRow(a) : undefined;
+        priorSettled = b ? parseHistoryRow(b) : undefined;
+      }
+
       return {
         baseSymbol: base,
         fundingRate,
@@ -253,6 +292,8 @@ export class BybitProvider implements Pick<CryptoProvider, 'getMarketData'> {
         markPrice: parseFloat(row.markPrice ?? row.lastPrice ?? '0'),
         indexPrice: parseFloat(row.indexPrice ?? '0'),
         fundingIntervalHours: intervalH,
+        lastSettled,
+        priorSettled,
       };
     } catch (error) {
       logger.error('Bybit getLinearFunding failed', error);

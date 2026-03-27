@@ -18,7 +18,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
           '`/top` `[limit]` — Top coin theo vốn hóa *(có trên Bybit)*',
           '`/movers` `[metric]` `[timeframe]` `[type]` `[limit]` — Tăng/giảm mạnh nhất',
           '`/scan` `min_cap` `max_cap` `[limit]` — Lọc coin theo vốn hóa',
-          '`/funding` `symbol` — Funding Bybit USDT perp: %/kỳ (vd 8h), mark/index, giờ funding tiếp theo',
+          '`/funding` `symbol` — Rate & giờ funding tới (ICT), 2 kỳ settle gần nhất',
           '`/unlock` `symbol` — Thông tin unlock token (lưu hành / bị khóa / tối đa)',
         ].join('\n'),
       },

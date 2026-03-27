@@ -108,7 +108,7 @@ Find Bybit-listed coins within a market cap range. Market cap from CoinMarketCap
 ---
 
 ### `/funding`
-By **Bybit** USDT perpetual (linear): current funding **rate per interval** (usually 8h), Mark & Index, and **next funding** time. No annualized APR — only the exchange-reported rate.
+By **Bybit** USDT perpetual (linear): current **rate**, **next funding** (giờ hiển thị **ICT UTC+7**), và **hai kỳ settle gần nhất** (`/v5/market/funding/history`). Không có APR quy năm.
 
 | Param | Type | Required | Description |
 |---|---|---|---|
@@ -118,8 +118,8 @@ By **Bybit** USDT perpetual (linear): current funding **rate per interval** (usu
 
 **Output includes:**
 - Funding rate % per interval (e.g. 8h)
-- Mark / Index prices
-- Next funding timestamp (Discord-relative)
+- Next funding — absolute time in **ICT (UTC+7)** plus Discord relative `in X`
+- Last two **settled** intervals (rate + settle time in ICT), when history API returns data
 
 ---
 
