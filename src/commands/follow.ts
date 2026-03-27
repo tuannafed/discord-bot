@@ -100,7 +100,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       `**User:** <@${userId}>`,
       `**Call ID:** \`...${shortId}\``,
       ``,
-      `Dùng \`/tp\` hoặc \`/cl\` khi muốn đóng lệnh.`,
+      `Dùng \`/tp\`, \`/sl\` hoặc \`/cl\` khi muốn đóng lệnh.`,
     ].join('\n'))
     .setTimestamp();
 

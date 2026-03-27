@@ -103,11 +103,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     const priceStr = currentPrice > 0 ? ` · **${formatPrice(currentPrice)}**` : '';
     const fieldName = `${call.symbol} ${dirEmoji} x${call.leverage}${priceStr}`;
 
-    if (call.positions.length === 0) {
-      embed.addFields({ name: fieldName, value: '_Chưa có ai join_' });
-    } else {
-      embed.addFields({ name: fieldName, value: buildContent(call.positions, call, currentPrice) });
-    }
+    embed.addFields({ name: fieldName, value: buildContent(call.positions, call, currentPrice) });
   }
 
   await interaction.editReply({ embeds: [embed] });
