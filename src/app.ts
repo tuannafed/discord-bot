@@ -11,6 +11,7 @@ import { AlertService, IAlertRepository } from './services/alert.service.js';
 import { CandidateService, ICandidateRepository } from './services/candidate.service.js';
 import { CallService } from './services/call.service.js';
 import { PollingService } from './services/polling.service.js';
+import { buildLlmChatServiceFromEnv } from './services/llm-chat.service.js';
 
 import { WatchlistRepository } from './repositories/watchlist.repository.js';
 import { AlertRepository } from './repositories/alert.repository.js';
@@ -68,6 +69,7 @@ async function main(): Promise<void> {
   const callService = callRepo ? new CallService(callRepo, marketService) : undefined;
 
   const pollingService = new PollingService(client, alertService, candidateService, cryptoProvider, callService);
+  const llmChat = buildLlmChatServiceFromEnv(env);
 
   // Commands
   const commands = buildCommands(
@@ -84,7 +86,7 @@ async function main(): Promise<void> {
   // Events
   registerReadyEvent(client, pollingService);
   registerInteractionCreateEvent(client, commands);
-  registerMessageCreateEvent(client);
+  registerMessageCreateEvent(client, llmChat);
 
   await client.login(env.DISCORD_TOKEN);
 

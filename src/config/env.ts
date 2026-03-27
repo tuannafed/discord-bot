@@ -27,6 +27,16 @@ const envSchema = z.object({
   CANDIDATE_MIN_CHANGE_24H: z.coerce.number().positive().default(10),
   CANDIDATE_SCAN_SIZE: z.coerce.number().int().positive().default(100),
   CANDIDATE_ALERT_CHANNEL_ID: z.string().optional(),
+
+  // Optional — mention bot + text → LLM (OpenAI-compatible hoặc Anthropic Claude)
+  LLM_API_KEY: z.string().optional(),
+  LLM_PROVIDER: z.string().optional(),
+  LLM_BASE_URL: z.string().optional(),
+  LLM_MODEL: z.string().optional(),
+  LLM_SYSTEM_PROMPT: z.string().optional(),
+  LLM_COOLDOWN_MS: z.coerce.number().int().positive().default(8000),
+  LLM_MAX_TOKENS: z.coerce.number().int().positive().max(4096).default(600),
+  LLM_ANTHROPIC_VERSION: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
