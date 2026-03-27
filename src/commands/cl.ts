@@ -60,12 +60,22 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const pnlPct = position.pnlPct ?? 0;
   const sign = pnlPct >= 0 ? '+' : '';
   const dirEmoji = call.direction === 'long' ? '📈 LONG' : '📉 SHORT';
+  const isCaller = call.calledById === interaction.user.id;
+
+  const condolence = pnlPct <= -500
+    ? '💀 Thanh lý rồi bro ơi...'
+    : pnlPct <= -200
+    ? '😭 Đau quá!'
+    : pnlPct <= -50
+    ? '😢 Tiếc thật!'
+    : pnlPct < 0
+    ? '😔 Lần sau nhé!'
+    : '😅 May mà kịp cắt!';
 
   const embed = new EmbedBuilder()
-    .setTitle(`❌ Cut Loss — ${call.symbol} ${dirEmoji}`)
+    .setTitle(`${condolence} — ${call.symbol} ${dirEmoji}`)
     .setColor(0xe74c3c)
     .addFields(
-      { name: 'Symbol', value: `${call.symbol} ${dirEmoji}`, inline: true },
       { name: 'Entry', value: formatPrice(position.entryPrice), inline: true },
       { name: 'Close Price', value: formatPrice(currentPrice), inline: true },
       { name: 'P&L', value: `**${sign}${pnlPct.toFixed(2)}%**`, inline: true },
@@ -80,20 +90,22 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     await sendMilestoneNotification(discordClient, interaction.channelId, {
       userId: interaction.user.id,
       symbol: call.symbol,
-      direction: dirEmoji,
+      direction: call.direction,
       pnlPct,
       milestone,
     });
   }
 
-  startCloseReminder(
-    discordClient,
-    callService,
-    call.id,
-    interaction.channelId,
-    interaction.user.id,
-    call.symbol,
-    call.direction,
-    'cl',
-  );
+  if (isCaller) {
+    startCloseReminder(
+      discordClient,
+      callService,
+      call.id,
+      interaction.channelId,
+      interaction.user.id,
+      call.symbol,
+      call.direction,
+      'cl',
+    );
+  }
 }

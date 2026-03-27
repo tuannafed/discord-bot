@@ -37,6 +37,10 @@ export class CallService {
       calledById: params.calledById,
       calledAt: new Date().toISOString(),
       status: 'active',
+      callerClosedAt: null,
+      callerCloseType: null,
+      callerClosePrice: null,
+      callerPnlPct: null,
     };
     await this.repo.createCall(call);
     return call;
@@ -131,7 +135,8 @@ export class CallService {
       await this.repo.closePosition(position.id, closedAt, params.closeType, currentPrice, pnlPct);
       closedPosition = { ...position, closedAt, closeType: params.closeType, closePrice: currentPrice, pnlPct };
     } else {
-      // Caller: synthetic position, không lưu DB
+      // Caller: save close info to calls table
+      await this.repo.saveCallerClose(call.id, closedAt, params.closeType, currentPrice, pnlPct);
       closedPosition = {
         id: '',
         callId: call.id,

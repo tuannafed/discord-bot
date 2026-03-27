@@ -29,8 +29,12 @@ function buildContent(positions: Position[], call: CallWithPositions, currentPri
   const callerRow: Position = {
     id: '', callId: call.id, guildId: call.guildId, userId: call.calledById,
     username: call.calledBy, entryPrice: call.callPrice, leverage: call.leverage,
-    joinedAt: call.calledAt, closedAt: null, closeType: null, closePrice: null,
-    pnlPct: null, notifiedMilestones: '', mutedMilestones: false,
+    joinedAt: call.calledAt,
+    closedAt: call.callerClosedAt,
+    closeType: call.callerCloseType,
+    closePrice: call.callerClosePrice,
+    pnlPct: call.callerPnlPct,
+    notifiedMilestones: '', mutedMilestones: false,
   };
   const allRows = [callerRow, ...positions];
 

@@ -141,7 +141,9 @@ export class PollingService {
     // Build caller synthetic entries from active calls (caller has no DB position)
     const repo = this.callService.getRepo();
     const activeCalls = await repo.findAllActiveCalls();
-    const callerEntries: { position: import('../types/call.js').Position; call: import('../types/call.js').Call }[] = activeCalls.map((call) => ({
+    const callerEntries: { position: import('../types/call.js').Position; call: import('../types/call.js').Call }[] = activeCalls
+    .filter((call) => !call.callerClosedAt)
+    .map((call) => ({
       position: {
         id: `caller-${call.id}`,
         callId: call.id,

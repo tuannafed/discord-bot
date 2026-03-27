@@ -60,12 +60,22 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const pnlPct = position.pnlPct ?? 0;
   const sign = pnlPct >= 0 ? '+' : '';
   const dirEmoji = call.direction === 'long' ? '📈 LONG' : '📉 SHORT';
+  const isCaller = call.calledById === interaction.user.id;
+
+  const congrats = pnlPct >= 500
+    ? '🏆 Huyền thoại! x' + (1 + pnlPct / 100).toFixed(1)
+    : pnlPct >= 200
+    ? '🚀 Cháy lắm! x' + (1 + pnlPct / 100).toFixed(1)
+    : pnlPct >= 100
+    ? '🎉 Tuyệt vời! x' + (1 + pnlPct / 100).toFixed(1)
+    : pnlPct >= 0
+    ? '✅ Chốt lời ngon!'
+    : '😅 Lần sau nhé!';
 
   const embed = new EmbedBuilder()
-    .setTitle(`✅ Take Profit — ${call.symbol} ${dirEmoji}`)
+    .setTitle(`${congrats} — ${call.symbol} ${dirEmoji}`)
     .setColor(0x2ecc71)
     .addFields(
-      { name: 'Symbol', value: `${call.symbol} ${dirEmoji}`, inline: true },
       { name: 'Entry', value: formatPrice(position.entryPrice), inline: true },
       { name: 'Close Price', value: formatPrice(currentPrice), inline: true },
       { name: 'P&L', value: `**${sign}${pnlPct.toFixed(2)}%**`, inline: true },
@@ -77,24 +87,25 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
 
   const milestone = getMilestoneHit(pnlPct);
   if (milestone !== null) {
-    const dirEmoji = call.direction === 'long' ? '📈 LONG' : '📉 SHORT';
     await sendMilestoneNotification(discordClient, interaction.channelId, {
       userId: interaction.user.id,
       symbol: call.symbol,
-      direction: dirEmoji,
+      direction: call.direction,
       pnlPct,
       milestone,
     });
   }
 
-  startCloseReminder(
-    discordClient,
-    callService,
-    call.id,
-    interaction.channelId,
-    interaction.user.id,
-    call.symbol,
-    call.direction,
-    'tp',
-  );
+  if (isCaller) {
+    startCloseReminder(
+      discordClient,
+      callService,
+      call.id,
+      interaction.channelId,
+      interaction.user.id,
+      call.symbol,
+      call.direction,
+      'tp',
+    );
+  }
 }

@@ -76,6 +76,10 @@ export async function runMigrations(): Promise<void> {
     );
 
     ALTER TABLE calls ADD COLUMN IF NOT EXISTS leverage INTEGER NOT NULL DEFAULT 20;
+    ALTER TABLE calls ADD COLUMN IF NOT EXISTS caller_closed_at TEXT;
+    ALTER TABLE calls ADD COLUMN IF NOT EXISTS caller_close_type TEXT;
+    ALTER TABLE calls ADD COLUMN IF NOT EXISTS caller_close_price DOUBLE PRECISION;
+    ALTER TABLE calls ADD COLUMN IF NOT EXISTS caller_pnl_pct DOUBLE PRECISION;
 
     CREATE TABLE IF NOT EXISTS positions (
       id           TEXT PRIMARY KEY,

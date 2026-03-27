@@ -14,6 +14,10 @@ export interface Call {
   calledById: string;
   calledAt: string;
   status: CallStatus;
+  callerClosedAt: string | null;
+  callerCloseType: CloseType | null;
+  callerClosePrice: number | null;
+  callerPnlPct: number | null;
 }
 
 export interface Position {

@@ -2,7 +2,8 @@ import { Pool } from 'pg';
 import { Call, Position } from '../types/call.js';
 
 const CALL_SELECT =
-  'id, guild_id AS "guildId", channel_id AS "channelId", symbol, direction, call_price AS "callPrice", leverage, called_by AS "calledBy", called_by_id AS "calledById", called_at AS "calledAt", status';
+  'id, guild_id AS "guildId", channel_id AS "channelId", symbol, direction, call_price AS "callPrice", leverage, called_by AS "calledBy", called_by_id AS "calledById", called_at AS "calledAt", status,' +
+  ' caller_closed_at AS "callerClosedAt", caller_close_type AS "callerCloseType", caller_close_price AS "callerClosePrice", caller_pnl_pct AS "callerPnlPct"';
 
 const POS_SELECT =
   'id, call_id AS "callId", guild_id AS "guildId", user_id AS "userId", username, entry_price AS "entryPrice", leverage, joined_at AS "joinedAt", closed_at AS "closedAt", close_type AS "closeType", close_price AS "closePrice", pnl_pct AS "pnlPct", notified_milestones AS "notifiedMilestones", muted_milestones AS "mutedMilestones"';
@@ -48,6 +49,13 @@ export class PgCallRepository {
 
   async closeCall(id: string): Promise<void> {
     await this.db.query(`UPDATE calls SET status = 'closed' WHERE id = $1`, [id]);
+  }
+
+  async saveCallerClose(callId: string, closedAt: string, closeType: string, closePrice: number, pnlPct: number): Promise<void> {
+    await this.db.query(
+      `UPDATE calls SET caller_closed_at = $1, caller_close_type = $2, caller_close_price = $3, caller_pnl_pct = $4 WHERE id = $5`,
+      [closedAt, closeType, closePrice, pnlPct, callId]
+    );
   }
 
   async createPosition(pos: Position): Promise<void> {
