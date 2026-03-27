@@ -25,7 +25,7 @@ export const data = new SlashCommandBuilder()
   .addNumberOption((opt) =>
     opt
       .setName('entry')
-      .setDescription('Giá entry của bạn (USD)')
+      .setDescription('Giá entry (USD)')
       .setRequired(true)
   )
   .addIntegerOption((opt) =>
@@ -35,6 +35,12 @@ export const data = new SlashCommandBuilder()
       .setRequired(false)
       .setMinValue(1)
       .setMaxValue(100)
+  )
+  .addUserOption((opt) =>
+    opt
+      .setName('user')
+      .setDescription('Follow cho member khác (chỉ admin)')
+      .setRequired(false)
   );
 
 export async function autocomplete(interaction: AutocompleteInteraction): Promise<void> {
@@ -51,14 +57,18 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const callId = interaction.options.getString('call_id', true);
   const entry = interaction.options.getNumber('entry', true);
   const leverageOpt = interaction.options.getInteger('leverage') ?? undefined;
+  const targetUser = interaction.options.getUser('user');
+
+  const userId = targetUser?.id ?? interaction.user.id;
+  const username = targetUser?.username ?? interaction.user.username;
 
   await interaction.deferReply({ ephemeral: true });
 
   const result = await callService.joinCall({
     callId,
     guildId: interaction.guildId!,
-    userId: interaction.user.id,
-    username: interaction.user.username,
+    userId,
+    username,
     entryPrice: entry,
     leverage: leverageOpt,
   });
@@ -79,7 +89,8 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       { name: 'Call Price', value: `$${call.callPrice.toLocaleString('en-US')}`, inline: true },
       { name: 'Called by', value: `<@${call.calledById}>`, inline: true },
       { name: 'ID', value: `\`...${shortId}\``, inline: true },
-      { name: 'Entry của bạn', value: `$${entry.toLocaleString('en-US')}`, inline: true },
+      { name: 'User', value: `<@${userId}>`, inline: true },
+      { name: 'Entry', value: `$${entry.toLocaleString('en-US')}`, inline: true },
       { name: 'Leverage', value: `x${position.leverage}`, inline: true },
     )
     .setDescription('Dùng `/tp` hoặc `/cl` khi muốn đóng lệnh.')

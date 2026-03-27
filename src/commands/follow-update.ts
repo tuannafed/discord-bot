@@ -3,7 +3,6 @@ import {
   ChatInputCommandInteraction,
   EmbedBuilder,
   AutocompleteInteraction,
-  PermissionFlagsBits,
 } from 'discord.js';
 import { CallService } from '../services/call.service.js';
 
@@ -62,17 +61,6 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   if (entry === null && leverage === null) {
     await interaction.reply({ content: '❌ Cần nhập ít nhất một giá trị: `entry` hoặc `leverage`.', ephemeral: true });
     return;
-  }
-
-  // Only admins can update other members
-  if (targetUser && targetUser.id !== interaction.user.id) {
-    const member = await interaction.guild?.members.fetch(interaction.user.id);
-    const isAdmin = member?.permissions.has(PermissionFlagsBits.Administrator) ||
-                    member?.permissions.has(PermissionFlagsBits.ManageGuild);
-    if (!isAdmin) {
-      await interaction.reply({ content: '❌ Chỉ admin mới có thể sửa lệnh của người khác.', ephemeral: true });
-      return;
-    }
   }
 
   const userId = targetUser?.id ?? interaction.user.id;
