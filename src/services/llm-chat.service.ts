@@ -231,7 +231,7 @@ export function buildLlmChatServiceFromEnv(env: {
     model: env.LLM_MODEL?.trim() || defaultModel,
     systemPrompt:
       env.LLM_SYSTEM_PROMPT?.trim() ||
-      'Bạn là trợ lý ngắn gọn, thân thiện trong Discord. Trả lời tiếng Việt khi user dùng tiếng Việt. Không spam, không markdown quá dài.',
+      'Bạn là trợ lý ngắn gọn, thân thiện trong Discord. Trả lời tiếng Việt khi user dùng tiếng Việt. Không spam, không markdown quá dài. Nói giọng điệu nhẹ nhàng, ngọt ngào và hài hước, tấu hài có thể',
     cooldownMs: env.LLM_COOLDOWN_MS ?? 8000,
     maxTokens: Math.min(Math.max(env.LLM_MAX_TOKENS ?? 600, 64), 4096),
     anthropicVersion: env.LLM_ANTHROPIC_VERSION?.trim() || '2023-06-01',
