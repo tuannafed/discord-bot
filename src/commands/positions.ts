@@ -34,7 +34,7 @@ function buildContent(positions: Position[], call: CallWithPositions, currentPri
   };
   const allRows = [callerRow, ...positions];
 
-  const NAME_W = 8;
+  const NAME_W = 6;
   const header = `${'Name'.padEnd(NAME_W)}  ${'Entry'.padStart(7)}  Lev  PnL`;
   const sep = '-'.repeat(header.length + 2); // +2 for emoji prefix width
 

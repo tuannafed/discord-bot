@@ -6,6 +6,7 @@ import {
 } from 'discord.js';
 import { CallService } from '../services/call.service.js';
 import { formatPrice } from '../utils/format.js';
+import { stopCloseReminder } from '../utils/close-reminder.js';
 
 let callService: CallService;
 
@@ -61,5 +62,6 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     .setDescription('Tất cả positions còn mở đã được auto-close theo giá hiện tại.')
     .setTimestamp();
 
+  stopCloseReminder(callId);
   await interaction.editReply({ embeds: [embed] });
 }

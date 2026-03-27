@@ -2,94 +2,96 @@ import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from '
 
 export const data = new SlashCommandBuilder()
   .setName('help')
-  .setDescription('Show all available commands');
+  .setDescription('Xem danh sách tất cả lệnh');
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   const embed = new EmbedBuilder()
-    .setTitle('📊 Crypto Tracker — Commands')
+    .setTitle('📖 Danh sách lệnh')
     .setColor(0x5865f2)
-    .setDescription('All commands are slash commands. Optional params shown in `[brackets]`.')
+    .setDescription('Tất cả đều là slash command. Tham số trong `[ngoặc]` là tùy chọn.')
     .addFields(
       {
-        name: '💹 Market Data',
+        name: '💹 Thị trường',
         value: [
-          '`/coin` `symbol` `[timeframe]` — Price, MCap, rank, change & supply',
-          '> Timeframe: `15m` / `1h` / `4h` / `24h` — shows prev price, prev cap & % change',
-          '`/top` `[limit]` — Top coins by market cap *(Bybit-listed)*',
-          '`/movers` `[metric]` `[timeframe]` `[type]` `[limit]`',
-          '> Gainers & losers · price or cap · 15m / 1h / 4h / 24h',
-          '`/scan` `min_cap` `max_cap` `[limit]` — Coins in a cap range',
-          '`/unlock` `symbol` — Token supply & unlock overview (circ / locked / max)',
+          '`/coin` `symbol` `[timeframe]` — Giá, vốn hóa, hạng, % thay đổi & cung',
+          '> Timeframe: `15m` / `1h` / `4h` / `24h`',
+          '`/top` `[limit]` — Top coin theo vốn hóa *(có trên Bybit)*',
+          '`/movers` `[metric]` `[timeframe]` `[type]` `[limit]` — Tăng/giảm mạnh nhất',
+          '`/scan` `min_cap` `max_cap` `[limit]` — Lọc coin theo vốn hóa',
+          '`/unlock` `symbol` — Thông tin unlock token (lưu hành / bị khóa / tối đa)',
         ].join('\n'),
       },
       {
         name: '👁 Watchlist',
         value: [
-          '`/watch-add` `symbol` — Add coin to watchlist',
-          '`/watch-remove` `symbol` — Remove coin from watchlist',
-          '`/watch-list` — View watchlist with live prices & 24h change',
+          '`/watch-add` `symbol` — Thêm coin vào danh sách theo dõi',
+          '`/watch-remove` `symbol` — Xóa coin khỏi danh sách',
+          '`/watch-list` — Xem danh sách với giá & % thay đổi 24h',
         ].join('\n'),
       },
       {
-        name: '🔔 Alerts',
+        name: '🔔 Cảnh báo giá',
         value: [
           '`/alert-add` `symbol` `metric` `condition` `threshold`',
-          '> `above` / `below` → fixed USD value',
-          '> `change_up` / `change_down` → % from current (e.g. `3` = 3%)',
-          '`/alert-list` — View all active alerts (with IDs)',
-          '`/alert-remove` `id` — Delete an alert',
+          '> `above` / `below` — Ngưỡng giá cố định (USD)',
+          '> `change_up` / `change_down` — % thay đổi so với hiện tại (vd: `3` = 3%)',
+          '`/alert-list` — Xem tất cả cảnh báo đang bật',
+          '`/alert-remove` `id` — Xóa một cảnh báo',
         ].join('\n'),
       },
       {
-        name: '⚡ Group Trading',
+        name: '⚡ Kèo nhóm',
         value: [
-          '`/call` `symbol` `direction` `price` — Tạo kèo mới (long/short)',
-          '`/follow` `call_id` `entry` — Vào lệnh theo kèo (chọn từ dropdown)',
-          '`/positions` — Xem tất cả kèo active + P&L% realtime từng người',
-          '`/tp` `call_id` — Take profit, đóng lệnh của bạn (fetch giá tự động)',
-          '`/cl` `call_id` — Cut loss, đóng lệnh của bạn (fetch giá tự động)',
-          '`/call-close` `call_id` — *(Admin)* Đóng kèo & auto-close tất cả positions còn mở',
-          '`/call-delete` `call_id` — *(Admin)* Xóa kèo ghi sai (xóa cả positions liên quan)',
-          '> P&L% tính theo entry từng người · Long: `(close−entry)/entry` · Short: `(entry−close)/entry`',
+          '`/call` `symbol` `direction` `price` `[leverage]` — Tạo kèo mới (long/short), đòn bẩy mặc định x20',
+          '`/follow` `call_id` `entry` `[leverage]` `[user]` — Vào lệnh theo kèo, có thể add cho người khác',
+          '`/positions` — Xem tất cả kèo active + P&L realtime của từng người',
+          '`/tp` `call_id` — Chốt lời, đóng lệnh (giá tự động lấy từ Bybit)',
+          '`/cl` `call_id` — Cắt lỗ, đóng lệnh (giá tự động lấy từ Bybit)',
+          '`/call-update` `call_id` `[price]` `[leverage]` — Sửa giá call hoặc đòn bẩy của kèo',
+          '`/follow-update` `call_id` `[entry]` `[leverage]` `[user]` — Sửa entry hoặc đòn bẩy lệnh follow',
+          '`/call-close` `call_id` — *(Admin)* Đóng kèo & tự động close tất cả lệnh còn mở',
+          '`/call-delete` `call_id` — *(Admin)* Xóa kèo ghi sai (xóa luôn tất cả lệnh liên quan)',
+          '> P&L = % thay đổi × đòn bẩy · Long: `(close−entry)/entry` · Short: `(entry−close)/entry`',
+          '> Nhận thông báo tự động khi đạt 100% / 200% / 300% / 500% / 1000%',
         ].join('\n'),
       },
       {
-        name: '🎯 Candidates',
+        name: '🎯 Coin tiềm năng',
         value: [
           '`/candidate-list` `[status]` — `tracking` / `hit_target` / `expired`',
-          '`/candidate-remove` `id` — Remove a candidate',
+          '`/candidate-remove` `id` — Xóa một coin khỏi danh sách',
         ].join('\n'),
       },
       {
-        name: '⚙️ Other',
-        value: '`/ping` — Health check\n`/help` — Show this message',
+        name: '⚙️ Khác',
+        value: '`/ping` — Kiểm tra bot còn sống không\n`/help` — Xem tin nhắn này',
       },
       {
-        name: '📌 Examples',
+        name: '📌 Ví dụ',
         value: [
           '```',
           '/coin symbol:btc',
           '/coin symbol:eth timeframe:1 hour',
           '/top limit:20',
-          '/movers metric:price timeframe:15 minutes type:gainers limit:10',
-          '/movers metric:cap timeframe:1 hour',
+          '/movers metric:price timeframe:15m type:gainers limit:10',
           '/scan min_cap:70000000 max_cap:100000000',
           '/alert-add symbol:eth metric:price condition:above threshold:5000',
           '/alert-add symbol:btc metric:price condition:change_up threshold:3',
-          '/alert-add symbol:eth metric:market_cap condition:change_down threshold:5',
-          '/alert-remove id:abc123',
           '/unlock symbol:apt',
-          '/unlock symbol:arb',
-          '/call symbol:BTC direction:long price:70000',
-          '/follow call_id:[chọn từ dropdown] entry:69500',
+          '/call symbol:STG direction:short price:0.271 leverage:20',
+          '/follow call_id:[chọn] entry:0.268',
+          '/follow call_id:[chọn] entry:0.268 user:@member',
+          '/follow-update call_id:[chọn] entry:0.270 leverage:10',
+          '/follow-update call_id:[chọn] leverage:50 user:@member',
+          '/call-update call_id:[chọn] price:0.275 leverage:25',
           '/positions',
-          '/tp call_id:[chọn từ dropdown]',
-          '/cl call_id:[chọn từ dropdown]',
+          '/tp call_id:[chọn]',
+          '/cl call_id:[chọn]',
           '```',
         ].join('\n'),
       },
     )
-    .setFooter({ text: 'Data from Bybit + CoinMarketCap' })
+    .setFooter({ text: 'Dữ liệu từ Bybit + CoinMarketCap' })
     .setTimestamp();
 
   await interaction.reply({ embeds: [embed], ephemeral: true });

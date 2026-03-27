@@ -235,6 +235,14 @@ export class CallService {
     return this.repo.findAllOpenPositionsWithCalls();
   }
 
+  async getOpenPositionsByCall(callId: string): Promise<Position[]> {
+    return this.repo.findOpenPositionsByCall(callId);
+  }
+
+  getRepo(): PgCallRepository {
+    return this.repo;
+  }
+
   async getCallWithPositions(callId: string): Promise<CallWithPositions | undefined> {
     const call = await this.repo.findCallById(callId);
     if (!call) return undefined;

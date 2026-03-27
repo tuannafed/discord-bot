@@ -8,6 +8,7 @@ import {
 import { CallService } from '../services/call.service.js';
 import { formatPrice } from '../utils/format.js';
 import { getMilestoneHit, sendMilestoneNotification } from '../utils/pnl-milestone.js';
+import { startCloseReminder } from '../utils/close-reminder.js';
 
 let callService: CallService;
 let discordClient: Client;
@@ -85,4 +86,15 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       milestone,
     });
   }
+
+  startCloseReminder(
+    discordClient,
+    callService,
+    call.id,
+    interaction.channelId,
+    interaction.user.id,
+    call.symbol,
+    call.direction,
+    'tp',
+  );
 }
