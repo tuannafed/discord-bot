@@ -92,14 +92,16 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const embed = new EmbedBuilder()
     .setTitle(`✅ Đã join kèo ${call.symbol} ${dirEmoji}`)
     .setColor(0x5865f2)
-    .setDescription(`Dùng \`/tp\` hoặc \`/cl\` khi muốn đóng lệnh.\nID: \`...${shortId}\``)
-    .addFields(
-      { name: 'Call Price', value: `$${call.callPrice.toLocaleString('en-US')}`, inline: true },
-      { name: 'Called by', value: `<@${call.calledById}>`, inline: true },
-      { name: 'Entry', value: `$${entry.toLocaleString('en-US')}`, inline: true },
-      { name: 'Leverage', value: `x${position.leverage}`, inline: true },
-      { name: 'User', value: `<@${userId}>`, inline: false },
-    )
+    .setDescription([
+      `**Call Price:** $${call.callPrice.toLocaleString('en-US')}`,
+      `**Called by:** <@${call.calledById}>`,
+      `**Entry:** $${entry.toLocaleString('en-US')}`,
+      `**Leverage:** x${position.leverage}`,
+      `**User:** <@${userId}>`,
+      `**Call ID:** \`...${shortId}\``,
+      ``,
+      `Dùng \`/tp\` hoặc \`/cl\` khi muốn đóng lệnh.`,
+    ].join('\n'))
     .setTimestamp();
 
   await interaction.editReply({ embeds: [embed] });

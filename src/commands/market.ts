@@ -38,8 +38,7 @@ function formatChange(current: number, prev: number): string {
   if (prev <= 0) return 'N/A';
   const pct = ((current - prev) / prev) * 100;
   const sign = pct >= 0 ? '+' : '';
-  const arrow = pct >= 0 ? '▲' : '▼';
-  return `${arrow} ${sign}${pct.toFixed(2)}%`;
+  return `${sign}${pct.toFixed(2)}%`;
 }
 
 function formatDominance(pct: number): string {
