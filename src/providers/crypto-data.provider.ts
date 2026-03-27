@@ -185,9 +185,27 @@ export class CryptoDataProvider implements CryptoProvider {
     return this.bybit.getKlineChange(symbol, interval);
   }
 
-  /** Fetch live prices from Bybit futures (linear) — no cache */
+  /** Fetch live prices from Bybit futures (linear), fallback to CMC for symbols not on Bybit */
   async getLivePrices(symbols: string[]): Promise<Map<string, number>> {
-    return this.bybit.getFuturesPrices(symbols);
+    if (symbols.length === 0) return new Map();
+
+    const bybitPrices = await this.bybit.getFuturesPrices(symbols);
+
+    const missing = symbols.filter((s) => !bybitPrices.has(s.toUpperCase()));
+    if (missing.length === 0) return bybitPrices;
+
+    try {
+      const cmcData = await this.cmc.getMarketData(missing);
+      const result = new Map(bybitPrices);
+      for (const coin of cmcData) {
+        if (coin.currentPrice > 0) {
+          result.set(coin.symbol.toUpperCase(), coin.currentPrice);
+        }
+      }
+      return result;
+    } catch {
+      return bybitPrices;
+    }
   }
 
   /** Invalidate all caches (e.g. after symbol resolution miss) */

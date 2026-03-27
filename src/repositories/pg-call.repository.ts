@@ -3,7 +3,8 @@ import { Call, Position } from '../types/call.js';
 
 const CALL_SELECT =
   'id, guild_id AS "guildId", channel_id AS "channelId", symbol, direction, call_price AS "callPrice", leverage, called_by AS "calledBy", called_by_id AS "calledById", called_at AS "calledAt", status,' +
-  ' caller_closed_at AS "callerClosedAt", caller_close_type AS "callerCloseType", caller_close_price AS "callerClosePrice", caller_pnl_pct AS "callerPnlPct"';
+  ' caller_closed_at AS "callerClosedAt", caller_close_type AS "callerCloseType", caller_close_price AS "callerClosePrice", caller_pnl_pct AS "callerPnlPct",' +
+  ' COALESCE(caller_notified_milestones, \'\') AS "callerNotifiedMilestones"';
 
 const POS_SELECT =
   'id, call_id AS "callId", guild_id AS "guildId", user_id AS "userId", username, entry_price AS "entryPrice", leverage, joined_at AS "joinedAt", closed_at AS "closedAt", close_type AS "closeType", close_price AS "closePrice", pnl_pct AS "pnlPct", notified_milestones AS "notifiedMilestones", muted_milestones AS "mutedMilestones"';
@@ -155,6 +156,13 @@ export class PgCallRepository {
       [callId]
     );
     return parseInt(r.rows[0].count, 10) === 0;
+  }
+
+  async updateCallerNotifiedMilestones(callId: string, value: string): Promise<void> {
+    await this.db.query(
+      'UPDATE calls SET caller_notified_milestones = $1 WHERE id = $2',
+      [value, callId]
+    );
   }
 
   async deleteCallerDuplicatePositions(guildId: string): Promise<number> {

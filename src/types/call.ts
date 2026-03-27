@@ -18,6 +18,7 @@ export interface Call {
   callerCloseType: CloseType | null;
   callerClosePrice: number | null;
   callerPnlPct: number | null;
+  callerNotifiedMilestones: string;
 }
 
 export interface Position {

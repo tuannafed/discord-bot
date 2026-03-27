@@ -87,7 +87,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
 
   const milestone = getMilestoneHit(pnlPct);
   if (milestone !== null) {
-    await sendMilestoneNotification(discordClient, interaction.channelId, {
+    await sendMilestoneNotification(discordClient, call.channelId, {
       userId: interaction.user.id,
       symbol: call.symbol,
       direction: call.direction,
@@ -101,7 +101,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       discordClient,
       callService,
       call.id,
-      interaction.channelId,
+      call.channelId,
       interaction.user.id,
       call.symbol,
       call.direction,
