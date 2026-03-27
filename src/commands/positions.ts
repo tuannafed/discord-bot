@@ -14,7 +14,6 @@ export function init(cService: CallService, mService: MarketService): void {
 
 function calcPnl(pos: Position, call: CallWithPositions, currentPrice: number): { pct: number; status: string } | { status: 'na' } {
   if (pos.closedAt !== null) {
-    // Closed PnL already has leverage applied when saved
     const pct = pos.pnlPct ?? 0;
     return { pct, status: pos.closeType === 'tp' ? 'TP' : 'CL' };
   }
@@ -27,7 +26,6 @@ function calcPnl(pos: Position, call: CallWithPositions, currentPrice: number): 
 }
 
 function buildTable(positions: Position[], call: CallWithPositions, currentPrice: number): string {
-  // Caller row uses call price and call leverage
   const callerRow: Position = {
     id: '', callId: call.id, guildId: call.guildId, userId: call.calledById,
     username: call.calledBy, entryPrice: call.callPrice, leverage: call.leverage,
@@ -36,30 +34,43 @@ function buildTable(positions: Position[], call: CallWithPositions, currentPrice
   };
   const allRows = [callerRow, ...positions];
 
-  const NAME_W = Math.max(4, ...allRows.map((p) => p.username.length));
-  const header = `#  ${'Name'.padEnd(NAME_W)}  ${'Entry'.padStart(10)}  Lev   PnL`;
+  const NAME_W = 8;
+  const header = `#  ${'Name'.padEnd(NAME_W)}  ${'Entry'.padStart(7)}  Lev  PnL`;
   const sep = '-'.repeat(header.length);
 
   const rows = allRows.map((pos, i) => {
     const label = String(i + 1).padStart(2);
     const pnlResult = calcPnl(pos, call, currentPrice);
+
     let pnlStr: string;
+    let isPositive: boolean | null = null;
+
     if (pnlResult.status === 'na') {
       pnlStr = 'N/A';
     } else {
       const { pct, status } = pnlResult as { pct: number; status: string };
       const sign = pct >= 0 ? '+' : '';
+      isPositive = pct >= 0;
       pnlStr = status === 'TP'
         ? `${sign}${pct.toFixed(2)}% TP`
         : status === 'CL'
           ? `${sign}${pct.toFixed(2)}% CL`
           : `${sign}${pct.toFixed(2)}%`;
     }
-    const entry = formatPrice(pos.entryPrice);
-    const lev = `x${pos.leverage}`.padEnd(5);
-    return `${label}  ${pos.username.padEnd(NAME_W)}  ${entry.padStart(10)}  ${lev} ${pnlStr}`;
+
+    const name = pos.username.length > NAME_W ? pos.username.slice(0, NAME_W) : pos.username.padEnd(NAME_W);
+    const price = pos.entryPrice < 1
+      ? `$${pos.entryPrice.toFixed(3)}`
+      : `$${pos.entryPrice.toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}`;
+    const lev = String(pos.leverage).padEnd(4);
+    const line = `${label}  ${name}  ${price.padStart(7)}  ${lev} ${pnlStr}`;
+
+    // diff syntax: prefix + for green, - for red, space for neutral
+    if (isPositive === null) return `  ${line}`;
+    return isPositive ? `+ ${line}` : `- ${line}`;
   });
-  return '```\n' + [header, sep, ...rows].join('\n') + '\n```';
+
+  return '```diff\n' + [header, sep, ...rows].join('\n') + '\n```';
 }
 
 export const data = new SlashCommandBuilder()
@@ -76,7 +87,6 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     return;
   }
 
-  // Fetch live prices directly from Bybit (no cache)
   const symbols = [...new Set(callsWithPositions.map((c) => c.symbol))];
   const priceMap = await marketService.getLivePrices(symbols);
 
@@ -88,15 +98,15 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   for (const call of callsWithPositions) {
     const currentPrice = priceMap.get(call.symbol) ?? 0;
     const dirEmoji = call.direction === 'long' ? '📈 LONG' : '📉 SHORT';
-    const priceStr = currentPrice > 0 ? ` · Market Price Now: ${formatPrice(currentPrice)}` : '';
+    const priceStr = currentPrice > 0 ? `\n**Market Price Now: ${formatPrice(currentPrice)}**` : '';
 
-    const header = `${call.symbol} ${dirEmoji} x${call.leverage}${priceStr}`;
+    const fieldName = `**${call.symbol}** ${dirEmoji} x${call.leverage}`;
+    const fieldValue = priceStr + (call.positions.length === 0
+      ? '\n_Chưa có ai join_'
+      : '\n' + buildTable(call.positions, call, currentPrice));
 
-    if (call.positions.length === 0) {
-      embed.addFields({ name: header, value: '_Chưa có ai join_' });
-    } else {
-      embed.addFields({ name: header, value: buildTable(call.positions, call, currentPrice) });
-    }
+    embed.addFields({ name: fieldName, value: fieldValue });
   }
+
   await interaction.editReply({ embeds: [embed] });
 }
