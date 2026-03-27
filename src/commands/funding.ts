@@ -31,6 +31,17 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const sign = pctPeriod >= 0 ? '+' : '';
 
   const unix = Math.floor(snap.nextFundingTime.getTime() / 1000);
+  const nextFormatted = new Intl.DateTimeFormat('en-GB', {
+    weekday: 'short',
+    day: '2-digit',
+    month: '2-digit',
+    year: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+    .format(snap.nextFundingTime)
+    .replace(',', '');
 
   const embed = new EmbedBuilder()
     .setTitle(`Funding — ${snap.baseSymbol}/USDT · Bybit`)
@@ -38,13 +49,9 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     .setDescription(
       [
         `**Rate kỳ hiện tại:** \`${sign}${pctPeriod.toFixed(4)}%\` / ${snap.fundingIntervalHours}h`,
-        'Rate **dương** → long trả short · **âm** → short trả long *(Bybit)*',
-        '',
-        `**Mark:** ${formatPrice(snap.markPrice)} · **Index:** ${formatPrice(snap.indexPrice)}`,
-        `**Funding tiếp theo:** <t:${unix}:F> (<t:${unix}:R>)`,
+        `**Funding tiếp theo:** ${nextFormatted} (<t:${unix}:R>)`,
       ].join('\n'),
     )
-    .setFooter({ text: 'Bybit v5 public API · cache ~30s' })
     .setTimestamp();
 
   await interaction.editReply({ embeds: [embed] });
