@@ -24,10 +24,15 @@ import { getPool, runMigrations } from './db/pg-client.js';
 import { buildCommands } from './commands/index.js';
 import { registerReadyEvent } from './events/ready.js';
 import { registerInteractionCreateEvent } from './events/interaction-create.js';
+import { registerMessageCreateEvent } from './events/message-create.js';
 
 async function main(): Promise<void> {
   const client = new Client({
-    intents: [GatewayIntentBits.Guilds],
+    intents: [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.MessageContent,
+    ],
   });
 
   // Repositories — use PostgreSQL when DATABASE_URL is set, else JSON files
@@ -79,6 +84,7 @@ async function main(): Promise<void> {
   // Events
   registerReadyEvent(client, pollingService);
   registerInteractionCreateEvent(client, commands);
+  registerMessageCreateEvent(client);
 
   await client.login(env.DISCORD_TOKEN);
 
