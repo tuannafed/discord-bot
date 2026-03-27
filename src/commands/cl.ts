@@ -7,7 +7,6 @@ import {
 } from 'discord.js';
 import { CallService } from '../services/call.service.js';
 import { formatPrice } from '../utils/format.js';
-import { getMilestoneHit, sendMilestoneNotification } from '../utils/pnl-milestone.js';
 import { getClMessage } from '../utils/trade-messages.js';
 import { startCloseReminder } from '../utils/close-reminder.js';
 
@@ -89,18 +88,6 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     .setTimestamp();
 
   await interaction.editReply({ embeds: [embed] });
-
-  const milestone = getMilestoneHit(pnlPct);
-  if (milestone !== null) {
-    await sendMilestoneNotification(discordClient, call.channelId, {
-      userId,
-      symbol: call.symbol,
-      direction: call.direction,
-      pnlPct,
-      milestone,
-      guildId: interaction.guildId!,
-    });
-  }
 
   if (isCaller) {
     startCloseReminder(

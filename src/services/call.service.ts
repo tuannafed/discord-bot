@@ -129,6 +129,13 @@ export class CallService {
       : ((entryPrice - currentPrice) / entryPrice) * 100;
     const pnlPct = rawPct * leverage;
 
+    if (params.closeType === 'tp' && pnlPct < 0) {
+      return { error: 'Take profit chỉ dùng khi P&L đang không âm (≥ 0%). Hiện P&L ước tính đang âm — dùng `/cl` hoặc `/sl` nếu muốn đóng lỗ.' };
+    }
+    if ((params.closeType === 'sl' || params.closeType === 'cl') && pnlPct > 0) {
+      return { error: 'Cut loss / stop loss chỉ dùng khi P&L không dương (≤ 0%). Hiện P&L ước tính đang dương — dùng `/tp` nếu muốn chốt lời.' };
+    }
+
     const closedAt = new Date().toISOString();
 
     let closedPosition: Position;
@@ -240,6 +247,22 @@ export class CallService {
     call: Call,
     currentPrice: number,
   ): Promise<number[]> {
+    const isSyntheticCaller = position.id.startsWith('caller-');
+    let milestoneCall = call;
+    let followerLive: Position | undefined;
+
+    // Re-verify DB so a 5‑min poll snapshot cannot notify after TP/CL/SL (or caller closed)
+    if (isSyntheticCaller) {
+      const liveCall = await this.repo.findCallById(call.id);
+      if (!liveCall || liveCall.callerClosedAt != null || liveCall.status !== 'active') return [];
+      milestoneCall = liveCall;
+      if (this.callerMuted.has(position.callId)) return [];
+    } else {
+      followerLive = await this.repo.findOpenPositionByUser(position.callId, position.userId);
+      if (!followerLive || followerLive.id !== position.id) return [];
+      if (followerLive.mutedMilestones) return [];
+    }
+
     const rawPct = call.direction === 'long'
       ? ((currentPrice - position.entryPrice) / position.entryPrice) * 100
       : ((position.entryPrice - currentPrice) / position.entryPrice) * 100;
@@ -257,16 +280,9 @@ export class CallService {
       }
     }
 
-    const isCaller = position.id.startsWith('caller-');
-
-    // Skip if muted
-    if (isCaller) {
-      if (this.callerMuted.has(position.callId)) return [];
-    } else if (position.mutedMilestones) {
-      return [];
-    }
-
-    const rawStored = isCaller ? call.callerNotifiedMilestones : position.notifiedMilestones;
+    const rawStored = isSyntheticCaller
+      ? milestoneCall.callerNotifiedMilestones
+      : followerLive!.notifiedMilestones;
     const trimmed = rawStored != null && String(rawStored).trim() !== '' ? String(rawStored).trim() : '';
     const parsed = trimmed === '' ? NaN : parseInt(trimmed, 10);
     const lastStored = Number.isFinite(parsed) ? parsed : null;
@@ -276,7 +292,7 @@ export class CallService {
     if (currentBand === lastStored) return [];
 
     // Mỗi lần band đổi (lãi hoặc lỗ) đều notify — ví dụ +300% → <300% (band 200) vẫn bắn mốc 200%; lên lại >300% bắn 300%. Lỗ: -300% → band -200 cũng bắn khi đổi bậc.
-    if (isCaller) {
+    if (isSyntheticCaller) {
       await this.repo.updateCallerNotifiedMilestones(position.callId, String(currentBand));
     } else {
       await this.repo.updateNotifiedMilestones(position.id, String(currentBand));
