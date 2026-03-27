@@ -1,6 +1,6 @@
 import { Client, Events } from 'discord.js';
 import { logger } from '../utils/logger.js';
-import type { LlmChatService } from '../services/llm-chat.service.js';
+import { LLM_ERROR_USER_MESSAGE, type LlmChatService } from '../services/llm-chat.service.js';
 
 const DISCORD_MSG_MAX = 1900;
 
@@ -57,7 +57,7 @@ export function registerMessageCreateEvent(client: Client, llmChat: LlmChatServi
       const result = await llmChat.complete(prompt);
       if ('error' in result) {
         await message.reply({
-          content: `❌ ${result.error}`,
+          content: LLM_ERROR_USER_MESSAGE,
           allowedMentions: { repliedUser: true },
         });
         return;

@@ -1,5 +1,8 @@
 import { logger } from '../utils/logger.js';
 
+/** Một dòng cố định cho Discord; chi tiết chỉ trong log. */
+export const LLM_ERROR_USER_MESSAGE = 'Không trả lời được lúc này — thử lại sau.';
+
 export type LlmProvider = 'openai' | 'anthropic';
 
 export type LlmChatConfig = {
@@ -21,8 +24,31 @@ type OpenAiChatResponse = {
 type AnthropicMessageResponse = {
   type?: string;
   content?: Array<{ type: string; text?: string }>;
-  error?: { message?: string };
+  error?: { message?: string; type?: string };
 };
+
+/** Anthropic trả { type: 'error', error: { message } } hoặc HTTP 4xx cùng schema. */
+function anthropicErrorMessage(raw: unknown, status: number, statusText: string): string {
+  if (raw && typeof raw === 'object') {
+    const o = raw as Record<string, unknown>;
+    const err = o.error;
+    if (typeof err === 'object' && err !== null && 'message' in err) {
+      const m = (err as { message?: unknown }).message;
+      if (typeof m === 'string' && m.length > 0) return m;
+    }
+    if (typeof o.message === 'string' && o.message.length > 0) return o.message;
+  }
+  if (status) return `${status} ${statusText}`.trim();
+  return statusText || 'Unknown error';
+}
+
+/** Đảm bảo POST …/v1/messages (nhiều người chỉ ghi https://api.anthropic.com). */
+function normalizeAnthropicBaseUrl(base: string): string {
+  const b = base.replace(/\/$/, '');
+  if (/\/v\d+$/i.test(b)) return b;
+  if (b === 'https://api.anthropic.com' || b === 'http://api.anthropic.com') return `${b}/v1`;
+  return b;
+}
 
 function extractAnthropicText(data: AnthropicMessageResponse): string | null {
   const blocks = data.content?.filter((b) => b.type === 'text' && b.text) ?? [];
@@ -82,22 +108,34 @@ export class LlmChatService {
         signal: AbortSignal.timeout(90_000),
       });
 
-      const data = (await res.json()) as OpenAiChatResponse;
+      const raw = await res.text();
+      let data: OpenAiChatResponse = {};
+      try {
+        data = raw ? (JSON.parse(raw) as OpenAiChatResponse) : {};
+      } catch {
+        logger.warn(
+          `OpenAI-compatible non-JSON HTTP ${res.status} url=${url} body=${raw.slice(0, 2000)}`,
+        );
+        return { error: LLM_ERROR_USER_MESSAGE };
+      }
 
       if (!res.ok) {
         const msg = data.error?.message ?? res.statusText;
-        logger.warn(`LLM HTTP ${res.status}: ${msg}`);
-        return { error: 'Model trả lỗi — thử lại sau hoặc kiểm tra API key / model.' };
+        logger.warn(
+          `OpenAI-compatible HTTP ${res.status} url=${url} model=${this.cfg.model} apiMessage=${msg} body=${raw.slice(0, 2000)}`,
+        );
+        return { error: LLM_ERROR_USER_MESSAGE };
       }
 
       const text = data.choices?.[0]?.message?.content?.trim();
       if (!text) {
-        return { error: 'Model không trả nội dung.' };
+        logger.warn(`OpenAI-compatible empty content model=${this.cfg.model} body=${raw.slice(0, 2000)}`);
+        return { error: LLM_ERROR_USER_MESSAGE };
       }
       return { text };
     } catch (err) {
-      logger.warn(`LLM request failed: ${(err as Error).message}`);
-      return { error: 'Không gọi được API (mạng hoặc timeout).' };
+      logger.warn(`OpenAI-compatible request failed model=${this.cfg.model}`, err);
+      return { error: LLM_ERROR_USER_MESSAGE };
     }
   }
 
@@ -105,7 +143,8 @@ export class LlmChatService {
     base: string,
     userMessage: string,
   ): Promise<{ text: string } | { error: string }> {
-    const url = `${base}/messages`;
+    const root = normalizeAnthropicBaseUrl(base);
+    const url = `${root}/messages`;
     const body = {
       model: this.cfg.model,
       max_tokens: this.cfg.maxTokens,
@@ -117,7 +156,7 @@ export class LlmChatService {
       const res = await fetch(url, {
         method: 'POST',
         headers: {
-          'x-api-key': this.cfg.apiKey,
+          'x-api-key': this.cfg.apiKey.trim(),
           'anthropic-version': this.cfg.anthropicVersion,
           'Content-Type': 'application/json',
         },
@@ -125,22 +164,36 @@ export class LlmChatService {
         signal: AbortSignal.timeout(90_000),
       });
 
-      const data = (await res.json()) as AnthropicMessageResponse;
+      const rawText = await res.text();
+      let data: AnthropicMessageResponse;
+      try {
+        data = rawText ? (JSON.parse(rawText) as AnthropicMessageResponse) : {};
+      } catch {
+        logger.warn(
+          `Anthropic non-JSON HTTP ${res.status} url=${url} model=${this.cfg.model} body=${rawText.slice(0, 2000)}`,
+        );
+        return { error: LLM_ERROR_USER_MESSAGE };
+      }
 
       if (!res.ok || data.type === 'error') {
-        const msg = data.error?.message ?? res.statusText;
-        logger.warn(`Anthropic HTTP ${res.status}: ${msg}`);
-        return { error: 'Claude trả lỗi — thử lại sau hoặc kiểm tra API key / model.' };
+        const detail = anthropicErrorMessage(data, res.status, res.statusText);
+        logger.warn(
+          `Anthropic HTTP ${res.status} url=${url} model=${this.cfg.model} detail=${detail} body=${rawText.slice(0, 2000)}`,
+        );
+        return { error: LLM_ERROR_USER_MESSAGE };
       }
 
       const text = extractAnthropicText(data);
       if (!text) {
-        return { error: 'Claude không trả nội dung.' };
+        logger.warn(
+          `Anthropic empty content model=${this.cfg.model} body=${rawText.slice(0, 2000)}`,
+        );
+        return { error: LLM_ERROR_USER_MESSAGE };
       }
       return { text };
     } catch (err) {
-      logger.warn(`Anthropic request failed: ${(err as Error).message}`);
-      return { error: 'Không gọi được API (mạng hoặc timeout).' };
+      logger.warn(`Anthropic request failed model=${this.cfg.model}`, err);
+      return { error: LLM_ERROR_USER_MESSAGE };
     }
   }
 }
@@ -169,7 +222,7 @@ export function buildLlmChatServiceFromEnv(env: {
     provider === 'anthropic' ? 'https://api.anthropic.com/v1' : 'https://api.openai.com/v1';
   const baseUrl = (env.LLM_BASE_URL?.trim() || defaultBase).replace(/\/$/, '');
   const defaultModel =
-    provider === 'anthropic' ? 'claude-3-5-haiku-20241022' : 'gpt-4o-mini';
+    provider === 'anthropic' ? 'claude-haiku-4-5-20251001' : 'gpt-4o-mini';
 
   return new LlmChatService({
     provider,
