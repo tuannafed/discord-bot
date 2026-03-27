@@ -35,11 +35,10 @@ function buildTable(positions: Position[], call: CallWithPositions, currentPrice
   const allRows = [callerRow, ...positions];
 
   const NAME_W = 8;
-  const header = `#  ${'Name'.padEnd(NAME_W)}  ${'Entry'.padStart(7)}  Lev  PnL`;
+  const header = `${'Name'.padEnd(NAME_W)}  ${'Entry'.padStart(7)}  Lev  PnL`;
   const sep = '-'.repeat(header.length);
 
-  const rows = allRows.map((pos, i) => {
-    const label = String(i + 1).padStart(2);
+  const rows = allRows.map((pos) => {
     const pnlResult = calcPnl(pos, call, currentPrice);
 
     let pnlStr: string;
@@ -63,14 +62,16 @@ function buildTable(positions: Position[], call: CallWithPositions, currentPrice
       ? `$${pos.entryPrice.toFixed(3)}`
       : `$${pos.entryPrice.toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}`;
     const lev = String(pos.leverage).padEnd(4);
-    const line = `${label}  ${name}  ${price.padStart(7)}  ${lev} ${pnlStr}`;
+    const line = `${name}  ${price.padStart(7)}  ${lev} ${pnlStr}`;
 
-    // diff syntax: prefix + for green, - for red, space for neutral
-    if (isPositive === null) return `  ${line}`;
-    return isPositive ? `+ ${line}` : `- ${line}`;
+    // ANSI colors: green=32, red=31, reset=0
+    if (isPositive === null) return line;
+    return isPositive
+      ? `\u001b[32m${line}\u001b[0m`
+      : `\u001b[31m${line}\u001b[0m`;
   });
 
-  return '```diff\n' + [header, sep, ...rows].join('\n') + '\n```';
+  return '```ansi\n' + [header, sep, ...rows].join('\n') + '\n```';
 }
 
 export const data = new SlashCommandBuilder()
