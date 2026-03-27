@@ -28,7 +28,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
 
   const lines = coins.map((coin, i) => {
     const arrow = coin.priceChangePercentage24h >= 0 ? '▲' : '▼';
-    return `${String(i + 1).padStart(2)}. ${coin.symbol.toUpperCase().padEnd(5)} ${formatPriceFixed(coin.currentPrice)} ${formatMarketCapFixed(coin.marketCap)} ${arrow}${formatChangeFixed(coin.priceChangePercentage24h)}`;
+    return `${String(i + 1).padStart(2)}. ${coin.symbol.toUpperCase().slice(0, 5).padEnd(5)} ${formatPriceFixed(coin.currentPrice)} ${formatMarketCapFixed(coin.marketCap)} ${arrow}${formatChangeFixed(coin.priceChangePercentage24h)}`;
   });
 
   const embed = new EmbedBuilder()

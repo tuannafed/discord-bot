@@ -89,8 +89,8 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       { name: 'Entry', value: formatPrice(position.entryPrice), inline: true },
       { name: 'Close Price', value: formatPrice(currentPrice), inline: true },
       { name: 'P&L', value: `**${sign}${pnlPct.toFixed(2)}%**`, inline: true },
-      { name: 'User', value: `<@${userId}>`, inline: true },
       { name: 'Leverage', value: `x${position.leverage}`, inline: true },
+      { name: 'User', value: `<@${userId}>`, inline: false },
     )
     .setTimestamp();
 

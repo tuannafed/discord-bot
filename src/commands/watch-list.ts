@@ -38,11 +38,11 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
 
   const lines = items.map((item) => {
     const market = marketMap.get(item.symbol.toLowerCase());
-    if (!market) return `${item.symbol.toUpperCase().padEnd(5)} — unavailable`;
+    if (!market) return `${item.symbol.toUpperCase().slice(0, 5).padEnd(5)} — unavailable`;
 
     const arrow = market.priceChangePercentage24h >= 0 ? '▲' : '▼';
     const chg = formatChange(market.priceChangePercentage24h);
-    return `${market.symbol.toUpperCase().padEnd(5)} ${formatPrice(market.currentPrice).padEnd(10)} ${formatMarketCap(market.marketCap).padEnd(7)} ${arrow}${chg.padStart(7)}`;
+    return `${market.symbol.toUpperCase().slice(0, 5).padEnd(5)} ${formatPrice(market.currentPrice).padEnd(10)} ${formatMarketCap(market.marketCap).padEnd(7)} ${arrow}${chg.padStart(7)}`;
   });
 
   const embed = new EmbedBuilder()
