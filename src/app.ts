@@ -4,6 +4,7 @@ import { env } from './config/env.js';
 import { logger } from './utils/logger.js';
 
 import { CryptoDataProvider } from './providers/crypto-data.provider.js';
+import { CoinGeckoProvider } from './providers/coingecko.provider.js';
 import { MarketService } from './services/market.service.js';
 import { WatchlistService, IWatchlistRepository } from './services/watchlist.service.js';
 import { AlertService, IAlertRepository } from './services/alert.service.js';
@@ -50,6 +51,7 @@ async function main(): Promise<void> {
 
   // Providers
   const cryptoProvider = new CryptoDataProvider();
+  const coinGeckoProvider = new CoinGeckoProvider();
 
   // Services
   const marketService = new MarketService(cryptoProvider);
@@ -69,6 +71,7 @@ async function main(): Promise<void> {
     alertService,
     candidateService,
     cryptoProvider,
+    coinGeckoProvider,
     callService!,
     client,
   );

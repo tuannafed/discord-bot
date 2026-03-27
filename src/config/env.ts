@@ -14,6 +14,9 @@ const envSchema = z.object({
   // Bybit (optional — used to enrich real-time prices)
   BYBIT_API_KEY: z.string().optional(),
 
+  // CoinGecko (optional — used for global market metrics)
+  COINGECKO_API_KEY: z.string().optional(),
+
   DATA_DIR: z.string().optional(),
   DATABASE_URL: z.string().optional(),
   DATABASE_SSL_REJECT_UNAUTHORIZED: z.coerce.boolean().default(true),

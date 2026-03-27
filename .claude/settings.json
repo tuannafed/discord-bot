@@ -8,7 +8,8 @@
       "Write(**)",
       "Edit(**)",
       "Bash(git *)",
-      "Bash(rm /Users/tuanna/Projects/My-app/discord-bot/src/commands/call-close.ts)"
+      "Bash(rm /Users/tuanna/Projects/My-app/discord-bot/src/commands/call-close.ts)",
+      "WebFetch(domain:api.coingecko.com)"
     ]
   },
   "hooks": {

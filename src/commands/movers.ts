@@ -115,8 +115,17 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     ? (coins: CoinMarketData[]) => buildCapLines(coins, label)
     : (coins: CoinMarketData[]) => buildPriceLines(coins, label);
 
+  const descParts = [
+    `Metric: **${metric === 'cap' ? 'Market Cap' : 'Price'}**`,
+    `Timeframe: **${label}**`,
+    `Limit: **${limit}**`,
+    ...(minCapInput != null ? [`Min Cap: **$${minCapInput}M**`] : []),
+    ...(maxCapInput != null ? [`Max Cap: **$${maxCapInput}M**`] : []),
+  ];
+
   const embed = new EmbedBuilder()
     .setTitle(`Top Movers — ${label} (${metric === 'cap' ? 'Market Cap' : 'Price'})`)
+    .setDescription(descParts.join('  ·  '))
     .setColor(0x5865f2)
     .setFooter({ text: 'Data from Bybit + CoinMarketCap' })
     .setTimestamp();

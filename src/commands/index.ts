@@ -4,6 +4,7 @@ import { WatchlistService } from '../services/watchlist.service.js';
 import { AlertService } from '../services/alert.service.js';
 import { CandidateService } from '../services/candidate.service.js';
 import { CryptoDataProvider } from '../providers/crypto-data.provider.js';
+import { CoinGeckoProvider } from '../providers/coingecko.provider.js';
 import { CallService } from '../services/call.service.js';
 
 import * as ping from './ping.js';
@@ -33,6 +34,7 @@ import * as followUpdate from './follow-update.js';
 import * as milestoneMute from './milestone-mute.js';
 import * as milestoneUnmute from './milestone-unmute.js';
 import * as positionFix from './position-fix.js';
+import * as market from './market.js';
 
 export interface Command {
   data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder;
@@ -46,6 +48,7 @@ export function buildCommands(
   alertService: AlertService,
   candidateService: CandidateService,
   provider: CryptoDataProvider,
+  coinGeckoProvider: CoinGeckoProvider,
   callService: CallService,
   client: Client,
 ): Map<string, Command> {
@@ -74,6 +77,7 @@ export function buildCommands(
   milestoneMute.init(callService);
   milestoneUnmute.init(callService);
   positionFix.init(callService);
+  market.init(coinGeckoProvider);
 
   const commands: Command[] = [
     ping,
@@ -102,6 +106,7 @@ export function buildCommands(
     milestoneMute,
     milestoneUnmute,
     positionFix,
+    market,
     help,
   ];
 
@@ -140,6 +145,7 @@ export function getCommandBuilders(): (SlashCommandBuilder | SlashCommandOptions
     milestoneMute.data,
     milestoneUnmute.data,
     positionFix.data,
+    market.data,
     help.data,
   ];
 }
