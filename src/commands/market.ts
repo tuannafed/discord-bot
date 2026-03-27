@@ -100,21 +100,19 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     },
   ];
 
-  const LABEL_W = 8;
-  const COL_W = 10;
-  const header = `${'INDEX'.padEnd(LABEL_W)} ${'PREV'.padStart(COL_W)} ${'NOW'.padStart(COL_W)}  CHG (${tfLabel})`;
-  const sep = '─'.repeat(header.length);
-  const lines = rows.map((r) => {
-    const label = r.label.padEnd(LABEL_W);
-    const prev = r.prev.padStart(COL_W);
-    const now = r.now.padStart(COL_W);
-    return `${label} ${prev} ${now}  ${r.chg}`;
-  });
+  const chgSign = (chg: string) => chg.startsWith('+') || chg.startsWith('▲') ? '🟢' : chg.startsWith('-') || chg.startsWith('▼') ? '🔴' : '⚪';
 
   const embed = new EmbedBuilder()
     .setTitle('🌐 Global Market Overview')
-    .setDescription('```\n' + [header, sep, ...lines].join('\n') + '\n```')
+    .setDescription(`Timeframe: **${tfLabel}**`)
     .setColor(0x5865f2)
+    .addFields(
+      ...rows.map((r) => ({
+        name: r.label,
+        value: `${r.prev} → **${r.now}**  ${chgSign(r.chg)} ${r.chg}`,
+        inline: false,
+      }))
+    )
     .setFooter({ text: 'Data from CoinGecko · BTC.D change in percentage points (pp)' })
     .setTimestamp();
 
