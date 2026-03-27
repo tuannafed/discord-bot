@@ -58,6 +58,8 @@ export async function runMigrations(): Promise<void> {
       created_at          TEXT NOT NULL
     );
 
+    ALTER TABLE positions ADD COLUMN IF NOT EXISTS notified_milestones TEXT NOT NULL DEFAULT '';
+
     CREATE TABLE IF NOT EXISTS calls (
       id           TEXT PRIMARY KEY,
       guild_id     TEXT NOT NULL,

@@ -1,8 +1,8 @@
 import { TextChannel, Client, EmbedBuilder } from 'discord.js';
 
-const MILESTONES = [100, 200, 300, 500, 1000];
+export const MILESTONES = [100, 200, 300, 500, 1000];
 
-const MILESTONE_CONFIG: Record<number, { emoji: string; title: string; color: number }> = {
+export const MILESTONE_CONFIG: Record<number, { emoji: string; title: string; color: number }> = {
   100:  { emoji: '🎉', title: 'x2 rồi bro!',        color: 0x2ecc71 },
   200:  { emoji: '🔥', title: 'x3 cháy quá!',        color: 0xe67e22 },
   300:  { emoji: '💎', title: 'x4 siêu phẩm!',       color: 0x1abc9c },

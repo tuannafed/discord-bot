@@ -78,6 +78,7 @@ export class CallService {
       closeType: null,
       closePrice: null,
       pnlPct: null,
+      notifiedMilestones: '',
     };
     await this.repo.createPosition(position);
     return { position, call };
@@ -164,6 +165,40 @@ export class CallService {
     if (!call) return { error: 'Kèo không tồn tại.' };
     await this.repo.deleteCall(callId);
     return { call };
+  }
+
+  async checkAndUpdateMilestones(
+    position: Position,
+    call: Call,
+    currentPrice: number,
+  ): Promise<number[]> {
+    const MILESTONES = [100, 200, 300, 500, 1000];
+    const already = new Set(
+      position.notifiedMilestones ? position.notifiedMilestones.split(',').map(Number) : []
+    );
+
+    const pnl = call.direction === 'long'
+      ? ((currentPrice - position.entryPrice) / position.entryPrice) * 100
+      : ((position.entryPrice - currentPrice) / position.entryPrice) * 100;
+
+    const newHits = MILESTONES.filter((m) => pnl >= m && !already.has(m));
+    if (newHits.length === 0) return [];
+
+    const updated = [...already, ...newHits].join(',');
+    await this.repo.updateNotifiedMilestones(position.id, updated);
+    return newHits;
+  }
+
+  async getOpenPositionsWithCalls(guildId: string): Promise<{ position: Position; call: Call }[]> {
+    const calls = await this.repo.findActiveCalls(guildId);
+    const result: { position: Position; call: Call }[] = [];
+    for (const call of calls) {
+      const positions = await this.repo.findOpenPositionsByCall(call.id);
+      for (const position of positions) {
+        result.push({ position, call });
+      }
+    }
+    return result;
   }
 
   async getCallWithPositions(callId: string): Promise<CallWithPositions | undefined> {

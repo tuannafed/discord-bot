@@ -5,7 +5,7 @@ const CALL_SELECT =
   'id, guild_id AS "guildId", channel_id AS "channelId", symbol, direction, call_price AS "callPrice", called_by AS "calledBy", called_by_id AS "calledById", called_at AS "calledAt", status';
 
 const POS_SELECT =
-  'id, call_id AS "callId", guild_id AS "guildId", user_id AS "userId", username, entry_price AS "entryPrice", joined_at AS "joinedAt", closed_at AS "closedAt", close_type AS "closeType", close_price AS "closePrice", pnl_pct AS "pnlPct"';
+  'id, call_id AS "callId", guild_id AS "guildId", user_id AS "userId", username, entry_price AS "entryPrice", joined_at AS "joinedAt", closed_at AS "closedAt", close_type AS "closeType", close_price AS "closePrice", pnl_pct AS "pnlPct", notified_milestones AS "notifiedMilestones"';
 
 export class PgCallRepository {
   constructor(private readonly db: Pool) {}
@@ -45,10 +45,14 @@ export class PgCallRepository {
 
   async createPosition(pos: Position): Promise<void> {
     await this.db.query(
-      `INSERT INTO positions (id, call_id, guild_id, user_id, username, entry_price, joined_at, closed_at, close_type, close_price, pnl_pct)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-      [pos.id, pos.callId, pos.guildId, pos.userId, pos.username, pos.entryPrice, pos.joinedAt, pos.closedAt, pos.closeType, pos.closePrice, pos.pnlPct]
+      `INSERT INTO positions (id, call_id, guild_id, user_id, username, entry_price, joined_at, closed_at, close_type, close_price, pnl_pct, notified_milestones)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+      [pos.id, pos.callId, pos.guildId, pos.userId, pos.username, pos.entryPrice, pos.joinedAt, pos.closedAt, pos.closeType, pos.closePrice, pos.pnlPct, pos.notifiedMilestones]
     );
+  }
+
+  async updateNotifiedMilestones(id: string, notifiedMilestones: string): Promise<void> {
+    await this.db.query('UPDATE positions SET notified_milestones = $1 WHERE id = $2', [notifiedMilestones, id]);
   }
 
   async findPositionsByCall(callId: string): Promise<Position[]> {

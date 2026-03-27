@@ -2,7 +2,9 @@ import cron from 'node-cron';
 import { Client, TextChannel } from 'discord.js';
 import { AlertService } from './alert.service.js';
 import { CandidateService } from './candidate.service.js';
+import { CallService } from './call.service.js';
 import { CryptoDataProvider } from '../providers/crypto-data.provider.js';
+import { MILESTONE_CONFIG, sendMilestoneNotification } from '../utils/pnl-milestone.js';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import { minutesSince, nowIso } from '../utils/time.js';
@@ -15,13 +17,17 @@ export class PollingService {
     private readonly client: Client,
     private readonly alertService: AlertService,
     private readonly candidateService: CandidateService,
-    private readonly provider: CryptoDataProvider
+    private readonly provider: CryptoDataProvider,
+    private readonly callService?: CallService,
   ) {}
 
   start(): void {
     this.tasks.push(
       cron.schedule('*/5 * * * *', () => {
         this.runAlertCheck().catch((err) => logger.error('Alert check failed', err));
+        if (this.callService) {
+          this.runMilestoneCheck().catch((err) => logger.error('Milestone check failed', err));
+        }
       })
     );
 
