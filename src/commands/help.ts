@@ -49,6 +49,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
           '`/tp` `call_id` — Take profit, đóng lệnh của bạn (fetch giá tự động)',
           '`/cl` `call_id` — Cut loss, đóng lệnh của bạn (fetch giá tự động)',
           '`/call-close` `call_id` — *(Admin)* Đóng kèo & auto-close tất cả positions còn mở',
+          '`/call-delete` `call_id` — *(Admin)* Xóa kèo ghi sai (xóa cả positions liên quan)',
           '> P&L% tính theo entry từng người · Long: `(close−entry)/entry` · Short: `(entry−close)/entry`',
         ].join('\n'),
       },

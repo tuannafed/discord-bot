@@ -38,6 +38,10 @@ export class CallService {
     return this.repo.findActiveCalls(guildId);
   }
 
+  async getAllCalls(guildId: string): Promise<Call[]> {
+    return this.repo.findAllCalls(guildId);
+  }
+
   async getActiveCallsWithPositions(guildId: string): Promise<CallWithPositions[]> {
     const calls = await this.repo.findActiveCalls(guildId);
     return Promise.all(
@@ -137,6 +141,13 @@ export class CallService {
     const closedCount = positions.filter((p) => p.closedAt === closedAt).length;
 
     return { call, closedCount, currentPrice };
+  }
+
+  async deleteCall(callId: string): Promise<{ call: Call } | { error: string }> {
+    const call = await this.repo.findCallById(callId);
+    if (!call) return { error: 'Kèo không tồn tại.' };
+    await this.repo.deleteCall(callId);
+    return { call };
   }
 
   async getCallWithPositions(callId: string): Promise<CallWithPositions | undefined> {

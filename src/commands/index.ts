@@ -27,6 +27,7 @@ import * as positions from './positions.js';
 import * as tp from './tp.js';
 import * as cl from './cl.js';
 import * as callClose from './call-close.js';
+import * as callDelete from './call-delete.js';
 
 export interface Command {
   data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder;
@@ -61,6 +62,7 @@ export function buildCommands(
   tp.init(callService);
   cl.init(callService);
   callClose.init(callService);
+  callDelete.init(callService);
 
   const commands: Command[] = [
     ping,
@@ -83,6 +85,7 @@ export function buildCommands(
     tp,
     cl,
     callClose,
+    callDelete,
     help,
   ];
 
@@ -115,6 +118,7 @@ export function getCommandBuilders(): (SlashCommandBuilder | SlashCommandOptions
     tp.data,
     cl.data,
     callClose.data,
+    callDelete.data,
     help.data,
   ];
 }

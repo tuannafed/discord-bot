@@ -96,6 +96,11 @@ export class PgCallRepository {
     }
   }
 
+  async deleteCall(id: string): Promise<void> {
+    await this.db.query('DELETE FROM positions WHERE call_id = $1', [id]);
+    await this.db.query('DELETE FROM calls WHERE id = $1', [id]);
+  }
+
   async checkAllPositionsClosed(callId: string): Promise<boolean> {
     const r = await this.db.query<{ count: string }>(
       `SELECT COUNT(*) AS count FROM positions WHERE call_id = $1 AND closed_at IS NULL`,
