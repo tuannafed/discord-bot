@@ -41,8 +41,9 @@ export function startCloseReminder(
       const mentions = pending.map((p) => `<@${p.userId}>`).join(' ');
       const dirLabel = direction === 'long' ? '📈 LONG' : '📉 SHORT';
 
+      const titleEmoji = closeType === 'tp' ? '✅' : closeType === 'sl' ? '🟥' : '❌';
       const embed = new EmbedBuilder()
-        .setTitle(`⚠️ Nhắc đóng lệnh — ${symbol} ${dirLabel}`)
+        .setTitle(`${titleEmoji} Nhắc đóng lệnh — ${symbol} ${dirLabel}`)
         .setColor(closeType === 'tp' ? 0x2ecc71 : closeType === 'sl' ? 0xe67e22 : 0xe74c3c)
         .setDescription(
           `<@${callerUserId}> vừa **${action}** kèo **${symbol}**.\n` +

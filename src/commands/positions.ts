@@ -53,12 +53,19 @@ function buildContent(positions: Position[], call: CallWithPositions, currentPri
     if (pnlResult.status !== 'na') {
       const { pct, status } = pnlResult as { pct: number; status: string };
       const sign = pct >= 0 ? '+' : '';
-      emoji = pct >= 0 ? '🟢' : '🔴';
-      pnlStr = status === 'TP'
-        ? `${sign}${pct.toFixed(2)}%TP`
-        : status === 'CL'
-          ? `${sign}${pct.toFixed(2)}%CL`
-          : `${sign}${pct.toFixed(2)}%`;
+      if (status === 'TP') {
+        emoji = '✅';
+        pnlStr = `${sign}${pct.toFixed(2)}%TP`;
+      } else if (status === 'SL') {
+        emoji = '🟥';
+        pnlStr = `${sign}${pct.toFixed(2)}%SL`;
+      } else if (status === 'CL') {
+        emoji = '❌';
+        pnlStr = `${sign}${pct.toFixed(2)}%CL`;
+      } else {
+        emoji = pct >= 0 ? '🟢' : '🔴';
+        pnlStr = `${sign}${pct.toFixed(2)}%`;
+      }
     }
 
     return `${emoji} ${name}  ${price.padStart(7)}  ${lev} ${pnlStr}`;

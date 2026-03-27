@@ -62,20 +62,11 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const dirEmoji = call.direction === 'long' ? '📈 LONG' : '📉 SHORT';
   const isCaller = call.calledById === interaction.user.id;
 
-  const condolence = pnlPct <= -500
-    ? '💀 Thanh lý rồi bro ơi...'
-    : pnlPct <= -200
-    ? '😭 Đau quá!'
-    : pnlPct <= -50
-    ? '😢 Tiếc thật!'
-    : pnlPct < 0
-    ? '🛑 Stop loss kịp thời!'
-    : '😅 May mà cắt kịp!';
-
   const embed = new EmbedBuilder()
-    .setTitle(`${condolence} — ${call.symbol} ${dirEmoji}`)
+    .setTitle(`🛑 Stop Loss — ${call.symbol} ${dirEmoji}`)
     .setColor(0xe67e22)
     .addFields(
+      { name: 'Symbol', value: `${call.symbol} ${dirEmoji}`, inline: true },
       { name: 'Entry', value: formatPrice(position.entryPrice), inline: true },
       { name: 'Close Price', value: formatPrice(currentPrice), inline: true },
       { name: 'P&L', value: `**${sign}${pnlPct.toFixed(2)}%**`, inline: true },

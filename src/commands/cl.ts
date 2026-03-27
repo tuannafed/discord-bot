@@ -73,9 +73,10 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     : '😅 May mà kịp cắt!';
 
   const embed = new EmbedBuilder()
-    .setTitle(`${condolence} — ${call.symbol} ${dirEmoji}`)
+    .setTitle(`❌ Cut Loss — ${call.symbol} ${dirEmoji}`)
     .setColor(0xe74c3c)
     .addFields(
+      { name: 'Symbol', value: `${call.symbol} ${dirEmoji}`, inline: true },
       { name: 'Entry', value: formatPrice(position.entryPrice), inline: true },
       { name: 'Close Price', value: formatPrice(currentPrice), inline: true },
       { name: 'P&L', value: `**${sign}${pnlPct.toFixed(2)}%**`, inline: true },
