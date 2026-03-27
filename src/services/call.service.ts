@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { PgCallRepository } from '../repositories/pg-call.repository.js';
 import { MarketService } from './market.service.js';
 import { Call, CallWithPositions, Position, CloseType } from '../types/call.js';
+import { LOSS_MILESTONES, MILESTONES } from '../utils/pnl-milestone.js';
 
 export class CallService {
   // In-memory mute state for callers: Set of callIds where caller has muted milestone noti
@@ -239,9 +240,6 @@ export class CallService {
     call: Call,
     currentPrice: number,
   ): Promise<number[]> {
-    const MILESTONES      = [100, 200, 300, 500, 1000];
-    const LOSS_MILESTONES = [-100, -200, -300, -500, -1000];
-
     const rawPct = call.direction === 'long'
       ? ((currentPrice - position.entryPrice) / position.entryPrice) * 100
       : ((position.entryPrice - currentPrice) / position.entryPrice) * 100;
