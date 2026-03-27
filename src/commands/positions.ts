@@ -12,18 +12,33 @@ export function init(cService: CallService, mService: MarketService): void {
   marketService = mService;
 }
 
-function pnlLabel(pos: Position, call: CallWithPositions, currentPrice: number): string {
+function calcPnl(pos: Position, call: CallWithPositions, currentPrice: number): { pct: number; status: string } {
   if (pos.closedAt !== null) {
     const pct = pos.pnlPct ?? 0;
-    const sign = pct >= 0 ? '+' : '';
-    const icon = pos.closeType === 'tp' ? '✅TP' : '❌CL';
-    return `${icon} ${sign}${pct.toFixed(2)}%`;
+    return { pct, status: pos.closeType === 'tp' ? 'TP' : 'CL' };
   }
-  const pnl = call.direction === 'long'
+  const pct = call.direction === 'long'
     ? ((currentPrice - pos.entryPrice) / pos.entryPrice) * 100
     : ((pos.entryPrice - currentPrice) / pos.entryPrice) * 100;
-  const sign = pnl >= 0 ? '+' : '';
-  return `🟡 ${sign}${pnl.toFixed(2)}%`;
+  return { pct, status: 'open' };
+}
+
+function buildTable(positions: Position[], call: CallWithPositions, currentPrice: number): string {
+  const NAME_W = Math.max(4, ...positions.map((p) => p.username.length));
+  const header = `#  ${'Name'.padEnd(NAME_W)}  ${'Entry'.padStart(10)}  PnL`;
+  const sep = '-'.repeat(header.length);
+  const rows = positions.map((pos, i) => {
+    const { pct, status } = calcPnl(pos, call, currentPrice);
+    const sign = pct >= 0 ? '+' : '';
+    const pnlStr = status === 'TP'
+      ? `${sign}${pct.toFixed(2)}% TP`
+      : status === 'CL'
+        ? `${sign}${pct.toFixed(2)}% CL`
+        : `${sign}${pct.toFixed(2)}%`;
+    const entry = `$${pos.entryPrice.toLocaleString('en-US')}`;
+    return `${String(i + 1).padStart(2)}  ${pos.username.padEnd(NAME_W)}  ${entry.padStart(10)}  ${pnlStr}`;
+  });
+  return '```\n' + [header, sep, ...rows].join('\n') + '\n```';
 }
 
 export const data = new SlashCommandBuilder()
@@ -54,24 +69,17 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     const dirEmoji = call.direction === 'long' ? '📈 LONG' : '📉 SHORT';
     const priceStr = currentPrice > 0 ? ` · Now: ${formatPrice(currentPrice)}` : '';
 
+    const shortId = call.id.slice(-6);
+    const header = `${call.symbol} ${dirEmoji} @ $${call.callPrice.toLocaleString('en-US')}${priceStr} · call by <@${call.calledById}> · \`...${shortId}\``;
+
     if (call.positions.length === 0) {
-      embed.addFields({
-        name: `${call.symbol} ${dirEmoji} @ $${call.callPrice.toLocaleString('en-US')}${priceStr}`,
-        value: '_Chưa có ai join_',
-      });
+      embed.addFields({ name: header, value: '_Chưa có ai join_' });
     } else {
-      const lines = call.positions.map((pos) => {
-        const label = pnlLabel(pos, call, currentPrice);
-        return `**${pos.username}** entry $${pos.entryPrice.toLocaleString('en-US')} → ${label}`;
-      });
-      embed.addFields({
-        name: `${call.symbol} ${dirEmoji} @ $${call.callPrice.toLocaleString('en-US')}${priceStr}`,
-        value: lines.join('\n'),
-      });
+      embed.addFields({ name: header, value: buildTable(call.positions, call, currentPrice) });
     }
   }
 
-  embed.setFooter({ text: `ID kèo: ${callsWithPositions.map((c) => c.id.slice(0, 8)).join(', ')}` });
+  embed.setFooter({ text: 'P&L tính theo entry từng người · giá realtime từ Bybit' });
 
   await interaction.editReply({ embeds: [embed] });
 }

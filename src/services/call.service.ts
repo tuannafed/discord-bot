@@ -143,6 +143,22 @@ export class CallService {
     return { call, closedCount, currentPrice };
   }
 
+  async updateCallPrice(callId: string, callPrice: number): Promise<{ call: Call } | { error: string }> {
+    const call = await this.repo.findCallById(callId);
+    if (!call) return { error: 'Kèo không tồn tại.' };
+    await this.repo.updateCallPrice(callId, callPrice);
+    return { call: { ...call, callPrice } };
+  }
+
+  async updatePositionEntry(callId: string, userId: string, entryPrice: number): Promise<{ position: Position; call: Call } | { error: string }> {
+    const call = await this.repo.findCallById(callId);
+    if (!call) return { error: 'Kèo không tồn tại.' };
+    const position = await this.repo.findOpenPositionByUser(callId, userId);
+    if (!position) return { error: 'Bạn chưa join kèo này hoặc đã đóng rồi.' };
+    await this.repo.updatePositionEntry(position.id, entryPrice);
+    return { position: { ...position, entryPrice }, call };
+  }
+
   async deleteCall(callId: string): Promise<{ call: Call } | { error: string }> {
     const call = await this.repo.findCallById(callId);
     if (!call) return { error: 'Kèo không tồn tại.' };

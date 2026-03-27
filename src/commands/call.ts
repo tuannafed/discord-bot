@@ -48,15 +48,15 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   });
 
   const dirEmoji = direction === 'long' ? '📈 LONG' : '📉 SHORT';
+  const shortId = call.id.slice(-6);
   const embed = new EmbedBuilder()
     .setTitle(`🎯 Kèo mới: ${symbol} ${dirEmoji}`)
     .setColor(direction === 'long' ? 0x2ecc71 : 0xe74c3c)
     .addFields(
-      { name: 'Symbol', value: symbol, inline: true },
-      { name: 'Direction', value: dirEmoji, inline: true },
+      { name: 'Symbol', value: `${symbol} ${dirEmoji}`, inline: true },
       { name: 'Call Price', value: `$${price.toLocaleString('en-US')}`, inline: true },
       { name: 'Called by', value: `<@${interaction.user.id}>`, inline: true },
-      { name: 'ID', value: `\`${call.id}\``, inline: false },
+      { name: 'ID', value: `\`...${shortId}\``, inline: true },
     )
     .setDescription('Dùng `/follow` để vào lệnh theo kèo này.')
     .setTimestamp();

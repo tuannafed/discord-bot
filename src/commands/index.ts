@@ -28,6 +28,8 @@ import * as tp from './tp.js';
 import * as cl from './cl.js';
 import * as callClose from './call-close.js';
 import * as callDelete from './call-delete.js';
+import * as callUpdate from './call-update.js';
+import * as followUpdate from './follow-update.js';
 
 export interface Command {
   data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder;
@@ -63,6 +65,8 @@ export function buildCommands(
   cl.init(callService);
   callClose.init(callService);
   callDelete.init(callService);
+  callUpdate.init(callService);
+  followUpdate.init(callService);
 
   const commands: Command[] = [
     ping,
@@ -86,6 +90,8 @@ export function buildCommands(
     cl,
     callClose,
     callDelete,
+    callUpdate,
+    followUpdate,
     help,
   ];
 
@@ -119,6 +125,8 @@ export function getCommandBuilders(): (SlashCommandBuilder | SlashCommandOptions
     cl.data,
     callClose.data,
     callDelete.data,
+    callUpdate.data,
+    followUpdate.data,
     help.data,
   ];
 }

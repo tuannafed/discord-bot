@@ -96,6 +96,22 @@ export class PgCallRepository {
     }
   }
 
+  async updateCallPrice(id: string, callPrice: number): Promise<void> {
+    await this.db.query('UPDATE calls SET call_price = $1 WHERE id = $2', [callPrice, id]);
+  }
+
+  async updatePositionEntry(id: string, entryPrice: number): Promise<void> {
+    await this.db.query('UPDATE positions SET entry_price = $1 WHERE id = $2', [entryPrice, id]);
+  }
+
+  async findOpenPositionsByCall(callId: string): Promise<Position[]> {
+    const r = await this.db.query<Position>(
+      `SELECT ${POS_SELECT} FROM positions WHERE call_id = $1 AND closed_at IS NULL ORDER BY joined_at ASC`,
+      [callId]
+    );
+    return r.rows;
+  }
+
   async deleteCall(id: string): Promise<void> {
     await this.db.query('DELETE FROM positions WHERE call_id = $1', [id]);
     await this.db.query('DELETE FROM calls WHERE id = $1', [id]);
