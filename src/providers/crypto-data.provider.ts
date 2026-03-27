@@ -2,6 +2,7 @@ import { CryptoProvider } from './crypto-provider.interface.js';
 import { BybitProvider } from './bybit.provider.js';
 import { CoinMarketCapProvider } from './coinmarketcap.provider.js';
 import { CoinMarketData, CoinListItem } from '../types/coin.js';
+import { LinearFundingSnapshot } from '../types/funding.js';
 import { logger } from '../utils/logger.js';
 
 interface CacheEntry<T> {
@@ -12,6 +13,7 @@ interface CacheEntry<T> {
 const PRICE_CACHE_TTL_MS = 15_000;     // 15s for prices
 const MARKET_CACHE_TTL_MS = 60_000;    // 60s for full market data
 const LIST_CACHE_TTL_MS = 3_600_000;   // 1h for coin list
+const FUNDING_CACHE_TTL_MS = 30_000;   // 30s — Bybit funding / next time
 
 export class CryptoDataProvider implements CryptoProvider {
   private readonly bybit: BybitProvider;
@@ -20,6 +22,7 @@ export class CryptoDataProvider implements CryptoProvider {
   private priceCache = new Map<string, CacheEntry<CoinMarketData>>();
   private marketCache = new Map<string, CacheEntry<CoinMarketData[]>>();
   private listCache: CacheEntry<CoinListItem[]> | null = null;
+  private fundingCache = new Map<string, CacheEntry<LinearFundingSnapshot | null>>();
 
   constructor() {
     this.bybit = new BybitProvider();
@@ -208,10 +211,22 @@ export class CryptoDataProvider implements CryptoProvider {
     }
   }
 
+  /** USDT perpetual funding (Bybit linear) — short-lived cache */
+  async getLinearFunding(symbol: string): Promise<LinearFundingSnapshot | null> {
+    const key = symbol.replace(/USDT$/i, '').toUpperCase();
+    const cached = this.fundingCache.get(key);
+    if (cached && cached.expiresAt > Date.now()) return cached.data;
+
+    const data = await this.bybit.getLinearFunding(key);
+    this.fundingCache.set(key, { data, expiresAt: Date.now() + FUNDING_CACHE_TTL_MS });
+    return data;
+  }
+
   /** Invalidate all caches (e.g. after symbol resolution miss) */
   clearCache(): void {
     this.priceCache.clear();
     this.marketCache.clear();
     this.listCache = null;
+    this.fundingCache.clear();
   }
 }

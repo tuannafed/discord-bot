@@ -9,6 +9,7 @@ Discord bot for tracking crypto coins by market cap and daily growth. Built with
 - Price and market cap alerts with cooldown
 - Auto-discovery of top gainers with target market cap tracking
 - Multi-timeframe price & cap change for individual coins (`/coin`) and movers (`/movers`)
+- Bybit USDT perpetual funding snapshot (`/funding`) with next funding time
 - **Group trading** — call kèo, theo dõi ai đang theo kèo nào, tính P&L% realtime khi TP/CL
 
 ## Commands
@@ -103,6 +104,23 @@ Find Bybit-listed coins within a market cap range. Market cap from CoinMarketCap
 
 **Example:** `/scan min_cap:70000000 max_cap:100000000`
 → Finds Bybit-listed coins with market cap between $70M and $100M.
+
+---
+
+### `/funding`
+Check current funding rate for a Bybit USDT perpetual pair (linear), including next funding time.
+
+| Param | Type | Required | Description |
+|---|---|---|---|
+| `symbol` | string | Yes | Base symbol (e.g. `btc`, `eth`, `sol`) |
+
+**Example:** `/funding symbol:btc`
+
+**Output includes:**
+- Funding rate per interval (usually 8h)
+- Estimated APR (reference only)
+- Mark / Index prices
+- Next funding timestamp
 
 ---
 
@@ -308,7 +326,7 @@ yarn register
 ```
 
 Run once after setup, and again whenever you add or change commands.
-With `DISCORD_GUILD_ID` set: instant registration to that guild.
+With `DISCORD_GUILD_ID` set: instant registration to those guild(s) (comma-separated IDs).
 Without it: global registration (~1 hour propagation).
 
 ### 5. Run
@@ -348,7 +366,7 @@ Set `CANDIDATE_ALERT_CHANNEL_ID` to enable candidate notifications.
 |---|---|---|---|
 | `DISCORD_TOKEN` | Yes | — | Bot token |
 | `DISCORD_CLIENT_ID` | Yes | — | Application ID |
-| `DISCORD_GUILD_ID` | No | — | Guild ID for instant dev command registration |
+| `DISCORD_GUILD_ID` | No | — | Guild ID(s) for instant dev command registration; comma-separated for multiple |
 | `COINMARKETCAP_API_KEY` | Yes | — | CMC API key |
 | `BYBIT_API_KEY` | No | — | Bybit API key for real-time prices |
 | `DATABASE_URL` | No | — | PostgreSQL connection string (recommended for production) |

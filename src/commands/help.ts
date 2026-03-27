@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder, MessageFlags} from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder, MessageFlags } from 'discord.js';
 
 export const data = new SlashCommandBuilder()
   .setName('help')
@@ -18,6 +18,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
           '`/top` `[limit]` — Top coin theo vốn hóa *(có trên Bybit)*',
           '`/movers` `[metric]` `[timeframe]` `[type]` `[limit]` — Tăng/giảm mạnh nhất',
           '`/scan` `min_cap` `max_cap` `[limit]` — Lọc coin theo vốn hóa',
+          '`/funding` `symbol` — Funding Bybit USDT perpetual (rate, giờ funding tới, mark/index)',
           '`/unlock` `symbol` — Thông tin unlock token (lưu hành / bị khóa / tối đa)',
         ].join('\n'),
       },
@@ -75,6 +76,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
           '/top limit:20',
           '/movers metric:price timeframe:15m type:gainers limit:10',
           '/scan min_cap:70000000 max_cap:100000000',
+          '/funding symbol:btc',
           '/alert-add symbol:eth metric:price condition:above threshold:5000',
           '/alert-add symbol:btc metric:price condition:change_up threshold:3',
           '/unlock symbol:apt',

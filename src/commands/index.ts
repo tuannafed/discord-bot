@@ -35,6 +35,7 @@ import * as milestoneMute from './milestone-mute.js';
 import * as milestoneUnmute from './milestone-unmute.js';
 import * as positionFix from './position-fix.js';
 import * as market from './market.js';
+import * as funding from './funding.js';
 
 export interface Command {
   data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder;
@@ -78,6 +79,7 @@ export function buildCommands(
   milestoneUnmute.init(callService);
   positionFix.init(callService);
   market.init(coinGeckoProvider);
+  funding.init(marketService);
 
   const commands: Command[] = [
     ping,
@@ -107,6 +109,7 @@ export function buildCommands(
     milestoneUnmute,
     positionFix,
     market,
+    funding,
     help,
   ];
 
@@ -146,6 +149,7 @@ export function getCommandBuilders(): (SlashCommandBuilder | SlashCommandOptions
     milestoneUnmute.data,
     positionFix.data,
     market.data,
+    funding.data,
     help.data,
   ];
 }

@@ -53,4 +53,4 @@ app.ts
 
 ## Environment variables
 
-Copy `.env.example` to `.env`. Required: `DISCORD_TOKEN`, `DISCORD_CLIENT_ID`, `COINMARKETCAP_API_KEY`. Set `DISCORD_GUILD_ID` for instant guild-scoped registration during development (omit for global registration which takes ~1 hour). `BYBIT_API_KEY` is optional but enables real-time price enrichment.
+Copy `.env.example` to `.env`. Required: `DISCORD_TOKEN`, `DISCORD_CLIENT_ID`, `COINMARKETCAP_API_KEY`. Set `DISCORD_GUILD_ID` for instant guild-scoped registration during development (comma-separated for multiple guilds; omit for global registration which takes ~1 hour). `BYBIT_API_KEY` is optional but enables real-time price enrichment.

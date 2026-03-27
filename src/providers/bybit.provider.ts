@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import { CryptoProvider } from './crypto-provider.interface.js';
 import { CoinMarketData, CoinListItem } from '../types/coin.js';
+import { LinearFundingSnapshot } from '../types/funding.js';
 import { logger } from '../utils/logger.js';
 
 interface BybitTicker {
@@ -213,5 +214,49 @@ export class BybitProvider implements Pick<CryptoProvider, 'getMarketData'> {
   /** Bybit doesn't support coin listing — not applicable */
   async getCoinList(): Promise<CoinListItem[]> {
     throw new Error('getCoinList not supported by Bybit provider');
+  }
+
+  /**
+   * Current USDT perpetual funding for one symbol (linear category).
+   * Public endpoint — no API key required.
+   */
+  async getLinearFunding(symbol: string): Promise<LinearFundingSnapshot | null> {
+    const base = symbol.replace(/USDT$/i, '').toUpperCase();
+    const bybitSymbol = `${base}USDT`;
+    try {
+      const response = await this.client.get<BybitTickersResponse>('/v5/market/tickers', {
+        params: { category: 'linear', symbol: bybitSymbol },
+      });
+      if (response.data.retCode !== 0) {
+        logger.warn(`Bybit funding: ${response.data.retMsg} (${bybitSymbol})`);
+        return null;
+      }
+      const first = response.data.result.list[0];
+      if (!first) return null;
+      const row = first as BybitTicker & {
+        fundingRate?: string;
+        nextFundingTime?: string;
+        markPrice?: string;
+        indexPrice?: string;
+        fundingIntervalHour?: string;
+      };
+      if (!row?.fundingRate || row.fundingRate === '') return null;
+
+      const fundingRate = parseFloat(row.fundingRate);
+      const nextMs = parseInt(row.nextFundingTime ?? '0', 10);
+      const intervalH = Math.max(1, parseInt(row.fundingIntervalHour ?? '8', 10) || 8);
+
+      return {
+        baseSymbol: base,
+        fundingRate,
+        nextFundingTime: Number.isFinite(nextMs) && nextMs > 0 ? new Date(nextMs) : new Date(),
+        markPrice: parseFloat(row.markPrice ?? row.lastPrice ?? '0'),
+        indexPrice: parseFloat(row.indexPrice ?? '0'),
+        fundingIntervalHours: intervalH,
+      };
+    } catch (error) {
+      logger.error('Bybit getLinearFunding failed', error);
+      return null;
+    }
   }
 }

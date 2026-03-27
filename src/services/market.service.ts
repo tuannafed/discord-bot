@@ -1,5 +1,6 @@
 import { CryptoDataProvider } from '../providers/crypto-data.provider.js';
 import { CoinMarketData } from '../types/coin.js';
+import { LinearFundingSnapshot } from '../types/funding.js';
 import { resolveSymbolToId } from '../utils/symbol-resolver.js';
 
 export class MarketService {
@@ -82,5 +83,10 @@ export class MarketService {
       .filter((c) => c.marketCap >= minCap && c.marketCap <= maxCap)
       .sort((a, b) => b.marketCap - a.marketCap)
       .slice(0, limit);
+  }
+
+  /** Bybit USDT perp funding snapshot (symbol missing from linear → null) */
+  async getLinearFunding(symbol: string): Promise<LinearFundingSnapshot | null> {
+    return this.provider.getLinearFunding(symbol);
   }
 }
