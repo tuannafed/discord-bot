@@ -116,9 +116,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     : (coins: CoinMarketData[]) => buildPriceLines(coins, label);
 
   const descParts = [
-    `Metric: **${metric === 'cap' ? 'Market Cap' : 'Price'}**`,
     `Timeframe: **${label}**`,
-    `Limit: **${limit}**`,
     ...(minCapInput != null ? [`Min Cap: **$${minCapInput}M**`] : []),
     ...(maxCapInput != null ? [`Max Cap: **$${maxCapInput}M**`] : []),
   ];

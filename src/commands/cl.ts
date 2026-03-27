@@ -84,12 +84,13 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const embed = new EmbedBuilder()
     .setTitle(`❌ Cut Loss — ${call.symbol} ${dirEmoji}`)
     .setColor(0xe74c3c)
+    .setDescription(condolence)
     .addFields(
-      { name: 'Symbol', value: call.symbol, inline: true },
       { name: 'Entry', value: formatPrice(position.entryPrice), inline: true },
       { name: 'Close Price', value: formatPrice(currentPrice), inline: true },
       { name: 'P&L', value: `**${sign}${pnlPct.toFixed(2)}%**`, inline: true },
       { name: 'User', value: `<@${userId}>`, inline: true },
+      { name: 'Leverage', value: `x${position.leverage}`, inline: true },
     )
     .setTimestamp();
 

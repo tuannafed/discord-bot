@@ -69,14 +69,13 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const embed = new EmbedBuilder()
     .setTitle(`🎯 Kèo mới: ${symbol} ${dirEmoji}`)
     .setColor(direction === 'long' ? 0x2ecc71 : 0xe74c3c)
+    .setDescription('Dùng `/follow` để vào lệnh theo kèo này.')
     .addFields(
-      { name: 'Symbol', value: `${symbol} ${dirEmoji}`, inline: true },
       { name: 'Call Price', value: `$${price.toLocaleString('en-US')}`, inline: true },
       { name: 'Leverage', value: `x${leverage}`, inline: true },
       { name: 'Called by', value: `<@${interaction.user.id}>`, inline: true },
       { name: 'ID', value: `\`...${shortId}\``, inline: true },
     )
-    .setDescription('Dùng `/follow` để vào lệnh theo kèo này.')
     .setTimestamp();
 
   await interaction.editReply({ embeds: [embed] });

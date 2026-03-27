@@ -66,50 +66,51 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const rows = [
     {
       label: 'TOTAL',
-      desc: 'Tổng vốn hóa toàn thị trường',
+      prev: formatMarketCap(prev.total),
       now: formatMarketCap(current.total),
       chg: formatChange(current.total, prev.total),
     },
     {
       label: 'BTC.D',
-      desc: 'Bitcoin Dominance',
+      prev: formatDominance(prev.btcDominance),
       now: formatDominance(current.btcDominance),
       chg: formatDominanceChange(current.btcDominance, prev.btcDominance),
     },
     {
       label: 'TOTAL2',
-      desc: 'Tổng mcap không gồm BTC',
+      prev: formatMarketCap(prev.total2),
       now: formatMarketCap(current.total2),
       chg: formatChange(current.total2, prev.total2),
     },
     {
       label: 'TOTAL3',
-      desc: 'Tổng mcap không gồm BTC & ETH',
+      prev: formatMarketCap(prev.total3),
       now: formatMarketCap(current.total3),
       chg: formatChange(current.total3, prev.total3),
     },
     {
       label: 'OTHERS',
-      desc: 'Altcoin vốn hóa vừa & nhỏ',
+      prev: formatMarketCap(prev.others),
       now: formatMarketCap(current.others),
       chg: formatChange(current.others, prev.others),
     },
     {
       label: 'OTHERS.D',
-      desc: 'Tỷ lệ thống trị của Others',
+      prev: formatDominance(prev.othersDominance),
       now: formatDominance(current.othersDominance),
       chg: formatDominanceChange(current.othersDominance, prev.othersDominance),
     },
   ];
 
   const LABEL_W = 8;
-  const NOW_W = 10;
-  const header = `${'INDEX'.padEnd(LABEL_W)} ${'NOW'.padStart(NOW_W)}  CHG (${tfLabel})`;
+  const COL_W = 10;
+  const header = `${'INDEX'.padEnd(LABEL_W)} ${'PREV'.padStart(COL_W)} ${'NOW'.padStart(COL_W)}  CHG (${tfLabel})`;
   const sep = '─'.repeat(header.length);
   const lines = rows.map((r) => {
     const label = r.label.padEnd(LABEL_W);
-    const now = r.now.padStart(NOW_W);
-    return `${label} ${now}  ${r.chg}`;
+    const prev = r.prev.padStart(COL_W);
+    const now = r.now.padStart(COL_W);
+    return `${label} ${prev} ${now}  ${r.chg}`;
   });
 
   const embed = new EmbedBuilder()

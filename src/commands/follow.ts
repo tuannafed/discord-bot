@@ -92,8 +92,8 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const embed = new EmbedBuilder()
     .setTitle(`✅ Đã join kèo ${call.symbol} ${dirEmoji}`)
     .setColor(0x5865f2)
+    .setDescription('Dùng `/tp` hoặc `/cl` khi muốn đóng lệnh.')
     .addFields(
-      { name: 'Symbol', value: `${call.symbol} ${dirEmoji}`, inline: true },
       { name: 'Call Price', value: `$${call.callPrice.toLocaleString('en-US')}`, inline: true },
       { name: 'Called by', value: `<@${call.calledById}>`, inline: true },
       { name: 'ID', value: `\`...${shortId}\``, inline: true },
@@ -101,7 +101,6 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       { name: 'Entry', value: `$${entry.toLocaleString('en-US')}`, inline: true },
       { name: 'Leverage', value: `x${position.leverage}`, inline: true },
     )
-    .setDescription('Dùng `/tp` hoặc `/cl` khi muốn đóng lệnh.')
     .setTimestamp();
 
   await interaction.editReply({ embeds: [embed] });
