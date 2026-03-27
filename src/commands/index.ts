@@ -30,6 +30,8 @@ import * as callClose from './call-close.js';
 import * as callDelete from './call-delete.js';
 import * as callUpdate from './call-update.js';
 import * as followUpdate from './follow-update.js';
+import * as milestoneMute from './milestone-mute.js';
+import * as milestoneUnmute from './milestone-unmute.js';
 
 export interface Command {
   data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder;
@@ -68,6 +70,8 @@ export function buildCommands(
   callDelete.init(callService);
   callUpdate.init(callService);
   followUpdate.init(callService);
+  milestoneMute.init(callService);
+  milestoneUnmute.init(callService);
 
   const commands: Command[] = [
     ping,
@@ -93,6 +97,8 @@ export function buildCommands(
     callDelete,
     callUpdate,
     followUpdate,
+    milestoneMute,
+    milestoneUnmute,
     help,
   ];
 
@@ -128,6 +134,8 @@ export function getCommandBuilders(): (SlashCommandBuilder | SlashCommandOptions
     callDelete.data,
     callUpdate.data,
     followUpdate.data,
+    milestoneMute.data,
+    milestoneUnmute.data,
     help.data,
   ];
 }

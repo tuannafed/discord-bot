@@ -59,6 +59,7 @@ export async function runMigrations(): Promise<void> {
     );
 
     ALTER TABLE positions ADD COLUMN IF NOT EXISTS notified_milestones TEXT NOT NULL DEFAULT '';
+    ALTER TABLE positions ADD COLUMN IF NOT EXISTS muted_milestones BOOLEAN NOT NULL DEFAULT FALSE;
 
     CREATE TABLE IF NOT EXISTS calls (
       id           TEXT PRIMARY KEY,

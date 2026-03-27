@@ -29,7 +29,8 @@ export interface Position {
   closeType: CloseType | null;
   closePrice: number | null;
   pnlPct: number | null;
-  notifiedMilestones: string; // comma-separated, e.g. "100,200"
+  notifiedMilestones: string;
+  mutedMilestones: boolean;
 }
 
 export interface CallWithPositions extends Call {

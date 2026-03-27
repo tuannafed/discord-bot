@@ -7,6 +7,8 @@ export class CallService {
   // In-memory milestone state for callers (no DB position row)
   // key: callId, value: last notified band (e.g. 100, 200)
   private readonly callerMilestones = new Map<string, number>();
+  // In-memory mute state for callers: Set of callIds where caller has muted milestone noti
+  private readonly callerMuted = new Set<string>();
 
   constructor(
     private readonly repo: PgCallRepository,
@@ -87,6 +89,7 @@ export class CallService {
       closePrice: null,
       pnlPct: null,
       notifiedMilestones: '',
+      mutedMilestones: false,
     };
     await this.repo.createPosition(position);
     return { position, call };
@@ -143,6 +146,7 @@ export class CallService {
         closePrice: currentPrice,
         pnlPct,
         notifiedMilestones: '',
+        mutedMilestones: false,
       };
     }
 
@@ -168,6 +172,7 @@ export class CallService {
     await this.repo.autoCloseOpenPositions(call.id, closedAt, currentPrice, call.direction);
     await this.repo.closeCall(call.id);
     this.callerMilestones.delete(call.id);
+    this.callerMuted.delete(call.id);
 
     const positions = await this.repo.findPositionsByCall(call.id);
     const closedCount = positions.filter((p) => p.closedAt === closedAt).length;
@@ -207,11 +212,42 @@ export class CallService {
     return { position: { ...position, leverage }, call };
   }
 
+  async muteMilestone(callId: string, userId: string): Promise<{ ok: true } | { error: string }> {
+    const call = await this.repo.findCallById(callId);
+    if (!call) return { error: 'Kèo không tồn tại.' };
+
+    if (call.calledById === userId) {
+      this.callerMuted.add(callId);
+      return { ok: true };
+    }
+
+    const position = await this.repo.findOpenPositionByUser(callId, userId);
+    if (!position) return { error: 'Bạn chưa join kèo này hoặc đã đóng rồi.' };
+    await this.repo.setMutedMilestones(position.id, true);
+    return { ok: true };
+  }
+
+  async unmuteMilestone(callId: string, userId: string): Promise<{ ok: true } | { error: string }> {
+    const call = await this.repo.findCallById(callId);
+    if (!call) return { error: 'Kèo không tồn tại.' };
+
+    if (call.calledById === userId) {
+      this.callerMuted.delete(callId);
+      return { ok: true };
+    }
+
+    const position = await this.repo.findOpenPositionByUser(callId, userId);
+    if (!position) return { error: 'Bạn chưa join kèo này hoặc đã đóng rồi.' };
+    await this.repo.setMutedMilestones(position.id, false);
+    return { ok: true };
+  }
+
   async deleteCall(callId: string): Promise<{ call: Call } | { error: string }> {
     const call = await this.repo.findCallById(callId);
     if (!call) return { error: 'Kèo không tồn tại.' };
     await this.repo.deleteCall(callId);
     this.callerMilestones.delete(callId);
+    this.callerMuted.delete(callId);
     return { call };
   }
 
@@ -234,9 +270,17 @@ export class CallService {
       if (pnl >= m) currentBand = m;
     }
 
+    const isCaller = position.id.startsWith('caller-');
+
+    // Skip if muted
+    if (isCaller) {
+      if (this.callerMuted.has(position.callId)) return [];
+    } else if (position.mutedMilestones) {
+      return [];
+    }
+
     // lastNotified: the band we last sent a notification for
     // Caller synthetic positions use in-memory map (id starts with 'caller-')
-    const isCaller = position.id.startsWith('caller-');
     const lastNotified = isCaller
       ? (this.callerMilestones.get(position.callId) ?? null)
       : (position.notifiedMilestones ? parseInt(position.notifiedMilestones, 10) : null);

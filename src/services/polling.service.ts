@@ -156,6 +156,7 @@ export class PollingService {
         closePrice: null,
         pnlPct: null,
         notifiedMilestones: '',
+        mutedMilestones: false,
       },
       call,
     }));
