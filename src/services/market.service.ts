@@ -54,6 +54,12 @@ export class MarketService {
     return this.provider.getCoinKlineChange(symbol, interval);
   }
 
+  async getLivePrices(symbols: string[]): Promise<Map<string, number>> {
+    if (symbols.length === 0) return new Map();
+    const results = await this.provider.getLivePrices(symbols);
+    return results;
+  }
+
   async scanByMarketCap(minCap: number, maxCap: number, limit: number): Promise<CoinMarketData[]> {
     const coins = await this.provider.getBybitFuturesWithMarketCap();
     return coins

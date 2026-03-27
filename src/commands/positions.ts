@@ -40,10 +40,9 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     return;
   }
 
-  // Fetch current prices for all symbols
+  // Fetch live prices directly from Bybit (no cache)
   const symbols = [...new Set(callsWithPositions.map((c) => c.symbol))];
-  const coins = await marketService.getCoinBySymbols(symbols);
-  const priceMap = new Map(coins.map((c) => [c.symbol.toUpperCase(), c.currentPrice]));
+  const priceMap = await marketService.getLivePrices(symbols);
 
   const embed = new EmbedBuilder()
     .setTitle('📊 Active Calls')
