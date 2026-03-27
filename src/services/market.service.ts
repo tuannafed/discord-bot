@@ -27,22 +27,26 @@ export class MarketService {
       .slice(0, limit);
   }
 
-  async getTopGainers(limit: number, interval?: string): Promise<CoinMarketData[]> {
+  async getTopGainers(limit: number, interval?: string, minCap?: number, maxCap?: number): Promise<CoinMarketData[]> {
     const coins = interval
       ? await this.provider.getBybitFuturesWithKlineChange(interval)
       : await this.provider.getBybitFuturesWithMarketCap();
     return coins
       .filter((c) => c.priceChangePercentage24h > 0)
+      .filter((c) => minCap == null || c.marketCap >= minCap)
+      .filter((c) => maxCap == null || c.marketCap <= maxCap)
       .sort((a, b) => b.priceChangePercentage24h - a.priceChangePercentage24h)
       .slice(0, limit);
   }
 
-  async getTopLosers(limit: number, interval?: string): Promise<CoinMarketData[]> {
+  async getTopLosers(limit: number, interval?: string, minCap?: number, maxCap?: number): Promise<CoinMarketData[]> {
     const coins = interval
       ? await this.provider.getBybitFuturesWithKlineChange(interval)
       : await this.provider.getBybitFuturesWithMarketCap();
     return coins
       .filter((c) => c.priceChangePercentage24h < 0)
+      .filter((c) => minCap == null || c.marketCap >= minCap)
+      .filter((c) => maxCap == null || c.marketCap <= maxCap)
       .sort((a, b) => a.priceChangePercentage24h - b.priceChangePercentage24h)
       .slice(0, limit);
   }

@@ -14,13 +14,13 @@ export const data = new SlashCommandBuilder()
   .addNumberOption((opt) =>
     opt
       .setName('min_cap')
-      .setDescription('Minimum market cap in USD (e.g. 70000000 for $70M)')
+      .setDescription('Minimum market cap in triệu $ (e.g. 30 = $30M)')
       .setRequired(true)
   )
   .addNumberOption((opt) =>
     opt
       .setName('max_cap')
-      .setDescription('Maximum market cap in USD (e.g. 100000000 for $100M)')
+      .setDescription('Maximum market cap in triệu $ (e.g. 100 = $100M)')
       .setRequired(true)
   )
   .addIntegerOption((opt) =>
@@ -32,8 +32,8 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
-  const minCap = interaction.options.getNumber('min_cap', true);
-  const maxCap = interaction.options.getNumber('max_cap', true);
+  const minCap = interaction.options.getNumber('min_cap', true) * 1_000_000;
+  const maxCap = interaction.options.getNumber('max_cap', true) * 1_000_000;
   const limit = interaction.options.getInteger('limit') ?? 10;
 
   if (minCap >= maxCap) {

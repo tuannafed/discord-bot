@@ -55,6 +55,16 @@ export const data = new SlashCommandBuilder()
       .setDescription('Number of coins per category (1-10, default 5)')
       .setMinValue(1)
       .setMaxValue(10)
+  )
+  .addNumberOption((opt) =>
+    opt
+      .setName('min_cap')
+      .setDescription('Lọc theo market cap tối thiểu, tính bằng triệu $ (e.g. 30 = $30M)')
+  )
+  .addNumberOption((opt) =>
+    opt
+      .setName('max_cap')
+      .setDescription('Lọc theo market cap tối đa, tính bằng triệu $ (e.g. 500 = $500M)')
   );
 
 function getPrev(current: number, pct: number): number {
@@ -92,6 +102,10 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const timeframe = interaction.options.getString('timeframe') ?? 'D';
   const type = interaction.options.getString('type') ?? 'both';
   const limit = interaction.options.getInteger('limit') ?? 5;
+  const minCapInput = interaction.options.getNumber('min_cap');
+  const maxCapInput = interaction.options.getNumber('max_cap');
+  const minCap = minCapInput != null ? minCapInput * 1_000_000 : undefined;
+  const maxCap = maxCapInput != null ? maxCapInput * 1_000_000 : undefined;
   const label = TIMEFRAME_LABEL[timeframe];
 
   await interaction.deferReply();
@@ -108,7 +122,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     .setTimestamp();
 
   if (type === 'gainers' || type === 'both') {
-    const gainers = await marketService.getTopGainers(limit, interval);
+    const gainers = await marketService.getTopGainers(limit, interval, minCap, maxCap);
     embed.addFields({
       name: `📈 Top ${limit} Gainers (${label})`,
       value: gainers.length > 0 ? buildLines(gainers) : 'No data available',
@@ -116,7 +130,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   }
 
   if (type === 'losers' || type === 'both') {
-    const losers = await marketService.getTopLosers(limit, interval);
+    const losers = await marketService.getTopLosers(limit, interval, minCap, maxCap);
     embed.addFields({
       name: `📉 Top ${limit} Losers (${label})`,
       value: losers.length > 0 ? buildLines(losers) : 'No data available',
