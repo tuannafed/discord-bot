@@ -52,17 +52,17 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
 
   const lines: string[] = [
     `**Rate kỳ hiện tại:** \`${sign}${pctPeriod.toFixed(4)}%\` / ${snap.fundingIntervalHours}h`,
-    `**Funding tiếp theo:** ${formatDatetimeICT(snap.nextFundingTime)} ICT (<t:${unix}:R>)`,
+    `**Funding tiếp theo:** ${formatDatetimeICT(snap.nextFundingTime)} (<t:${unix}:R>)`,
   ];
 
   if (snap.lastSettled) {
     lines.push(
-      `**Vừa settle:** \`${formatRatePct(snap.lastSettled.fundingRate)}\` · ${formatDatetimeICT(snap.lastSettled.settledAt)} ICT`,
+      `**Vừa settle:** \`${formatRatePct(snap.lastSettled.fundingRate)}\` · ${formatDatetimeICT(snap.lastSettled.settledAt)}`,
     );
   }
   if (snap.priorSettled) {
     lines.push(
-      `**Kỳ trước:** \`${formatRatePct(snap.priorSettled.fundingRate)}\` · ${formatDatetimeICT(snap.priorSettled.settledAt)} ICT`,
+      `**Kỳ trước:** \`${formatRatePct(snap.priorSettled.fundingRate)}\` · ${formatDatetimeICT(snap.priorSettled.settledAt)}`,
     );
   }
 
@@ -70,9 +70,6 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     .setTitle(`Funding — ${snap.baseSymbol}/USDT · Bybit`)
     .setColor(pctPeriod >= 0 ? 0xe74c3c : 0x3498db)
     .setDescription(lines.join('\n'))
-    .setFooter({
-      text: 'Giờ cố định ICT (UTC+7). Bybit trả timestamp UTC; settle: /v5/market/funding/history.',
-    })
     .setTimestamp();
 
   await interaction.editReply({ embeds: [embed] });
