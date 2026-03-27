@@ -98,28 +98,49 @@ export class CallService {
     const call = await this.repo.findCallById(params.callId);
     if (!call) return { error: 'Kèo không tồn tại.' };
 
-    const position = await this.repo.findOpenPositionByUser(params.callId, params.userId);
-    if (!position) return { error: 'Bạn chưa join kèo này hoặc đã đóng rồi.' };
+    // Caller dùng callPrice + call.leverage làm entry
+    const isCaller = call.calledById === params.userId;
+    const position = isCaller
+      ? null
+      : await this.repo.findOpenPositionByUser(params.callId, params.userId);
+
+    if (!isCaller && !position) return { error: 'Bạn chưa join kèo này hoặc đã đóng rồi.' };
 
     const coin = await this.marketService.getCoinBySymbol(call.symbol);
     if (!coin) return { error: `Không fetch được giá ${call.symbol}.` };
 
     const currentPrice = coin.currentPrice;
+    const entryPrice = position ? position.entryPrice : call.callPrice;
+    const leverage = position ? position.leverage : call.leverage;
     const rawPct = call.direction === 'long'
-      ? ((currentPrice - position.entryPrice) / position.entryPrice) * 100
-      : ((position.entryPrice - currentPrice) / position.entryPrice) * 100;
-    const pnlPct = rawPct * position.leverage;
+      ? ((currentPrice - entryPrice) / entryPrice) * 100
+      : ((entryPrice - currentPrice) / entryPrice) * 100;
+    const pnlPct = rawPct * leverage;
 
     const closedAt = new Date().toISOString();
-    await this.repo.closePosition(position.id, closedAt, params.closeType, currentPrice, pnlPct);
 
-    const closedPosition: Position = {
-      ...position,
-      closedAt,
-      closeType: params.closeType,
-      closePrice: currentPrice,
-      pnlPct,
-    };
+    let closedPosition: Position;
+    if (position) {
+      await this.repo.closePosition(position.id, closedAt, params.closeType, currentPrice, pnlPct);
+      closedPosition = { ...position, closedAt, closeType: params.closeType, closePrice: currentPrice, pnlPct };
+    } else {
+      // Caller: synthetic position, không lưu DB
+      closedPosition = {
+        id: '',
+        callId: call.id,
+        guildId: call.guildId,
+        userId: call.calledById,
+        username: call.calledBy,
+        entryPrice: call.callPrice,
+        leverage: call.leverage,
+        joinedAt: call.calledAt,
+        closedAt,
+        closeType: params.closeType,
+        closePrice: currentPrice,
+        pnlPct,
+        notifiedMilestones: '',
+      };
+    }
 
     // Auto-close call if all positions are closed
     const allClosed = await this.repo.checkAllPositionsClosed(params.callId);
