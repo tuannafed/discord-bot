@@ -3,6 +3,7 @@ import {
   ChatInputCommandInteraction,
   EmbedBuilder,
   AutocompleteInteraction,
+  PermissionFlagsBits,
 } from 'discord.js';
 import { CallService } from '../services/call.service.js';
 
@@ -35,6 +36,12 @@ export const data = new SlashCommandBuilder()
       .setRequired(false)
       .setMinValue(1)
       .setMaxValue(100)
+  )
+  .addUserOption((opt) =>
+    opt
+      .setName('user')
+      .setDescription('Member cần sửa (chỉ admin, mặc định là bạn)')
+      .setRequired(false)
   );
 
 export async function autocomplete(interaction: AutocompleteInteraction): Promise<void> {
@@ -50,11 +57,26 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const callId = interaction.options.getString('call_id', true);
   const entry = interaction.options.getNumber('entry');
   const leverage = interaction.options.getInteger('leverage');
+  const targetUser = interaction.options.getUser('user');
 
   if (entry === null && leverage === null) {
     await interaction.reply({ content: '❌ Cần nhập ít nhất một giá trị: `entry` hoặc `leverage`.', ephemeral: true });
     return;
   }
+
+  // Only admins can update other members
+  if (targetUser && targetUser.id !== interaction.user.id) {
+    const member = await interaction.guild?.members.fetch(interaction.user.id);
+    const isAdmin = member?.permissions.has(PermissionFlagsBits.Administrator) ||
+                    member?.permissions.has(PermissionFlagsBits.ManageGuild);
+    if (!isAdmin) {
+      await interaction.reply({ content: '❌ Chỉ admin mới có thể sửa lệnh của người khác.', ephemeral: true });
+      return;
+    }
+  }
+
+  const userId = targetUser?.id ?? interaction.user.id;
+  const displayUser = targetUser ?? interaction.user;
 
   await interaction.deferReply({ ephemeral: true });
 
@@ -62,7 +84,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   let lastCall = null;
 
   if (entry !== null) {
-    const result = await callService.updatePositionEntry(callId, interaction.user.id, entry);
+    const result = await callService.updatePositionEntry(callId, userId, entry);
     if ('error' in result) {
       await interaction.editReply(`❌ ${result.error}`);
       return;
@@ -72,7 +94,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   }
 
   if (leverage !== null) {
-    const result = await callService.updatePositionLeverage(callId, interaction.user.id, leverage);
+    const result = await callService.updatePositionLeverage(callId, userId, leverage);
     if ('error' in result) {
       await interaction.editReply(`❌ ${result.error}`);
       return;
@@ -89,7 +111,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     .addFields(
       { name: 'Kèo', value: `${lastCall!.symbol} ${dirEmoji}`, inline: true },
       ...fields,
-      { name: 'User', value: `<@${interaction.user.id}>`, inline: true },
+      { name: 'User', value: `<@${displayUser.id}>`, inline: true },
     )
     .setTimestamp();
 

@@ -35,12 +35,14 @@ function buildContent(positions: Position[], call: CallWithPositions, currentPri
   const allRows = [callerRow, ...positions];
 
   const NAME_W = 8;
+  const header = `${'Name'.padEnd(NAME_W)}  ${'Entry'.padStart(7)}  Lev  PnL`;
+  const sep = '-'.repeat(header.length + 2); // +2 for emoji prefix width
 
-  const lines = allRows.map((pos, i) => {
+  const rows = allRows.map((pos) => {
     const pnlResult = calcPnl(pos, call, currentPrice);
-    const label = i + 1;
-    const name = pos.username.length > NAME_W ? pos.username.slice(0, NAME_W) : pos.username;
+    const name = pos.username.length > NAME_W ? pos.username.slice(0, NAME_W) : pos.username.padEnd(NAME_W);
     const price = `$${pos.entryPrice.toFixed(4)}`;
+    const lev = String(pos.leverage).padEnd(4);
 
     let emoji = '⬜';
     let pnlStr = 'N/A';
@@ -49,16 +51,16 @@ function buildContent(positions: Position[], call: CallWithPositions, currentPri
       const sign = pct >= 0 ? '+' : '';
       emoji = pct >= 0 ? '🟢' : '🔴';
       pnlStr = status === 'TP'
-        ? `${sign}${pct.toFixed(2)}% TP`
+        ? `${sign}${pct.toFixed(2)}%TP`
         : status === 'CL'
-          ? `${sign}${pct.toFixed(2)}% CL`
+          ? `${sign}${pct.toFixed(2)}%CL`
           : `${sign}${pct.toFixed(2)}%`;
     }
 
-    return `${emoji} **${label}. ${name}** · ${price} x${pos.leverage} · **${pnlStr}**`;
+    return `${emoji} ${name}  ${price.padStart(7)}  ${lev} ${pnlStr}`;
   });
 
-  return lines.join('\n');
+  return '```\n' + [header, sep, ...rows].join('\n') + '\n```';
 }
 
 export const data = new SlashCommandBuilder()
