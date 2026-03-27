@@ -27,6 +27,14 @@ export const data = new SlashCommandBuilder()
       .setName('entry')
       .setDescription('Giá entry của bạn (USD)')
       .setRequired(true)
+  )
+  .addIntegerOption((opt) =>
+    opt
+      .setName('leverage')
+      .setDescription('Đòn bẩy riêng (mặc định theo kèo)')
+      .setRequired(false)
+      .setMinValue(1)
+      .setMaxValue(100)
   );
 
 export async function autocomplete(interaction: AutocompleteInteraction): Promise<void> {
@@ -42,6 +50,7 @@ export async function autocomplete(interaction: AutocompleteInteraction): Promis
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   const callId = interaction.options.getString('call_id', true);
   const entry = interaction.options.getNumber('entry', true);
+  const leverageOpt = interaction.options.getInteger('leverage') ?? undefined;
 
   await interaction.deferReply({ ephemeral: true });
 
@@ -51,6 +60,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     userId: interaction.user.id,
     username: interaction.user.username,
     entryPrice: entry,
+    leverage: leverageOpt,
   });
 
   if ('error' in result) {
@@ -58,7 +68,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     return;
   }
 
-  const { call } = result;
+  const { call, position } = result;
   const dirEmoji = call.direction === 'long' ? '📈 LONG' : '📉 SHORT';
   const shortId = call.id.slice(-6);
   const embed = new EmbedBuilder()
@@ -70,6 +80,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       { name: 'Called by', value: `<@${call.calledById}>`, inline: true },
       { name: 'ID', value: `\`...${shortId}\``, inline: true },
       { name: 'Entry của bạn', value: `$${entry.toLocaleString('en-US')}`, inline: true },
+      { name: 'Leverage', value: `x${position.leverage}`, inline: true },
     )
     .setDescription('Dùng `/tp` hoặc `/cl` khi muốn đóng lệnh.')
     .setTimestamp();

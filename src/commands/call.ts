@@ -28,12 +28,21 @@ export const data = new SlashCommandBuilder()
       .setName('price')
       .setDescription('Giá call kèo (USD)')
       .setRequired(true)
+  )
+  .addIntegerOption((opt) =>
+    opt
+      .setName('leverage')
+      .setDescription('Đòn bẩy (mặc định x20)')
+      .setRequired(false)
+      .setMinValue(1)
+      .setMaxValue(100)
   );
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   const symbol = interaction.options.getString('symbol', true).toUpperCase();
   const direction = interaction.options.getString('direction', true) as 'long' | 'short';
   const price = interaction.options.getNumber('price', true);
+  const leverage = interaction.options.getInteger('leverage') ?? 20;
 
   await interaction.deferReply();
 
@@ -43,6 +52,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     symbol,
     direction,
     callPrice: price,
+    leverage,
     calledBy: interaction.user.username,
     calledById: interaction.user.id,
   });
@@ -55,6 +65,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     .addFields(
       { name: 'Symbol', value: `${symbol} ${dirEmoji}`, inline: true },
       { name: 'Call Price', value: `$${price.toLocaleString('en-US')}`, inline: true },
+      { name: 'Leverage', value: `x${leverage}`, inline: true },
       { name: 'Called by', value: `<@${interaction.user.id}>`, inline: true },
       { name: 'ID', value: `\`...${shortId}\``, inline: true },
     )

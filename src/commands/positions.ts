@@ -14,25 +14,30 @@ export function init(cService: CallService, mService: MarketService): void {
 
 function calcPnl(pos: Position, call: CallWithPositions, currentPrice: number): { pct: number; status: string } | { status: 'na' } {
   if (pos.closedAt !== null) {
+    // Closed PnL already has leverage applied when saved
     const pct = pos.pnlPct ?? 0;
     return { pct, status: pos.closeType === 'tp' ? 'TP' : 'CL' };
   }
   if (currentPrice <= 0) return { status: 'na' };
-  const pct = call.direction === 'long'
+  const rawPct = call.direction === 'long'
     ? ((currentPrice - pos.entryPrice) / pos.entryPrice) * 100
     : ((pos.entryPrice - currentPrice) / pos.entryPrice) * 100;
+  const pct = rawPct * pos.leverage;
   return { pct, status: 'open' };
 }
 
 function buildTable(positions: Position[], call: CallWithPositions, currentPrice: number): string {
-  // Caller row (index 0 = caller, shown as "👑")
-  const allRows = [
-    { username: call.calledBy, entryPrice: call.callPrice, isCall: true, closedAt: null, pnlPct: null, closeType: null } as Position & { isCall: boolean },
-    ...positions.map((p) => ({ ...p, isCall: false })),
-  ];
+  // Caller row uses call price and call leverage
+  const callerRow: Position = {
+    id: '', callId: call.id, guildId: call.guildId, userId: call.calledById,
+    username: call.calledBy, entryPrice: call.callPrice, leverage: call.leverage,
+    joinedAt: call.calledAt, closedAt: null, closeType: null, closePrice: null,
+    pnlPct: null, notifiedMilestones: '',
+  };
+  const allRows = [callerRow, ...positions];
 
   const NAME_W = Math.max(4, ...allRows.map((p) => p.username.length));
-  const header = `#  ${'Name'.padEnd(NAME_W)}  ${'Entry'.padStart(10)}  PnL`;
+  const header = `#  ${'Name'.padEnd(NAME_W)}  ${'Entry'.padStart(10)}  Lev   PnL`;
   const sep = '-'.repeat(header.length);
 
   const rows = allRows.map((pos, i) => {
@@ -50,8 +55,9 @@ function buildTable(positions: Position[], call: CallWithPositions, currentPrice
           ? `${sign}${pct.toFixed(2)}% CL`
           : `${sign}${pct.toFixed(2)}%`;
     }
-    const entry = `$${pos.entryPrice.toLocaleString('en-US')}`;
-    return `${label}  ${pos.username.padEnd(NAME_W)}  ${entry.padStart(10)}  ${pnlStr}`;
+    const entry = formatPrice(pos.entryPrice);
+    const lev = `x${pos.leverage}`.padEnd(5);
+    return `${label}  ${pos.username.padEnd(NAME_W)}  ${entry.padStart(10)}  ${lev} ${pnlStr}`;
   });
   return '```\n' + [header, sep, ...rows].join('\n') + '\n```';
 }
@@ -82,9 +88,9 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   for (const call of callsWithPositions) {
     const currentPrice = priceMap.get(call.symbol) ?? 0;
     const dirEmoji = call.direction === 'long' ? '📈 LONG' : '📉 SHORT';
-    const priceStr = currentPrice > 0 ? ` · Now: ${formatPrice(currentPrice)}` : '';
+    const priceStr = currentPrice > 0 ? ` · Market Price Now: ${formatPrice(currentPrice)}` : '';
 
-    const header = `${call.symbol} ${dirEmoji}${priceStr}`;
+    const header = `${call.symbol} ${dirEmoji} x${call.leverage}${priceStr}`;
 
     if (call.positions.length === 0) {
       embed.addFields({ name: header, value: '_Chưa có ai join_' });
@@ -92,8 +98,5 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       embed.addFields({ name: header, value: buildTable(call.positions, call, currentPrice) });
     }
   }
-
-  embed.setFooter({ text: 'P&L tính theo entry từng người · giá realtime từ Bybit' });
-
   await interaction.editReply({ embeds: [embed] });
 }

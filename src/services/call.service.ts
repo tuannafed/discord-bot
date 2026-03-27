@@ -15,6 +15,7 @@ export class CallService {
     symbol: string;
     direction: 'long' | 'short';
     callPrice: number;
+    leverage: number;
     calledBy: string;
     calledById: string;
   }): Promise<Call> {
@@ -25,6 +26,7 @@ export class CallService {
       symbol: params.symbol.toUpperCase(),
       direction: params.direction,
       callPrice: params.callPrice,
+      leverage: params.leverage,
       calledBy: params.calledBy,
       calledById: params.calledById,
       calledAt: new Date().toISOString(),
@@ -58,6 +60,7 @@ export class CallService {
     userId: string;
     username: string;
     entryPrice: number;
+    leverage?: number;
   }): Promise<{ position: Position; call: Call } | { error: string }> {
     const call = await this.repo.findCallById(params.callId);
     if (!call) return { error: 'Kèo không tồn tại.' };
@@ -73,6 +76,7 @@ export class CallService {
       userId: params.userId,
       username: params.username,
       entryPrice: params.entryPrice,
+      leverage: params.leverage ?? call.leverage,
       joinedAt: new Date().toISOString(),
       closedAt: null,
       closeType: null,
@@ -101,9 +105,10 @@ export class CallService {
     if (!coin) return { error: `Không fetch được giá ${call.symbol}.` };
 
     const currentPrice = coin.currentPrice;
-    const pnlPct = call.direction === 'long'
+    const rawPct = call.direction === 'long'
       ? ((currentPrice - position.entryPrice) / position.entryPrice) * 100
       : ((position.entryPrice - currentPrice) / position.entryPrice) * 100;
+    const pnlPct = rawPct * position.leverage;
 
     const closedAt = new Date().toISOString();
     await this.repo.closePosition(position.id, closedAt, params.closeType, currentPrice, pnlPct);
@@ -173,20 +178,29 @@ export class CallService {
     currentPrice: number,
   ): Promise<number[]> {
     const MILESTONES = [100, 200, 300, 500, 1000];
-    const already = new Set(
-      position.notifiedMilestones ? position.notifiedMilestones.split(',').map(Number) : []
-    );
 
-    const pnl = call.direction === 'long'
+    const rawPct = call.direction === 'long'
       ? ((currentPrice - position.entryPrice) / position.entryPrice) * 100
       : ((position.entryPrice - currentPrice) / position.entryPrice) * 100;
+    const pnl = rawPct * position.leverage;
 
-    const newHits = MILESTONES.filter((m) => pnl >= m && !already.has(m));
-    if (newHits.length === 0) return [];
+    // Find the current milestone band (highest milestone crossed right now)
+    // e.g. pnl=230% → currentBand=200, pnl=80% → currentBand=null
+    let currentBand: number | null = null;
+    for (const m of MILESTONES) {
+      if (pnl >= m) currentBand = m;
+    }
 
-    const updated = [...already, ...newHits].join(',');
-    await this.repo.updateNotifiedMilestones(position.id, updated);
-    return newHits;
+    // lastNotified: the band we last sent a notification for (stored as single number or empty)
+    const lastNotified = position.notifiedMilestones
+      ? parseInt(position.notifiedMilestones, 10)
+      : null;
+
+    // Fire if we're in a band AND it differs from the last notified band
+    if (currentBand === null || currentBand === lastNotified) return [];
+
+    await this.repo.updateNotifiedMilestones(position.id, String(currentBand));
+    return [currentBand];
   }
 
   async getOpenPositionsWithCalls(guildId: string): Promise<{ position: Position; call: Call }[]> {
@@ -199,6 +213,10 @@ export class CallService {
       }
     }
     return result;
+  }
+
+  async getAllOpenPositionsWithCalls(): Promise<{ position: Position; call: Call }[]> {
+    return this.repo.findAllOpenPositionsWithCalls();
   }
 
   async getCallWithPositions(callId: string): Promise<CallWithPositions | undefined> {

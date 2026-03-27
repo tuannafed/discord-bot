@@ -133,6 +133,47 @@ export class PollingService {
     }
   }
 
+  private async runMilestoneCheck(): Promise<void> {
+    if (!this.callService) return;
+
+    const entries = await this.callService.getAllOpenPositionsWithCalls();
+    if (entries.length === 0) return;
+
+    logger.info(`Milestone check: ${entries.length} open position(s)`);
+
+    const symbols = [...new Set(entries.map((e) => e.call.symbol.toUpperCase()))];
+    let priceMap: Map<string, number>;
+    try {
+      priceMap = await this.provider.getLivePrices(symbols);
+    } catch (err) {
+      logger.error('Milestone check: failed to fetch live prices', err);
+      return;
+    }
+
+    for (const { position, call } of entries) {
+      const currentPrice = priceMap.get(call.symbol.toUpperCase()) ?? 0;
+      if (currentPrice <= 0) continue;
+
+      const newMilestones = await this.callService.checkAndUpdateMilestones(position, call, currentPrice);
+
+      for (const milestone of newMilestones) {
+        const rawPct = call.direction === 'long'
+          ? ((currentPrice - position.entryPrice) / position.entryPrice) * 100
+          : ((position.entryPrice - currentPrice) / position.entryPrice) * 100;
+        const pnl = rawPct * position.leverage;
+
+        await sendMilestoneNotification(this.client, call.channelId, {
+          userId: position.userId,
+          symbol: call.symbol,
+          direction: call.direction,
+          pnlPct: pnl,
+          milestone,
+        });
+        logger.info(`Milestone ${milestone}% fired for position ${position.id} (${position.username})`);
+      }
+    }
+  }
+
   private async runCandidateUpdate(): Promise<void> {
     const { hitTarget, expired } = await this.candidateService.runUpdateJob();
 

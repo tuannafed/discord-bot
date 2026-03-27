@@ -9,6 +9,7 @@ export interface Call {
   symbol: string;
   direction: CallDirection;
   callPrice: number;
+  leverage: number;
   calledBy: string;
   calledById: string;
   calledAt: string;
@@ -22,6 +23,7 @@ export interface Position {
   userId: string;
   username: string;
   entryPrice: number;
+  leverage: number;
   joinedAt: string;
   closedAt: string | null;
   closeType: CloseType | null;

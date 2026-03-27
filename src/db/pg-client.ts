@@ -67,11 +67,14 @@ export async function runMigrations(): Promise<void> {
       symbol       TEXT NOT NULL,
       direction    TEXT NOT NULL,
       call_price   DOUBLE PRECISION NOT NULL,
+      leverage     INTEGER NOT NULL DEFAULT 20,
       called_by    TEXT NOT NULL,
       called_by_id TEXT NOT NULL,
       called_at    TEXT NOT NULL,
       status       TEXT NOT NULL DEFAULT 'active'
     );
+
+    ALTER TABLE calls ADD COLUMN IF NOT EXISTS leverage INTEGER NOT NULL DEFAULT 20;
 
     CREATE TABLE IF NOT EXISTS positions (
       id           TEXT PRIMARY KEY,
@@ -80,12 +83,15 @@ export async function runMigrations(): Promise<void> {
       user_id      TEXT NOT NULL,
       username     TEXT NOT NULL,
       entry_price  DOUBLE PRECISION NOT NULL,
+      leverage     INTEGER NOT NULL DEFAULT 20,
       joined_at    TEXT NOT NULL,
       closed_at    TEXT,
       close_type   TEXT,
       close_price  DOUBLE PRECISION,
       pnl_pct      DOUBLE PRECISION
     );
+
+    ALTER TABLE positions ADD COLUMN IF NOT EXISTS leverage INTEGER NOT NULL DEFAULT 20;
 
     CREATE TABLE IF NOT EXISTS candidates (
       id                      TEXT PRIMARY KEY,
