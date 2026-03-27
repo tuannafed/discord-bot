@@ -24,10 +24,21 @@ function calcPnl(pos: Position, call: CallWithPositions, currentPrice: number): 
 }
 
 function buildTable(positions: Position[], call: CallWithPositions, currentPrice: number): string {
-  const NAME_W = Math.max(4, ...positions.map((p) => p.username.length));
+  // Caller row (index 0 = caller, shown as "👑")
+  const allRows = [
+    { username: call.calledBy, entryPrice: call.callPrice, isCall: true, closedAt: null, pnlPct: null, closeType: null } as Position & { isCall: boolean },
+    ...positions.map((p) => ({ ...p, isCall: false })),
+  ];
+
+  const NAME_W = Math.max(4, ...allRows.map((p) => p.username.length));
   const header = `#  ${'Name'.padEnd(NAME_W)}  ${'Entry'.padStart(10)}  PnL`;
   const sep = '-'.repeat(header.length);
-  const rows = positions.map((pos, i) => {
+
+  const rows = allRows.map((pos, i) => {
+    const label = pos.isCall ? '👑' : String(i).padStart(2);
+    if (pos.isCall) {
+      return `${label}  ${pos.username.padEnd(NAME_W)}  ${'(caller)'.padStart(10)}`;
+    }
     const { pct, status } = calcPnl(pos, call, currentPrice);
     const sign = pct >= 0 ? '+' : '';
     const pnlStr = status === 'TP'
@@ -36,7 +47,7 @@ function buildTable(positions: Position[], call: CallWithPositions, currentPrice
         ? `${sign}${pct.toFixed(2)}% CL`
         : `${sign}${pct.toFixed(2)}%`;
     const entry = `$${pos.entryPrice.toLocaleString('en-US')}`;
-    return `${String(i + 1).padStart(2)}  ${pos.username.padEnd(NAME_W)}  ${entry.padStart(10)}  ${pnlStr}`;
+    return ` ${label}  ${pos.username.padEnd(NAME_W)}  ${entry.padStart(10)}  ${pnlStr}`;
   });
   return '```\n' + [header, sep, ...rows].join('\n') + '\n```';
 }
@@ -69,8 +80,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     const dirEmoji = call.direction === 'long' ? '📈 LONG' : '📉 SHORT';
     const priceStr = currentPrice > 0 ? ` · Now: ${formatPrice(currentPrice)}` : '';
 
-    const shortId = call.id.slice(-6);
-    const header = `${call.symbol} ${dirEmoji} @ $${call.callPrice.toLocaleString('en-US')}${priceStr} · call by <@${call.calledById}> · \`...${shortId}\``;
+    const header = `${call.symbol} ${dirEmoji}${priceStr}`;
 
     if (call.positions.length === 0) {
       embed.addFields({ name: header, value: '_Chưa có ai join_' });
