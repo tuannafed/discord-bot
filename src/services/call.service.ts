@@ -156,6 +156,13 @@ export class CallService {
     return { call: { ...call, callPrice } };
   }
 
+  async updateCallLeverage(callId: string, leverage: number): Promise<{ call: Call } | { error: string }> {
+    const call = await this.repo.findCallById(callId);
+    if (!call) return { error: 'Kèo không tồn tại.' };
+    await this.repo.updateCallLeverage(callId, leverage);
+    return { call: { ...call, leverage } };
+  }
+
   async updatePositionEntry(callId: string, userId: string, entryPrice: number): Promise<{ position: Position; call: Call } | { error: string }> {
     const call = await this.repo.findCallById(callId);
     if (!call) return { error: 'Kèo không tồn tại.' };
@@ -163,6 +170,15 @@ export class CallService {
     if (!position) return { error: 'Bạn chưa join kèo này hoặc đã đóng rồi.' };
     await this.repo.updatePositionEntry(position.id, entryPrice);
     return { position: { ...position, entryPrice }, call };
+  }
+
+  async updatePositionLeverage(callId: string, userId: string, leverage: number): Promise<{ position: Position; call: Call } | { error: string }> {
+    const call = await this.repo.findCallById(callId);
+    if (!call) return { error: 'Kèo không tồn tại.' };
+    const position = await this.repo.findOpenPositionByUser(callId, userId);
+    if (!position) return { error: 'Bạn chưa join kèo này hoặc đã đóng rồi.' };
+    await this.repo.updatePositionLeverage(position.id, leverage);
+    return { position: { ...position, leverage }, call };
   }
 
   async deleteCall(callId: string): Promise<{ call: Call } | { error: string }> {

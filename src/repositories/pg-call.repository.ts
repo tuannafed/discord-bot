@@ -105,8 +105,16 @@ export class PgCallRepository {
     await this.db.query('UPDATE calls SET call_price = $1 WHERE id = $2', [callPrice, id]);
   }
 
+  async updateCallLeverage(id: string, leverage: number): Promise<void> {
+    await this.db.query('UPDATE calls SET leverage = $1 WHERE id = $2', [leverage, id]);
+  }
+
   async updatePositionEntry(id: string, entryPrice: number): Promise<void> {
     await this.db.query('UPDATE positions SET entry_price = $1 WHERE id = $2', [entryPrice, id]);
+  }
+
+  async updatePositionLeverage(id: string, leverage: number): Promise<void> {
+    await this.db.query('UPDATE positions SET leverage = $1 WHERE id = $2', [leverage, id]);
   }
 
   async findOpenPositionsByCall(callId: string): Promise<Position[]> {
