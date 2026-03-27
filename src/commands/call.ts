@@ -79,5 +79,5 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     ].join('\n'))
     .setTimestamp();
 
-  await interaction.editReply({ embeds: [embed] });
+  await interaction.editReply({ content: '@everyone', embeds: [embed], allowedMentions: { parse: ['everyone'] } });
 }

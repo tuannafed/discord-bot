@@ -49,8 +49,7 @@ function formatDominanceChange(current: number, prev: number): string {
   if (prev <= 0) return 'N/A';
   const diff = current - prev;
   const sign = diff >= 0 ? '+' : '';
-  const arrow = diff >= 0 ? '▲' : '▼';
-  return `${arrow} ${sign}${diff.toFixed(2)}pp`;
+  return `${sign}${diff.toFixed(2)}pp`;
 }
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
