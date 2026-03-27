@@ -27,6 +27,12 @@ export const data = new SlashCommandBuilder()
       .setDescription('Chọn kèo để đóng')
       .setRequired(true)
       .setAutocomplete(true)
+  )
+  .addUserOption((opt) =>
+    opt
+      .setName('user')
+      .setDescription('Đóng lệnh cho member khác')
+      .setRequired(false)
   );
 
 export async function autocomplete(interaction: AutocompleteInteraction): Promise<void> {
@@ -40,13 +46,16 @@ export async function autocomplete(interaction: AutocompleteInteraction): Promis
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   const callId = interaction.options.getString('call_id', true);
+  const targetUser = interaction.options.getUser('user');
+  const userId = targetUser?.id ?? interaction.user.id;
+  const username = targetUser?.username ?? interaction.user.username;
 
   await interaction.deferReply();
 
   const result = await callService.closeUserPosition({
     guildId: interaction.guildId!,
-    userId: interaction.user.id,
-    username: interaction.user.username,
+    userId,
+    username,
     callId,
     closeType: 'cl',
   });
@@ -60,7 +69,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const pnlPct = position.pnlPct ?? 0;
   const sign = pnlPct >= 0 ? '+' : '';
   const dirEmoji = call.direction === 'long' ? '📈 LONG' : '📉 SHORT';
-  const isCaller = call.calledById === interaction.user.id;
+  const isCaller = call.calledById === userId;
 
   const condolence = pnlPct <= -500
     ? '💀 Thanh lý rồi bro ơi...'
@@ -80,7 +89,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       { name: 'Entry', value: formatPrice(position.entryPrice), inline: true },
       { name: 'Close Price', value: formatPrice(currentPrice), inline: true },
       { name: 'P&L', value: `**${sign}${pnlPct.toFixed(2)}%**`, inline: true },
-      { name: 'User', value: `<@${interaction.user.id}>`, inline: true },
+      { name: 'User', value: `<@${userId}>`, inline: true },
     )
     .setTimestamp();
 
@@ -89,7 +98,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const milestone = getMilestoneHit(pnlPct);
   if (milestone !== null) {
     await sendMilestoneNotification(discordClient, call.channelId, {
-      userId: interaction.user.id,
+      userId,
       symbol: call.symbol,
       direction: call.direction,
       pnlPct,
@@ -103,7 +112,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       callService,
       call.id,
       call.channelId,
-      interaction.user.id,
+      userId,
       call.symbol,
       call.direction,
       'cl',

@@ -38,7 +38,7 @@ function buildContent(positions: Position[], call: CallWithPositions, currentPri
   };
   const allRows = [callerRow, ...positions.filter((p) => p.userId !== call.calledById)];
 
-  const NAME_W = 6;
+  const NAME_W = 8;
   const header = `${'Name'.padEnd(NAME_W)}  ${'Entry'.padStart(7)}  Lev  PnL`;
   const sep = '-'.repeat(header.length + 2); // +2 for emoji prefix width
 
@@ -53,18 +53,19 @@ function buildContent(positions: Position[], call: CallWithPositions, currentPri
     if (pnlResult.status !== 'na') {
       const { pct, status } = pnlResult as { pct: number; status: string };
       const sign = pct >= 0 ? '+' : '';
+      const pctRounded = Math.round(pct);
       if (status === 'TP') {
         emoji = '✅';
-        pnlStr = `${sign}${pct.toFixed(2)}%TP`;
+        pnlStr = `${sign}${pctRounded}%TP`;
       } else if (status === 'SL') {
         emoji = '🟥';
-        pnlStr = `${sign}${pct.toFixed(2)}%SL`;
+        pnlStr = `${sign}${pctRounded}%SL`;
       } else if (status === 'CL') {
         emoji = '❌';
-        pnlStr = `${sign}${pct.toFixed(2)}%CL`;
+        pnlStr = `${sign}${pctRounded}%CL`;
       } else {
         emoji = pct >= 0 ? '🟢' : '🔴';
-        pnlStr = `${sign}${pct.toFixed(2)}%`;
+        pnlStr = `${sign}${pctRounded}%`;
       }
     }
 
