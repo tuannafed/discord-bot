@@ -266,14 +266,16 @@ export class CallService {
       return [];
     }
 
-    // lastNotified: the band we last sent a notification for
-    const lastNotified = isCaller
-      ? (call.callerNotifiedMilestones ? parseInt(call.callerNotifiedMilestones, 10) : null)
-      : (position.notifiedMilestones ? parseInt(position.notifiedMilestones, 10) : null);
+    const rawStored = isCaller ? call.callerNotifiedMilestones : position.notifiedMilestones;
+    const trimmed = rawStored != null && String(rawStored).trim() !== '' ? String(rawStored).trim() : '';
+    const parsed = trimmed === '' ? NaN : parseInt(trimmed, 10);
+    const lastStored = Number.isFinite(parsed) ? parsed : null;
 
-    // Fire if we're in a band AND it differs from the last notified band
-    if (currentBand === null || currentBand === lastNotified) return [];
+    if (currentBand === null) return [];
 
+    if (currentBand === lastStored) return [];
+
+    // Mỗi lần band đổi (lãi hoặc lỗ) đều notify — ví dụ +300% → <300% (band 200) vẫn bắn mốc 200%; lên lại >300% bắn 300%. Lỗ: -300% → band -200 cũng bắn khi đổi bậc.
     if (isCaller) {
       await this.repo.updateCallerNotifiedMilestones(position.callId, String(currentBand));
     } else {
