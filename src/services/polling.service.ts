@@ -200,6 +200,7 @@ export class PollingService {
           pnlPct: pnl,
           milestone,
           live: true,
+          guildId: call.guildId,
         });
         logger.info(`Milestone ${milestone}% fired for position ${position.id} (${position.username})`);
       }

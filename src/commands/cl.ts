@@ -105,6 +105,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       direction: call.direction,
       pnlPct,
       milestone,
+      guildId: interaction.guildId!,
     });
   }
 

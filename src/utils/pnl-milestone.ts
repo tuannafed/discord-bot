@@ -29,11 +29,13 @@ export async function sendMilestoneNotification(
     pnlPct: number;
     milestone: number;
     live?: boolean; // true = đang giữ lệnh, false/undefined = vừa chốt
+    guildId?: string;
   }
 ): Promise<void> {
   try {
     const channel = await client.channels.fetch(channelId);
     if (!channel || !channel.isTextBased()) return;
+    if (params.guildId && 'guildId' in channel && channel.guildId !== params.guildId) return;
 
     const cfg = MILESTONE_CONFIG[params.milestone];
     const sign = params.pnlPct >= 0 ? '+' : '';
