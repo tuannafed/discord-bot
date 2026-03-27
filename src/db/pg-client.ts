@@ -80,6 +80,7 @@ export async function runMigrations(): Promise<void> {
     ALTER TABLE calls ADD COLUMN IF NOT EXISTS caller_close_type TEXT;
     ALTER TABLE calls ADD COLUMN IF NOT EXISTS caller_close_price DOUBLE PRECISION;
     ALTER TABLE calls ADD COLUMN IF NOT EXISTS caller_pnl_pct DOUBLE PRECISION;
+    ALTER TABLE calls ADD COLUMN IF NOT EXISTS caller_notified_milestones TEXT NOT NULL DEFAULT '';
 
     CREATE TABLE IF NOT EXISTS positions (
       id           TEXT PRIMARY KEY,

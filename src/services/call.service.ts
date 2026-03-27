@@ -164,26 +164,6 @@ export class CallService {
     return { position: closedPosition, call, currentPrice };
   }
 
-  async adminCloseCall(callId: string): Promise<{ call: Call; closedCount: number; currentPrice: number } | { error: string }> {
-    const call = await this.repo.findCallById(callId);
-    if (!call) return { error: 'Kèo không tồn tại.' };
-    if (call.status === 'closed') return { error: 'Kèo này đã đóng rồi.' };
-
-    const coin = await this.marketService.getCoinBySymbol(call.symbol);
-    if (!coin) return { error: `Không fetch được giá ${call.symbol}.` };
-
-    const currentPrice = coin.currentPrice;
-    const closedAt = new Date().toISOString();
-    await this.repo.autoCloseOpenPositions(call.id, closedAt, currentPrice, call.direction);
-    await this.repo.closeCall(call.id);
-    this.callerMuted.delete(call.id);
-
-    const positions = await this.repo.findPositionsByCall(call.id);
-    const closedCount = positions.filter((p) => p.closedAt === closedAt).length;
-
-    return { call, closedCount, currentPrice };
-  }
-
   async updateCallPrice(callId: string, callPrice: number): Promise<{ call: Call } | { error: string }> {
     const call = await this.repo.findCallById(callId);
     if (!call) return { error: 'Kèo không tồn tại.' };

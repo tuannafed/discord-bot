@@ -7,7 +7,8 @@
       "Read(**)",
       "Write(**)",
       "Edit(**)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(rm /Users/tuanna/Projects/My-app/discord-bot/src/commands/call-close.ts)"
     ]
   },
   "hooks": {
@@ -19,8 +20,7 @@
             "type": "command",
             "command": "node -e \"let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const i=JSON.parse(d);const cmd=i.tool_input?.command||'';if(process.platform!=='win32'&&/(npm run dev\\b|pnpm( run)? dev\\b|yarn dev\\b|bun run dev\\b)/.test(cmd)&&!process.env.TMUX){console.error('[Hook] Tip: run dev server in tmux so logs persist across sessions');console.error('[Hook] tmux new -s dev | tmux attach -t dev')}}catch{}console.log(d)})\""
           }
-        ],
-        "description": "Remind to use tmux for dev servers (non-blocking)"
+        ]
       }
     ],
     "PostToolUse": [
@@ -31,8 +31,7 @@
             "type": "command",
             "command": "node -e \"let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const i=JSON.parse(d);const f=i.tool_input?.file_path||'';if(/\\.(ts|tsx|js|jsx)$/.test(f)&&require('fs').existsSync(f)){const c=require('fs').readFileSync(f,'utf8');const m=c.match(/console\\.(log|debug)\\(/g)||[];if(m.length>0)console.error('[Hook] '+m.length+' console.log/debug in '+require('path').basename(f)+' — remove before committing')}}catch{}console.log(d)})\""
           }
-        ],
-        "description": "Warn about console.log/debug in JS/TS files after edits"
+        ]
       }
     ],
     "SessionStart": [

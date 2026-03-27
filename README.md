@@ -273,15 +273,6 @@ Cut loss — đóng lệnh của bạn với kết quả âm. Giá đóng đư�
 
 ---
 
-### `/call-close`
-(Admin) Đóng kèo và auto-close tất cả positions còn mở theo giá hiện tại.
-
-| Param | Type | Required | Description |
-|---|---|---|---|
-| `call_id` | string | Yes | Chọn kèo từ dropdown |
-
----
-
 ### `/help`
 Show all available commands (ephemeral — only visible to you).
 

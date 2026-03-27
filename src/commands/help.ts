@@ -49,7 +49,6 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
           '`/cl` `call_id` — Cắt lỗ, đóng lệnh (giá tự động lấy từ Bybit)',
           '`/call-update` `call_id` `[price]` `[leverage]` — Sửa giá call hoặc đòn bẩy của kèo',
           '`/follow-update` `call_id` `[entry]` `[leverage]` `[user]` — Sửa entry hoặc đòn bẩy lệnh follow',
-          '`/call-close` `call_id` — *(Admin)* Đóng kèo & tự động close tất cả lệnh còn mở',
           '`/call-delete` `call_id` — *(Admin)* Xóa kèo ghi sai (xóa luôn tất cả lệnh liên quan)',
           '> P&L = % thay đổi × đòn bẩy · Long: `(close−entry)/entry` · Short: `(entry−close)/entry`',
           '> Nhận thông báo tự động khi đạt 100% / 200% / 300% / 500% / 1000%',

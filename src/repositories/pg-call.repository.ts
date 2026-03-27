@@ -106,20 +106,6 @@ export class PgCallRepository {
     );
   }
 
-  async autoCloseOpenPositions(callId: string, closedAt: string, closePrice: number, direction: 'long' | 'short'): Promise<void> {
-    const openPositions = await this.db.query<Position>(
-      `SELECT ${POS_SELECT} FROM positions WHERE call_id = $1 AND closed_at IS NULL`,
-      [callId]
-    );
-    for (const pos of openPositions.rows) {
-      const rawPct = direction === 'long'
-        ? ((closePrice - pos.entryPrice) / pos.entryPrice) * 100
-        : ((pos.entryPrice - closePrice) / pos.entryPrice) * 100;
-      const pnlPct = rawPct * pos.leverage;
-      const closeType = pnlPct >= 0 ? 'tp' : 'cl';
-      await this.closePosition(pos.id, closedAt, closeType, closePrice, pnlPct);
-    }
-  }
 
   async updateCallPrice(id: string, callPrice: number): Promise<void> {
     await this.db.query('UPDATE calls SET call_price = $1 WHERE id = $2', [callPrice, id]);

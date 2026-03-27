@@ -26,7 +26,6 @@ import * as follow from './follow.js';
 import * as positions from './positions.js';
 import * as tp from './tp.js';
 import * as cl from './cl.js';
-import * as callClose from './call-close.js';
 import * as callDelete from './call-delete.js';
 import * as callUpdate from './call-update.js';
 import * as followUpdate from './follow-update.js';
@@ -67,7 +66,6 @@ export function buildCommands(
   positions.init(callService, marketService);
   tp.init(callService, client);
   cl.init(callService, client);
-  callClose.init(callService);
   callDelete.init(callService);
   callUpdate.init(callService);
   followUpdate.init(callService);
@@ -95,7 +93,6 @@ export function buildCommands(
     positions,
     tp,
     cl,
-    callClose,
     callDelete,
     callUpdate,
     followUpdate,
@@ -133,7 +130,6 @@ export function getCommandBuilders(): (SlashCommandBuilder | SlashCommandOptions
     positions.data,
     tp.data,
     cl.data,
-    callClose.data,
     callDelete.data,
     callUpdate.data,
     followUpdate.data,
