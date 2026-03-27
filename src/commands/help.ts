@@ -41,6 +41,18 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
         ].join('\n'),
       },
       {
+        name: '⚡ Group Trading',
+        value: [
+          '`/call` `symbol` `direction` `price` — Tạo kèo mới (long/short)',
+          '`/follow` `call_id` `entry` — Vào lệnh theo kèo (chọn từ dropdown)',
+          '`/positions` — Xem tất cả kèo active + P&L% realtime từng người',
+          '`/tp` `call_id` — Take profit, đóng lệnh của bạn (fetch giá tự động)',
+          '`/cl` `call_id` — Cut loss, đóng lệnh của bạn (fetch giá tự động)',
+          '`/call-close` `call_id` — *(Admin)* Đóng kèo & auto-close tất cả positions còn mở',
+          '> P&L% tính theo entry từng người · Long: `(close−entry)/entry` · Short: `(entry−close)/entry`',
+        ].join('\n'),
+      },
+      {
         name: '🎯 Candidates',
         value: [
           '`/candidate-list` `[status]` — `tracking` / `hit_target` / `expired`',
@@ -67,6 +79,11 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
           '/alert-remove id:abc123',
           '/unlock symbol:apt',
           '/unlock symbol:arb',
+          '/call symbol:BTC direction:long price:70000',
+          '/follow call_id:[chọn từ dropdown] entry:69500',
+          '/positions',
+          '/tp call_id:[chọn từ dropdown]',
+          '/cl call_id:[chọn từ dropdown]',
           '```',
         ].join('\n'),
       },

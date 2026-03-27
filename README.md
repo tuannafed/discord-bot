@@ -9,6 +9,7 @@ Discord bot for tracking crypto coins by market cap and daily growth. Built with
 - Price and market cap alerts with cooldown
 - Auto-discovery of top gainers with target market cap tracking
 - Multi-timeframe price & cap change for individual coins (`/coin`) and movers (`/movers`)
+- **Group trading** — call kèo, theo dõi ai đang theo kèo nào, tính P&L% realtime khi TP/CL
 
 ## Commands
 
@@ -188,6 +189,96 @@ Remove a candidate from tracking.
 | `id` | string | Yes | Candidate ID (from `/candidate-list`) |
 
 **Example:** `/candidate-remove id:abc123`
+
+---
+
+### `/unlock`
+Token supply & unlock overview for a coin.
+
+| Param | Type | Required | Description |
+|---|---|---|---|
+| `symbol` | string | Yes | Coin symbol (e.g. `apt`, `arb`) |
+
+**Example:** `/unlock symbol:apt`
+
+**Output:**
+```
+Circulating : 793.88M   (37.8% of max)
+Locked      : 406.30M   (19.3% of max)
+Total issued: 1,200.18M (57.1% of max)
+Max supply  : 2,100M
+Not issued  : 899.82M   (42.8% of max)
+
+Unlock progress (circ / max):
+[████████░░░░░░░░░░░░] 37.8%
+```
+
+---
+
+### `/call`
+Tạo một kèo future mới cho cả nhóm theo dõi.
+
+| Param | Type | Required | Description |
+|---|---|---|---|
+| `symbol` | string | Yes | Coin symbol (e.g. `BTC`, `ETH`) |
+| `direction` | choice | Yes | `long` hoặc `short` |
+| `price` | number | Yes | Giá call kèo (USD) |
+
+**Example:** `/call symbol:BTC direction:long price:70000`
+
+---
+
+### `/follow`
+Vào lệnh theo một kèo đang active. Kèo được chọn từ dropdown autocomplete.
+
+| Param | Type | Required | Description |
+|---|---|---|---|
+| `call_id` | string | Yes | Chọn kèo từ dropdown |
+| `entry` | number | Yes | Giá entry của bạn (USD) |
+
+**Example:** `/follow call_id:[chọn từ dropdown] entry:69500`
+
+---
+
+### `/positions`
+Xem tất cả kèo đang active, danh sách thành viên đang theo, và P&L% realtime.
+
+**Output:**
+```
+BTC 📈 LONG @ $70,000 · Now: $70,504
+Alice   entry $69,500 → 🟡 +1.44%
+Bob     entry $70,200 → ✅TP +0.43%
+Charlie entry $71,000 → ❌CL -0.70%
+```
+
+---
+
+### `/tp`
+Take profit — đóng lệnh của bạn với kết quả dương. Giá đóng được fetch tự động từ Bybit.
+
+| Param | Type | Required | Description |
+|---|---|---|---|
+| `call_id` | string | Yes | Chọn kèo từ dropdown |
+
+---
+
+### `/cl`
+Cut loss — đóng lệnh của bạn với kết quả âm. Giá đóng được fetch tự động từ Bybit.
+
+| Param | Type | Required | Description |
+|---|---|---|---|
+| `call_id` | string | Yes | Chọn kèo từ dropdown |
+
+> **Lưu ý:** P&L% được tính theo `entry` của từng người. Long: `(close - entry) / entry`. Short: `(entry - close) / entry`. Kèo tự đóng khi tất cả thành viên đã TP/CL.
+
+---
+
+### `/call-close`
+(Admin) Đóng kèo và auto-close tất cả positions còn mở theo giá hiện tại.
+
+| Param | Type | Required | Description |
+|---|---|---|---|
+| `call_id` | string | Yes | Chọn kèo từ dropdown |
 
 ---
 

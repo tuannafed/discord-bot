@@ -1,9 +1,10 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder, SlashCommandOptionsOnlyBuilder } from 'discord.js';
+import { ChatInputCommandInteraction, AutocompleteInteraction, SlashCommandBuilder, SlashCommandOptionsOnlyBuilder } from 'discord.js';
 import { MarketService } from '../services/market.service.js';
 import { WatchlistService } from '../services/watchlist.service.js';
 import { AlertService } from '../services/alert.service.js';
 import { CandidateService } from '../services/candidate.service.js';
 import { CryptoDataProvider } from '../providers/crypto-data.provider.js';
+import { CallService } from '../services/call.service.js';
 
 import * as ping from './ping.js';
 import * as coin from './coin.js';
@@ -20,10 +21,17 @@ import * as movers from './movers.js';
 import * as scan from './scan.js';
 import * as unlock from './unlock.js';
 import * as help from './help.js';
+import * as call from './call.js';
+import * as follow from './follow.js';
+import * as positions from './positions.js';
+import * as tp from './tp.js';
+import * as cl from './cl.js';
+import * as callClose from './call-close.js';
 
 export interface Command {
   data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder;
   execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
+  autocomplete?: (interaction: AutocompleteInteraction) => Promise<void>;
 }
 
 export function buildCommands(
@@ -31,7 +39,8 @@ export function buildCommands(
   watchlistService: WatchlistService,
   alertService: AlertService,
   candidateService: CandidateService,
-  provider: CryptoDataProvider
+  provider: CryptoDataProvider,
+  callService: CallService,
 ): Map<string, Command> {
   coin.init(marketService);
   top.init(marketService);
@@ -46,6 +55,12 @@ export function buildCommands(
   movers.init(marketService);
   scan.init(marketService);
   unlock.init(marketService);
+  call.init(callService);
+  follow.init(callService);
+  positions.init(callService, marketService);
+  tp.init(callService);
+  cl.init(callService);
+  callClose.init(callService);
 
   const commands: Command[] = [
     ping,
@@ -62,6 +77,12 @@ export function buildCommands(
     movers,
     scan,
     unlock,
+    call,
+    follow,
+    positions,
+    tp,
+    cl,
+    callClose,
     help,
   ];
 
@@ -88,6 +109,12 @@ export function getCommandBuilders(): (SlashCommandBuilder | SlashCommandOptions
     movers.data,
     scan.data,
     unlock.data,
+    call.data,
+    follow.data,
+    positions.data,
+    tp.data,
+    cl.data,
+    callClose.data,
     help.data,
   ];
 }

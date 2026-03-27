@@ -8,6 +8,7 @@ import { MarketService } from './services/market.service.js';
 import { WatchlistService, IWatchlistRepository } from './services/watchlist.service.js';
 import { AlertService, IAlertRepository } from './services/alert.service.js';
 import { CandidateService, ICandidateRepository } from './services/candidate.service.js';
+import { CallService } from './services/call.service.js';
 import { PollingService } from './services/polling.service.js';
 
 import { WatchlistRepository } from './repositories/watchlist.repository.js';
@@ -16,6 +17,7 @@ import { CandidateRepository } from './repositories/candidate.repository.js';
 import { PgWatchlistRepository } from './repositories/pg-watchlist.repository.js';
 import { PgAlertRepository } from './repositories/pg-alert.repository.js';
 import { PgCandidateRepository } from './repositories/pg-candidate.repository.js';
+import { PgCallRepository } from './repositories/pg-call.repository.js';
 import { getPool, runMigrations } from './db/pg-client.js';
 
 import { buildCommands } from './commands/index.js';
@@ -56,13 +58,17 @@ async function main(): Promise<void> {
   const candidateService = new CandidateService(candidateRepo, cryptoProvider);
   const pollingService = new PollingService(client, alertService, candidateService, cryptoProvider);
 
+  const callRepo = env.DATABASE_URL ? new PgCallRepository(getPool()) : undefined;
+  const callService = callRepo ? new CallService(callRepo, marketService) : undefined;
+
   // Commands
   const commands = buildCommands(
     marketService,
     watchlistService,
     alertService,
     candidateService,
-    cryptoProvider
+    cryptoProvider,
+    callService!,
   );
 
   // Events

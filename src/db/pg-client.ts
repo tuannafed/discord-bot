@@ -58,6 +58,33 @@ export async function runMigrations(): Promise<void> {
       created_at          TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS calls (
+      id           TEXT PRIMARY KEY,
+      guild_id     TEXT NOT NULL,
+      channel_id   TEXT NOT NULL,
+      symbol       TEXT NOT NULL,
+      direction    TEXT NOT NULL,
+      call_price   DOUBLE PRECISION NOT NULL,
+      called_by    TEXT NOT NULL,
+      called_by_id TEXT NOT NULL,
+      called_at    TEXT NOT NULL,
+      status       TEXT NOT NULL DEFAULT 'active'
+    );
+
+    CREATE TABLE IF NOT EXISTS positions (
+      id           TEXT PRIMARY KEY,
+      call_id      TEXT NOT NULL REFERENCES calls(id),
+      guild_id     TEXT NOT NULL,
+      user_id      TEXT NOT NULL,
+      username     TEXT NOT NULL,
+      entry_price  DOUBLE PRECISION NOT NULL,
+      joined_at    TEXT NOT NULL,
+      closed_at    TEXT,
+      close_type   TEXT,
+      close_price  DOUBLE PRECISION,
+      pnl_pct      DOUBLE PRECISION
+    );
+
     CREATE TABLE IF NOT EXISTS candidates (
       id                      TEXT PRIMARY KEY,
       guild_id                TEXT NOT NULL,

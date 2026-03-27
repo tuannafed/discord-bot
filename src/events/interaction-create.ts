@@ -7,6 +7,18 @@ export function registerInteractionCreateEvent(
   commands: Map<string, Command>
 ): void {
   client.on(Events.InteractionCreate, async (interaction) => {
+    if (interaction.isAutocomplete()) {
+      const command = commands.get(interaction.commandName);
+      if (command?.autocomplete) {
+        try {
+          await command.autocomplete(interaction);
+        } catch (error) {
+          logger.error(`Autocomplete error for ${interaction.commandName}`, error);
+        }
+      }
+      return;
+    }
+
     if (!interaction.isChatInputCommand()) return;
 
     const command = commands.get(interaction.commandName);
