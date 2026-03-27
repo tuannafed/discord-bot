@@ -1,5 +1,6 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { CallService } from '../services/call.service.js';
+import { parseDecimalInput } from '../utils/format.js';
 
 let callService: CallService;
 
@@ -23,10 +24,10 @@ export const data = new SlashCommandBuilder()
       .setRequired(true)
       .addChoices({ name: 'Long', value: 'long' }, { name: 'Short', value: 'short' })
   )
-  .addNumberOption((opt) =>
+  .addStringOption((opt) =>
     opt
       .setName('price')
-      .setDescription('Giá call kèo (USD)')
+      .setDescription('Giá call kèo (USD) — vd: 0.27 hoặc 0,27')
       .setRequired(true)
   )
   .addIntegerOption((opt) =>
@@ -41,8 +42,14 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   const symbol = interaction.options.getString('symbol', true).toUpperCase();
   const direction = interaction.options.getString('direction', true) as 'long' | 'short';
-  const price = interaction.options.getNumber('price', true);
+  const priceRaw = interaction.options.getString('price', true);
+  const price = parseDecimalInput(priceRaw);
   const leverage = interaction.options.getInteger('leverage') ?? 20;
+
+  if (isNaN(price) || price <= 0) {
+    await interaction.reply({ content: '❌ Giá call không hợp lệ. Vui lòng nhập số dương (vd: 0.27 hoặc 0,27).', ephemeral: true });
+    return;
+  }
 
   await interaction.deferReply();
 

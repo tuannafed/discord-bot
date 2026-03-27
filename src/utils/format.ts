@@ -1,3 +1,14 @@
+/**
+ * Normalize decimal input from various keyboard locales.
+ * Accepts both "0.27" (en-US) and "0,27" (some iPhone locales).
+ * Returns NaN if the input is not a valid number.
+ */
+export function parseDecimalInput(raw: string): number {
+  const normalized = raw.trim().replace(',', '.');
+  const value = parseFloat(normalized);
+  return value;
+}
+
 export function formatPrice(price: number): string {
   if (price >= 1) {
     return `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;

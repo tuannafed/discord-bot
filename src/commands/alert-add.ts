@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { AlertService } from '../services/alert.service.js';
 import { AlertMetric, AlertCondition } from '../types/alert.js';
-import { formatPrice, formatMarketCap } from '../utils/format.js';
+import { formatPrice, formatMarketCap, parseDecimalInput } from '../utils/format.js';
 
 let alertService: AlertService;
 
@@ -37,10 +37,10 @@ export const data = new SlashCommandBuilder()
         { name: 'Change Down % (from now)', value: 'change_down' }
       )
   )
-  .addNumberOption((opt) =>
+  .addStringOption((opt) =>
     opt
       .setName('threshold')
-      .setDescription('USD value for above/below — OR % for change_up/change_down (e.g. 3 = 3%)')
+      .setDescription('USD value for above/below — OR % for change_up/change_down (e.g. 3 = 3%). Supports 0,27 or 0.27')
       .setRequired(true)
   );
 
@@ -55,7 +55,13 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const symbol = interaction.options.getString('symbol', true);
   const metric = interaction.options.getString('metric', true) as AlertMetric;
   const condition = interaction.options.getString('condition', true) as AlertCondition;
-  const thresholdInput = interaction.options.getNumber('threshold', true);
+  const thresholdRaw = interaction.options.getString('threshold', true);
+  const thresholdInput = parseDecimalInput(thresholdRaw);
+
+  if (isNaN(thresholdInput) || thresholdInput <= 0) {
+    await interaction.reply({ content: '❌ Threshold không hợp lệ. Vui lòng nhập số dương (vd: 0.27 hoặc 0,27).', ephemeral: true });
+    return;
+  }
 
   await interaction.deferReply();
 

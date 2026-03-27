@@ -32,6 +32,7 @@ import * as callUpdate from './call-update.js';
 import * as followUpdate from './follow-update.js';
 import * as milestoneMute from './milestone-mute.js';
 import * as milestoneUnmute from './milestone-unmute.js';
+import * as positionFix from './position-fix.js';
 
 export interface Command {
   data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder;
@@ -72,6 +73,7 @@ export function buildCommands(
   followUpdate.init(callService);
   milestoneMute.init(callService);
   milestoneUnmute.init(callService);
+  positionFix.init(callService);
 
   const commands: Command[] = [
     ping,
@@ -99,6 +101,7 @@ export function buildCommands(
     followUpdate,
     milestoneMute,
     milestoneUnmute,
+    positionFix,
     help,
   ];
 
@@ -136,6 +139,7 @@ export function getCommandBuilders(): (SlashCommandBuilder | SlashCommandOptions
     followUpdate.data,
     milestoneMute.data,
     milestoneUnmute.data,
+    positionFix.data,
     help.data,
   ];
 }

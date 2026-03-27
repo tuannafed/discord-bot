@@ -5,6 +5,7 @@ import {
   AutocompleteInteraction,
 } from 'discord.js';
 import { CallService } from '../services/call.service.js';
+import { parseDecimalInput } from '../utils/format.js';
 
 let callService: CallService;
 
@@ -22,10 +23,10 @@ export const data = new SlashCommandBuilder()
       .setRequired(true)
       .setAutocomplete(true)
   )
-  .addNumberOption((opt) =>
+  .addStringOption((opt) =>
     opt
       .setName('entry')
-      .setDescription('Giá entry (USD)')
+      .setDescription('Giá entry (USD) — vd: 0.27 hoặc 0,27')
       .setRequired(true)
   )
   .addIntegerOption((opt) =>
@@ -55,9 +56,16 @@ export async function autocomplete(interaction: AutocompleteInteraction): Promis
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   const callId = interaction.options.getString('call_id', true);
-  const entry = interaction.options.getNumber('entry', true);
+  const entryRaw = interaction.options.getString('entry', true);
+  const entry = parseDecimalInput(entryRaw);
   const leverageOpt = interaction.options.getInteger('leverage') ?? undefined;
+
   const targetUser = interaction.options.getUser('user');
+
+  if (isNaN(entry) || entry <= 0) {
+    await interaction.reply({ content: '❌ Giá entry không hợp lệ. Vui lòng nhập số dương (vd: 0.27 hoặc 0,27).', ephemeral: true });
+    return;
+  }
 
   const userId = targetUser?.id ?? interaction.user.id;
   const username = targetUser?.username ?? interaction.user.username;

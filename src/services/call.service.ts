@@ -76,6 +76,8 @@ export class CallService {
     if (!call) return { error: 'Kèo không tồn tại.' };
     if (call.status !== 'active') return { error: 'Kèo này đã đóng, không thể join.' };
 
+    if (call.calledById === params.userId) return { error: 'Bạn là người call kèo này, không cần join thêm.' };
+
     const existing = await this.repo.findOpenPositionByUser(params.callId, params.userId);
     if (existing) return { error: 'Bạn đã join kèo này rồi.' };
 
@@ -319,6 +321,10 @@ export class CallService {
 
   async getOpenPositionsByCall(callId: string): Promise<Position[]> {
     return this.repo.findOpenPositionsByCall(callId);
+  }
+
+  async fixCallerDuplicatePositions(guildId: string): Promise<number> {
+    return this.repo.deleteCallerDuplicatePositions(guildId);
   }
 
   getRepo(): PgCallRepository {

@@ -157,6 +157,23 @@ export class PgCallRepository {
     return parseInt(r.rows[0].count, 10) === 0;
   }
 
+  async deleteCallerDuplicatePositions(guildId: string): Promise<number> {
+    const r = await this.db.query<{ id: string }>(
+      `DELETE FROM positions
+       WHERE id IN (
+         SELECT p.id FROM positions p
+         JOIN calls c ON c.id = p.call_id
+         WHERE c.guild_id = $1
+           AND c.status = 'active'
+           AND p.user_id = c.called_by_id
+           AND p.closed_at IS NULL
+       )
+       RETURNING id`,
+      [guildId]
+    );
+    return r.rowCount ?? 0;
+  }
+
   async findAllOpenPositionsWithCalls(): Promise<{ position: Position; call: Call }[]> {
     const r = await this.db.query<Position & {
       call_id_2: string; call_guild_id: string; call_channel_id: string; call_symbol: string;

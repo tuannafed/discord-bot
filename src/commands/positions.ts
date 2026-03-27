@@ -36,7 +36,7 @@ function buildContent(positions: Position[], call: CallWithPositions, currentPri
     pnlPct: call.callerPnlPct,
     notifiedMilestones: '', mutedMilestones: false,
   };
-  const allRows = [callerRow, ...positions];
+  const allRows = [callerRow, ...positions.filter((p) => p.userId !== call.calledById)];
 
   const NAME_W = 6;
   const header = `${'Name'.padEnd(NAME_W)}  ${'Entry'.padStart(7)}  Lev  PnL`;

@@ -5,6 +5,7 @@ import {
   AutocompleteInteraction,
 } from 'discord.js';
 import { CallService } from '../services/call.service.js';
+import { parseDecimalInput } from '../utils/format.js';
 
 let callService: CallService;
 
@@ -22,10 +23,10 @@ export const data = new SlashCommandBuilder()
       .setRequired(true)
       .setAutocomplete(true)
   )
-  .addNumberOption((opt) =>
+  .addStringOption((opt) =>
     opt
       .setName('price')
-      .setDescription('Giá call mới (USD)')
+      .setDescription('Giá call mới (USD) — vd: 0.27 hoặc 0,27')
       .setRequired(false)
   )
   .addIntegerOption((opt) =>
@@ -48,8 +49,14 @@ export async function autocomplete(interaction: AutocompleteInteraction): Promis
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   const callId = interaction.options.getString('call_id', true);
-  const price = interaction.options.getNumber('price');
+  const priceRaw = interaction.options.getString('price');
+  const price = priceRaw !== null ? parseDecimalInput(priceRaw) : null;
   const leverage = interaction.options.getInteger('leverage');
+
+  if (price !== null && (isNaN(price) || price <= 0)) {
+    await interaction.reply({ content: '❌ Giá call không hợp lệ. Vui lòng nhập số dương (vd: 0.27 hoặc 0,27).', ephemeral: true });
+    return;
+  }
 
   if (price === null && leverage === null) {
     await interaction.reply({ content: '❌ Cần nhập ít nhất một giá trị: `price` hoặc `leverage`.', ephemeral: true });

@@ -163,7 +163,11 @@ export class PollingService {
       call,
     }));
 
-    const entries = [...followerEntries, ...callerEntries];
+    const callerIds = new Set(callerEntries.map((e) => e.call.calledById + ':' + e.call.id));
+    const deduplicatedFollowers = followerEntries.filter(
+      (e) => !callerIds.has(e.position.userId + ':' + e.call.id)
+    );
+    const entries = [...deduplicatedFollowers, ...callerEntries];
     if (entries.length === 0) return;
 
     logger.info(`Milestone check: ${entries.length} open position(s) (${followerEntries.length} followers + ${callerEntries.length} callers)`);
