@@ -16,12 +16,12 @@ export function startCloseReminder(
   callerUserId: string,
   symbol: string,
   direction: string,
-  closeType: 'tp' | 'cl',
+  closeType: 'tp' | 'cl' | 'sl',
 ): void {
   // Không chạy 2 reminder cho cùng 1 call
   if (activeReminders.has(callId)) return;
 
-  const action = closeType === 'tp' ? 'chốt lời ✅' : 'cắt lỗ ❌';
+  const action = closeType === 'tp' ? 'chốt lời ✅' : closeType === 'sl' ? 'stop loss 🛑' : 'cắt lỗ ❌';
   let rounds = 0;
 
   const intervalId = setInterval(async () => {
@@ -43,10 +43,10 @@ export function startCloseReminder(
 
       const embed = new EmbedBuilder()
         .setTitle(`⚠️ Nhắc đóng lệnh — ${symbol} ${dirLabel}`)
-        .setColor(closeType === 'tp' ? 0x2ecc71 : 0xe74c3c)
+        .setColor(closeType === 'tp' ? 0x2ecc71 : closeType === 'sl' ? 0xe67e22 : 0xe74c3c)
         .setDescription(
           `<@${callerUserId}> vừa **${action}** kèo **${symbol}**.\n` +
-          `${mentions} bạn chưa đóng lệnh, dùng \`/tp\` hoặc \`/cl\` ngay!`
+          `${mentions} bạn chưa đóng lệnh, dùng \`/tp\`, \`/cl\` hoặc \`/sl\` ngay!`
         )
         .setTimestamp();
 

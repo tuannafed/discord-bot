@@ -15,7 +15,7 @@ export function init(cService: CallService, mService: MarketService): void {
 function calcPnl(pos: Position, call: CallWithPositions, currentPrice: number): { pct: number; status: string } | { status: 'na' } {
   if (pos.closedAt !== null) {
     const pct = pos.pnlPct ?? 0;
-    return { pct, status: pos.closeType === 'tp' ? 'TP' : 'CL' };
+    return { pct, status: pos.closeType === 'tp' ? 'TP' : pos.closeType === 'sl' ? 'SL' : 'CL' };
   }
   if (currentPrice <= 0) return { status: 'na' };
   const rawPct = call.direction === 'long'

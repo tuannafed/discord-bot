@@ -99,7 +99,7 @@ export class PgCallRepository {
     return r.rows;
   }
 
-  async closePosition(id: string, closedAt: string, closeType: 'tp' | 'cl', closePrice: number, pnlPct: number): Promise<void> {
+  async closePosition(id: string, closedAt: string, closeType: 'tp' | 'cl' | 'sl', closePrice: number, pnlPct: number): Promise<void> {
     await this.db.query(
       `UPDATE positions SET closed_at=$1, close_type=$2, close_price=$3, pnl_pct=$4 WHERE id=$5`,
       [closedAt, closeType, closePrice, pnlPct, id]

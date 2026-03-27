@@ -1,6 +1,6 @@
 export type CallDirection = 'long' | 'short';
 export type CallStatus = 'active' | 'closed';
-export type CloseType = 'tp' | 'cl';
+export type CloseType = 'tp' | 'cl' | 'sl';
 
 export interface Call {
   id: string;

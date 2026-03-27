@@ -47,6 +47,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
           '`/positions` — Xem tất cả kèo active + P&L realtime của từng người',
           '`/tp` `call_id` — Chốt lời, đóng lệnh (giá tự động lấy từ Bybit)',
           '`/cl` `call_id` — Cắt lỗ, đóng lệnh (giá tự động lấy từ Bybit)',
+          '`/sl` `call_id` — Stop loss, đóng lệnh cắt lỗ (giá tự động lấy từ Bybit)',
           '`/call-update` `call_id` `[price]` `[leverage]` — Sửa giá call hoặc đòn bẩy của kèo',
           '`/follow-update` `call_id` `[entry]` `[leverage]` `[user]` — Sửa entry hoặc đòn bẩy lệnh follow',
           '`/call-delete` `call_id` — *(Admin)* Xóa kèo ghi sai (xóa luôn tất cả lệnh liên quan)',
