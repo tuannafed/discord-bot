@@ -9,7 +9,7 @@ Discord bot for tracking crypto coins by market cap and daily growth. Built with
 - Price and market cap alerts with cooldown
 - Auto-discovery of top gainers with target market cap tracking
 - Multi-timeframe price & cap change for individual coins (`/coin`) and movers (`/movers`)
-- Bybit USDT perpetual funding snapshot (`/funding`) with next funding time
+- Bybit USDT perpetual funding (`/funding` and a one-line **Funding:** preview on `/positions`)
 - **Group trading** — call kèo, theo dõi ai đang theo kèo nào, tính P&L% realtime khi TP/CL
 
 ## Commands
@@ -108,7 +108,7 @@ Find Bybit-listed coins within a market cap range. Market cap from CoinMarketCap
 ---
 
 ### `/funding`
-Check current funding rate for a Bybit USDT perpetual pair (linear), including next funding time.
+By **Bybit** USDT perpetual (linear): current funding **rate per interval** (usually 8h), Mark & Index, and **next funding** time. No annualized APR — only the exchange-reported rate.
 
 | Param | Type | Required | Description |
 |---|---|---|---|
@@ -117,10 +117,9 @@ Check current funding rate for a Bybit USDT perpetual pair (linear), including n
 **Example:** `/funding symbol:btc`
 
 **Output includes:**
-- Funding rate per interval (usually 8h)
-- Estimated APR (reference only)
+- Funding rate % per interval (e.g. 8h)
 - Mark / Index prices
-- Next funding timestamp
+- Next funding timestamp (Discord-relative)
 
 ---
 
@@ -261,12 +260,17 @@ Vào lệnh theo một kèo đang active. Kèo được chọn từ dropdown aut
 ### `/positions`
 Xem tất cả kèo đang active, danh sách thành viên đang theo, và P&L% realtime.
 
-**Output:**
+Mỗi kèo là một embed field: tiêu đề có **symbol · LONG/SHORT · đòn bẩy · giá hiện tại**; ngay dưới là **một dòng** funding perp (nếu Bybit trả dữ liệu), rồi bảng monospace Entry / Lev / PnL.
+
+**Ví dụ (rút gọn):**
 ```
-BTC 📈 LONG @ $70,000 · Now: $70,504
-Alice   entry $69,500 → 🟡 +1.44%
-Bob     entry $70,200 → ✅TP +0.43%
-Charlie entry $71,000 → ❌CL -0.70%
+BTC 📈 LONG x20 · $70,504
+Funding: +0.0100% / 8h
+
+Name    Entry      Lev  PnL
+-----------------------------
+🟢 alice  $69,500   20  +2%
+🔴 bob    $70,200   20  -1%
 ```
 
 ---

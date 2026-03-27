@@ -29,8 +29,6 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
 
   const pctPeriod = snap.fundingRate * 100;
   const sign = pctPeriod >= 0 ? '+' : '';
-  const periodsPerDay = 24 / snap.fundingIntervalHours;
-  const aprSimple = snap.fundingRate * periodsPerDay * 365 * 100;
 
   const unix = Math.floor(snap.nextFundingTime.getTime() / 1000);
 
@@ -41,8 +39,6 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       [
         `**Rate kỳ hiện tại:** \`${sign}${pctPeriod.toFixed(4)}%\` / ${snap.fundingIntervalHours}h`,
         'Rate **dương** → long trả short · **âm** → short trả long *(Bybit)*',
-        '',
-        `**Ước tính APR (cộng dồn đơn giản):** \`${sign}${aprSimple.toFixed(2)}%\` *(tham khảo)*`,
         '',
         `**Mark:** ${formatPrice(snap.markPrice)} · **Index:** ${formatPrice(snap.indexPrice)}`,
         `**Funding tiếp theo:** <t:${unix}:F> (<t:${unix}:R>)`,

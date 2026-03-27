@@ -2,6 +2,7 @@ import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from '
 import { CallService } from '../services/call.service.js';
 import { MarketService } from '../services/market.service.js';
 import { CallWithPositions, Position } from '../types/call.js';
+import type { LinearFundingSnapshot } from '../types/funding.js';
 import { formatPrice } from '../utils/format.js';
 
 let callService: CallService;
@@ -75,6 +76,14 @@ function buildContent(positions: Position[], call: CallWithPositions, currentPri
   return '```\n' + [header, sep, ...rows].join('\n') + '\n```';
 }
 
+/** Một dòng trước bảng PnL — ví dụ: Funding: -0.0214% / 8h */
+function formatFundingSnippet(snap: LinearFundingSnapshot | null | undefined): string {
+  if (!snap) return '';
+  const pctPeriod = snap.fundingRate * 100;
+  const sign = pctPeriod >= 0 ? '+' : '';
+  return `Funding: ${sign}${pctPeriod.toFixed(4)}% / ${snap.fundingIntervalHours}h\n\n`;
+}
+
 export const data = new SlashCommandBuilder()
   .setName('positions')
   .setDescription('Xem tất cả kèo active và danh sách thành viên đang theo');
@@ -90,7 +99,12 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   }
 
   const symbols = [...new Set(callsWithPositions.map((c) => c.symbol))];
-  const priceMap = await marketService.getLivePrices(symbols);
+  const [priceMap, fundingMap] = await Promise.all([
+    marketService.getLivePrices(symbols),
+    Promise.all(symbols.map(async (sym) => [sym, await marketService.getLinearFunding(sym)] as const)).then(
+      (pairs) => new Map(pairs),
+    ),
+  ]);
 
   const embed = new EmbedBuilder()
     .setTitle('📊 Active Calls')
@@ -102,8 +116,9 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     const dirEmoji = call.direction === 'long' ? '📈 LONG' : '📉 SHORT';
     const priceStr = currentPrice > 0 ? ` · **${formatPrice(currentPrice)}**` : '';
     const fieldName = `${call.symbol} ${dirEmoji} x${call.leverage}${priceStr}`;
-
-    embed.addFields({ name: fieldName, value: buildContent(call.positions, call, currentPrice) });
+    const fundingDesc = formatFundingSnippet(fundingMap.get(call.symbol));
+    const body = buildContent(call.positions, call, currentPrice);
+    embed.addFields({ name: fieldName, value: `${fundingDesc}${body}` });
   }
 
   await interaction.editReply({ embeds: [embed] });

@@ -18,7 +18,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
           '`/top` `[limit]` — Top coin theo vốn hóa *(có trên Bybit)*',
           '`/movers` `[metric]` `[timeframe]` `[type]` `[limit]` — Tăng/giảm mạnh nhất',
           '`/scan` `min_cap` `max_cap` `[limit]` — Lọc coin theo vốn hóa',
-          '`/funding` `symbol` — Funding Bybit USDT perpetual (rate, giờ funding tới, mark/index)',
+          '`/funding` `symbol` — Funding Bybit USDT perp: %/kỳ (vd 8h), mark/index, giờ funding tiếp theo',
           '`/unlock` `symbol` — Thông tin unlock token (lưu hành / bị khóa / tối đa)',
         ].join('\n'),
       },
@@ -45,7 +45,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
         value: [
           '`/call` `symbol` `direction` `price` `[leverage]` — Tạo kèo mới (long/short), đòn bẩy mặc định x20',
           '`/follow` `call_id` `entry` `[leverage]` `[user]` — Vào lệnh theo kèo, có thể add cho người khác',
-          '`/positions` — Xem tất cả kèo active + P&L realtime của từng người',
+          '`/positions` — Kèo active + P&L realtime; mỗi kèo hiện Funding %/kỳ Bybit (một dòng) rồi bảng PnL',
           '`/tp` `call_id` — Chốt lời, đóng lệnh (giá tự động lấy từ Bybit)',
           '`/cl` `call_id` — Cắt lỗ, đóng lệnh (giá tự động lấy từ Bybit)',
           '`/sl` `call_id` — Stop loss, đóng lệnh cắt lỗ (giá tự động lấy từ Bybit)',
