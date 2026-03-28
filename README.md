@@ -11,6 +11,51 @@ Bot Discord theo dõi coin theo vốn hóa và biến động giá/ngày. Xây v
 - Nhiều khung thời gian cho giá & vốn hóa từng coin (`/coin`) và top biến động (`/movers`)
 - Funding perpetual USDT Bybit (`/funding` và một dòng **Funding:** trên `/positions`)
 - **Kèo nhóm** — tạo kèo, theo dõi ai đang theo kèo, PnL% realtime khi TP/CL
+- **AI Chat** — tag bot + nhắn tin để chat với LLM (DeepSeek), hỗ trợ web search (Tavily), skill tự động
+- **Voice Commands** — gửi voice message để ra lệnh bằng giọng nói (Whisper STT + LLM intent parser)
+
+## Voice Commands
+
+Bấm nút 🎤 **mic** ở góc phải ô chat → ghi âm → gửi. Bot tự nhận diện, **không cần tag bot**.
+
+**Quy tắc:** câu nói phải **bắt đầu bằng keyword lệnh**. Nếu không → bot trả lời bằng AI chat.
+
+### Lệnh trading (cần xác nhận ✅❌)
+
+| Keyword | Ví dụ |
+|---------|-------|
+| `call` | `call BTC long x20 giá 65k` |
+| `follow` | `follow kèo BTC entry 64000` |
+| `cl` | `cl BTC` hoặc `cắt lỗ BTC` |
+| `tp` | `tp BTC` hoặc `chốt lời BTC` |
+| `sl` | `sl BTC` hoặc `stop loss BTC` |
+| `call update` | `call update kèo BTC giá 65500` |
+| `follow update` | `follow update BTC đòn 15` |
+
+### Lệnh xem thông tin (thực hiện ngay)
+
+| Keyword | Ví dụ |
+|---------|-------|
+| `positions` | `positions`, `chạy positions` |
+| `coin` | `coin BTC` |
+| `top` | `top`, `top coin` |
+| `movers` | `movers` |
+| `funding` | `funding BTC` |
+| `watchlist` | `watchlist` |
+| `alert` | `alert` |
+
+### Chat AI bằng giọng nói
+
+Nói tự nhiên không có keyword → bot trả lời AI: tin tức, phân tích, tử vi, tâm lý...
+
+**Mẹo:**
+- Số bằng lời: *"không phẩy hai ba sáu"* → `0.236`, *"sáu mươi lăm nghìn"* → `65000`
+- Giá luôn tính bằng **USD**, không cần nói đơn vị
+- Coin name tự convert: *bitcoin* → `BTC`, *ethereum* → `ETH`
+
+> Dùng `/help-voice` trong Discord để xem hướng dẫn đầy đủ với ví dụ.
+
+---
 
 ## Lệnh
 

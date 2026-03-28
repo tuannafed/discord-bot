@@ -23,6 +23,7 @@ import * as scan from './scan.js';
 import * as unlock from './unlock.js';
 import * as help from './help.js';
 import * as helpFull from './help-full.js';
+import * as helpVoice from './help-voice.js';
 import * as call from './call.js';
 import * as follow from './follow.js';
 import * as positions from './positions.js';
@@ -119,6 +120,7 @@ export function buildCommands(
     funding,
     help,
     helpFull,
+    helpVoice,
   ];
 
   const map = new Map<string, Command>();
@@ -162,5 +164,6 @@ export function getCommandBuilders(): (SlashCommandBuilder | SlashCommandOptions
     funding.data,
     help.data,
     helpFull.data,
+    helpVoice.data,
   ];
 }
