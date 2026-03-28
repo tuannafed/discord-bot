@@ -1,4 +1,4 @@
-import { Message, TextChannel } from 'discord.js';
+import { Message, TextChannel, EmbedBuilder } from 'discord.js';
 import axios from 'axios';
 import OpenAI, { toFile } from 'openai';
 import { Readable } from 'stream';
@@ -11,6 +11,30 @@ import { detectSkill, getSkill } from './llm-skills.js';
 import { shouldSearch, formatSearchContext, type TavilySearchService } from './tavily-search.service.js';
 import { ConversationHistoryService } from './conversation-history.service.js';
 import { logger } from '../utils/logger.js';
+
+const SKILL_COLOR: Record<string, number> = {
+  'crypto-analyst': 0x26cb7c,
+  'trader': 0xf0a500,
+  'news-analyst': 0x5865f2,
+  'world-news': 0x1da1f2,
+  'psychologist': 0xff6b9d,
+  'astrology': 0x9b59b6,
+  'general': 0x2b2d31,
+};
+
+function splitIntoChunks(text: string, size: number): string[] {
+  if (text.length <= size) return [text];
+  const chunks: string[] = [];
+  let remaining = text;
+  while (remaining.length > 0) {
+    if (remaining.length <= size) { chunks.push(remaining); break; }
+    let cutAt = remaining.lastIndexOf('\n', size);
+    if (cutAt < size * 0.5) cutAt = size;
+    chunks.push(remaining.slice(0, cutAt));
+    remaining = remaining.slice(cutAt).trimStart();
+  }
+  return chunks;
+}
 
 // Discord voice message attachment flag
 const VOICE_MESSAGE_FLAG = 1 << 13; // MessageFlags.IsVoiceMessage = 8192
@@ -171,19 +195,25 @@ export class VoiceMessageService {
     this.history.addAssistantMessage(channelId, result.text);
     logger.info(`Voice chat skill=${skillName} for transcript="${transcript.slice(0, 60)}"`);
 
-    // Split if > 4096 chars
-    const MAX = 4000;
-    const text = result.text;
-    const prefix = `🎙️ *"${transcript.slice(0, 80)}${transcript.length > 80 ? '…' : ''}"*\n\n`;
-    if (prefix.length + text.length <= MAX) {
-      await message.reply({ content: prefix + text, allowedMentions: { repliedUser: true } });
-    } else {
-      await message.reply({ content: prefix + text.slice(0, MAX - prefix.length), allowedMentions: { repliedUser: true } });
-      let remaining = text.slice(MAX - prefix.length);
-      while (remaining.length > 0) {
-        await (message.channel as TextChannel).send({ content: remaining.slice(0, MAX) });
-        remaining = remaining.slice(MAX);
-      }
+    const EMBED_MAX = 4096;
+    const shortTranscript = transcript.slice(0, 80) + (transcript.length > 80 ? '…' : '');
+    const chunks = splitIntoChunks(result.text, EMBED_MAX);
+    const color = SKILL_COLOR[skillName] ?? SKILL_COLOR['general'];
+
+    const embeds = chunks.map((chunk, i) =>
+      new EmbedBuilder()
+        .setColor(color)
+        .setDescription(chunk)
+        .setFooter(
+          i === 0
+            ? { text: `🎙️ "${shortTranscript}" • ${skillName}` }
+            : { text: `(tiếp theo ${i + 1}/${chunks.length})` },
+        ),
+    );
+
+    await message.reply({ embeds: [embeds[0]], allowedMentions: { repliedUser: true } });
+    for (const embed of embeds.slice(1)) {
+      await (message.channel as TextChannel).send({ embeds: [embed] });
     }
   }
 
