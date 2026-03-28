@@ -1,4 +1,4 @@
-import { AttachmentBuilder, Client, Events } from 'discord.js';
+import { AttachmentBuilder, Client, EmbedBuilder, Events } from 'discord.js';
 import { logger } from '../utils/logger.js';
 import { LLM_ERROR_USER_MESSAGE, type LlmChatService } from '../services/llm-chat.service.js';
 import {
@@ -11,7 +11,13 @@ import { fetchOhlcv, renderCandlestickChart } from '../services/chart.service.js
 import { detectSkill, getSkill } from '../services/llm-skills.js';
 import { ConversationHistoryService } from '../services/conversation-history.service.js';
 
-const DISCORD_MSG_MAX = 1900;
+const EMBED_DESC_MAX = 4096;
+const EMBED_COLOR: Record<string, number> = {
+  'crypto-analyst': 0x26cb7c,
+  trader: 0xf0a500,
+  'news-analyst': 0x5865f2,
+  general: 0x2b2d31,
+};
 
 function stripBotMention(content: string, botId: string): string {
   return content
@@ -20,9 +26,37 @@ function stripBotMention(content: string, botId: string): string {
     .trim();
 }
 
-function truncateForDiscord(text: string): string {
-  if (text.length <= DISCORD_MSG_MAX) return text;
-  return `${text.slice(0, DISCORD_MSG_MAX - 20)}\n\n_(đã cắt bớt — quá dài)_`;
+/** Split text into chunks of max `size` chars, breaking at newlines when possible. */
+function splitIntoChunks(text: string, size: number): string[] {
+  if (text.length <= size) return [text];
+  const chunks: string[] = [];
+  let remaining = text;
+  while (remaining.length > 0) {
+    if (remaining.length <= size) {
+      chunks.push(remaining);
+      break;
+    }
+    let cutAt = remaining.lastIndexOf('\n', size);
+    if (cutAt < size * 0.5) cutAt = size;
+    chunks.push(remaining.slice(0, cutAt));
+    remaining = remaining.slice(cutAt).trimStart();
+  }
+  return chunks;
+}
+
+function buildEmbeds(text: string, skillName: string, prompt: string): EmbedBuilder[] {
+  const color = EMBED_COLOR[skillName] ?? EMBED_COLOR['general'];
+  const chunks = splitIntoChunks(text, EMBED_DESC_MAX);
+  return chunks.map((chunk, i) =>
+    new EmbedBuilder()
+      .setColor(color)
+      .setDescription(chunk)
+      .setFooter(
+        i === 0
+          ? { text: `Skill: ${skillName} • "${prompt.slice(0, 60)}${prompt.length > 60 ? '…' : ''}"` }
+          : { text: `(tiếp theo ${i + 1}/${chunks.length})` },
+      ),
+  );
 }
 
 const MSG_CHAT_HIDDEN =
@@ -128,10 +162,12 @@ export function registerMessageCreateEvent(
 
       history.addAssistantMessage(message.channelId, result.text);
 
-      await message.reply({
-        content: truncateForDiscord(result.text),
-        allowedMentions: { users: [] },
-      });
+      const embeds = buildEmbeds(result.text, skillName, prompt);
+      // Reply with first embed, send remaining as follow-ups
+      await message.reply({ embeds: [embeds[0]], allowedMentions: { users: [] } });
+      for (const embed of embeds.slice(1)) {
+        await message.channel.send({ embeds: [embed] });
+      }
     } catch (err) {
       logger.warn(`Mention reply failed in channel ${message.channelId}: ${(err as Error).message}`);
     }
