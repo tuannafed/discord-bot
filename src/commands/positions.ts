@@ -28,8 +28,30 @@ function calcPnl(pos: Position, call: CallWithPositions, currentPrice: number): 
 
 export type BuildPositionsTableOptions = { openOnly?: boolean };
 
-/** Caller PnL row (synthetic — not a real Position DB row) */
-function buildCallerPnlString(call: CallWithPositions, currentPrice: number): string {
+const CALLER_PNL_PROFIT = [
+  'đang đếm tiền rồi!', 'thuyền trưởng cười tươi!', 'ngon lành cành đào!',
+  'bà con vỗ tay đi!', 'đỉnh của chóp luôn!',
+];
+const CALLER_PNL_LOSS = [
+  'đang chìm nhưng chưa bỏ cuộc!', 'bình tĩnh, thuyền trưởng vẫn tự tin!',
+  'sóng to nhưng tàu vẫn chạy!', 'hold chắc, thuyền trưởng còn đây!',
+  'chưa đến bến thì chưa tính thua!',
+];
+const CALLER_PNL_REKT = [
+  'ai cứu với! 😱', 'thuyền trưởng vẫn giữ lái dù sóng to!',
+  'chìm tàu chưa? Chưa! Bám chặt vào!', 'thuyền trưởng tuyên bố: TA KHÔNG항CAPITULATE!',
+];
+
+function randomItem(arr: string[]): string {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+/** Caller section: 2 lines — name line + đu giá line */
+function buildCallerSection(call: CallWithPositions, currentPrice: number): string {
+  if (call.callerClosedAt !== null) {
+    return `⚓ **Thuyền trưởng:** ${call.calledBy} _(đã đóng lệnh)_`;
+  }
+
   const callerPos: Position = {
     id: '', callId: call.id, guildId: call.guildId, userId: call.calledById,
     username: call.calledBy, entryPrice: call.callPrice, leverage: call.leverage,
@@ -41,14 +63,23 @@ function buildCallerPnlString(call: CallWithPositions, currentPrice: number): st
     notifiedMilestones: '', mutedMilestones: false,
   };
   const pnlResult = calcPnl(callerPos, call, currentPrice);
-  if (pnlResult.status === 'na') return 'PnL: N/A';
-  const { pct, status } = pnlResult as { pct: number; status: string };
-  const sign = pct >= 0 ? '+' : '';
-  const pctRounded = Math.round(pct);
-  if (status === 'TP') return `PnL: ✅ +${pctRounded}% TP`;
-  if (status === 'SL') return `PnL: 🟥 ${sign}${pctRounded}% SL`;
-  if (status === 'CL') return `PnL: ❌ ${sign}${pctRounded}% CL`;
-  return `PnL: ${pct >= 0 ? '🟢' : '🔴'} ${sign}${pctRounded}%`;
+
+  let pnlStr = 'N/A';
+  let vibe = '';
+  if (pnlResult.status !== 'na') {
+    const { pct } = pnlResult as { pct: number; status: string };
+    const sign = pct >= 0 ? '+' : '';
+    const pctRounded = Math.round(pct);
+    const emoji = pct >= 0 ? '🟢' : '🔴';
+    pnlStr = `${emoji} ${sign}${pctRounded}%`;
+    if (pct >= 0) vibe = randomItem(CALLER_PNL_PROFIT);
+    else if (pct > -50) vibe = randomItem(CALLER_PNL_LOSS);
+    else vibe = randomItem(CALLER_PNL_REKT);
+  }
+
+  const line1 = `⚓ **Thuyền trưởng:** ${call.calledBy}`;
+  const line2 = `🎯 Đang đu giá: $${formatPrice(call.callPrice)} x${call.leverage} — ${pnlStr} _(${vibe})_`;
+  return `${line1}\n${line2}`;
 }
 
 export function buildPositionsTableContent(
@@ -115,9 +146,31 @@ export const data = new SlashCommandBuilder()
   .setName('positions')
   .setDescription('Kèo đang chạy — chỉ người còn mở lệnh (đã TP/CL/SL không hiện)');
 
-/** Embed color based on call direction */
+const LONG_COLORS = [
+  0x57f287, // xanh lá Discord
+  0x1abc9c, // ngọc lam
+  0x2ecc71, // emerald
+  0x00b4d8, // xanh dương sáng
+  0xf1c40f, // vàng
+  0x9b59b6, // tím
+  0xe67e22, // cam
+  0x00d2ff, // cyan
+];
+
+const SHORT_COLORS = [
+  0xed4245, // đỏ Discord
+  0xe74c3c, // đỏ đậm
+  0xff6b6b, // hồng đỏ
+  0xff4500, // đỏ cam
+  0xc0392b, // crimson
+  0xff0080, // hồng neon
+  0x8b0000, // dark red
+  0xff7675, // salmon
+];
+
 function callEmbedColor(direction: string): number {
-  return direction === 'long' ? 0x57f287 : 0xed4245; // green / red
+  const pool = direction === 'long' ? LONG_COLORS : SHORT_COLORS;
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 const CREW_CAPTIONS_LONG = [
@@ -128,7 +181,18 @@ const CREW_CAPTIONS_LONG = [
   '⚓ Neo đã nhổ! Con thuyền lệnh đang lướt sóng về phía lợi nhuận!',
   '🌊 Sóng to không sợ, bà con vẫn bám tàu kiên cường!',
 ];
-
+const CREW_CAPTIONS_LONG_EXTRA = [
+  '🚀 Thuyền trưởng nói: "All in!" — bà con check ví xong vẫn all in!',
+  '📈 Chart xanh lè, thuyền trưởng cười, bà con bắt đầu mơ Lamborghini!',
+  '🔥 Lệnh đã vào, tim đập nhanh hơn cả funding rate!',
+  '💰 Thuyền này không có vé khứ hồi — chỉ có bay lên hoặc… bay màu!',
+  '🌕 Hướng đến mặt trăng! Ai xuống tàu giữa đường là mất slot triệu phú!',
+  '🎯 Entry đẹp như mơ, bà con tin tưởng tuyệt đối… cho tới khi market mở!',
+  '🧭 Thuyền trưởng bảo đi lên — lý do: "Trust me bro!"',
+  '🚢 Tàu căng buồm, bà con căng margin!',
+  '📊 Nhìn chart 5 phút mà tưởng đang nhìn tương lai!',
+  '🤑 Lãi chưa thấy, nhưng niềm tin thì đang ATH!',
+];
 const CREW_CAPTIONS_SHORT = [
   '🔻 Thuyền trưởng bắt đỉnh, bà con đu short không chớp mắt!',
   '📉 Thuyền đang lặn xuống đáy — bà con thắt dây an toàn chưa?',
@@ -137,9 +201,20 @@ const CREW_CAPTIONS_SHORT = [
   '🌊 Thuyền ngược sóng — short gang đang kiếm tiền trong bão!',
   '🐋 Cá voi short xuất hiện! Thuyền trưởng và con dân bơi theo!',
 ];
-
+const CREW_CAPTIONS_SHORT_EXTRA = [
+  '📉 Thuyền trưởng quay xe, bà con short theo không cần hỏi lý do!',
+  '🩸 Chart đỏ như máu, short gang cười như trúng số!',
+  '⚰️ Long chết hàng loạt — short team dựng bia ghi công!',
+  '🌊 Sóng càng mạnh, short càng lời!',
+  '🔪 Thị trường bị “cắt tiết” — bà con short đứng xem như phim!',
+  '🐻 Gấu đã thức giấc — thuyền trưởng ra lệnh: SHORT ALL!',
+  '📊 Nhìn chart rơi mà lòng vui như Tết!',
+  '💀 Longers bị thanh lý, shorters mở tiệc ăn mừng!',
+  '⚡ Dump bất ngờ! Ai không short kịp chỉ biết đứng nhìn!',
+  '🧊 Giá đóng băng rồi… nhưng tài khoản short thì đang nóng!',
+];
 function randomCrewCaption(direction: string): string {
-  const pool = direction === 'long' ? CREW_CAPTIONS_LONG : CREW_CAPTIONS_SHORT;
+  const pool = direction === 'long' ? [...CREW_CAPTIONS_LONG, ...CREW_CAPTIONS_LONG_EXTRA] : [...CREW_CAPTIONS_SHORT, ...CREW_CAPTIONS_SHORT_EXTRA];
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
@@ -168,22 +243,15 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     const dirEmoji = call.direction === 'long' ? '📈 LONG' : '📉 SHORT';
     const priceStr = currentPrice > 0 ? ` · **${formatPrice(currentPrice)}**` : '';
 
-    // Caller line (above table)
-    const callerPnl = call.callerClosedAt === null
-      ? buildCallerPnlString(call, currentPrice)
-      : null;
-    const callerLine = callerPnl !== null
-      ? `⚓ **Thuyền trưởng:** ${call.calledBy} @ ${formatPrice(call.callPrice)} x${call.leverage} — ${callerPnl}`
-      : `⚓ **Thuyền trưởng:** ${call.calledBy} _(đã đóng)_`;
-
     const fundingDesc = formatFundingSnippet(fundingMap.get(call.symbol));
+    const callerSection = buildCallerSection(call, currentPrice);
     const table = buildPositionsTableContent(call.positions, call, currentPrice, { openOnly: true });
     const caption = randomCrewCaption(call.direction);
 
     const embed = new EmbedBuilder()
       .setTitle(`${call.symbol} ${dirEmoji} x${call.leverage}${priceStr}`)
       .setColor(callEmbedColor(call.direction))
-      .setDescription(`${callerLine}\n\n${caption}\n\n${fundingDesc}${table}`);
+      .setDescription(`${fundingDesc}${callerSection}\n\n${caption}\n\n${table}`);
 
     embeds.push(embed.toJSON());
   }

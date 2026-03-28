@@ -67,19 +67,48 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     calledById: interaction.user.id,
   });
 
-  const dirEmoji = direction === 'long' ? '📈 LONG' : '📉 SHORT';
+  const dirEmoji = direction === 'long' ? '📈' : '📉';
+  const dirLabel = direction === 'long' ? 'LONG' : 'SHORT';
   const shortId = call.id.slice(-6);
+
+  const LONG_CAPTIONS = [
+    '🚀 Thuyền trưởng mở kèo! Ai lên tàu thì nhanh lên, sắp nhổ neo rồi!',
+    '⛵ Con thuyền lệnh đã sẵn sàng — bà con đu đỉnh không kịp thở!',
+    '🏝️ Hướng ra đảo! Thuyền trưởng dẫn đầu, con dân bơi theo!',
+    '🌊 Sóng xanh nổi lên! Thuyền trưởng hô: ALL ABOARD — ai không lên tự bơi!',
+    '🦜 Thuyền trưởng phán: "Đu hay không đu?" — Bà con đồng thanh: DU!',
+    '⚓ Neo nhổ! Tàu chạy! Ai còn đứng bờ thì khóc một mình nha!',
+    '🎯 Thuyền trưởng đã ngắm xong — bà con chuẩn bị đếm tiền thôi!',
+    '🌅 Bình minh ló dạng, thuyền trưởng kéo còi: KÈO MỚI — ai ngủ thì ráng chịu!',
+    '💪 Thuyền trưởng tuyên bố: "Không long thì thôi, long là long tới bến!"',
+    '🥂 Rượu mừng để sẵn, thuyền trưởng chỉ cần bà con lên tàu là đủ!',
+  ];
+  const SHORT_CAPTIONS = [
+    '🔻 Thuyền trưởng lệnh lặn! Ai theo short thì bám chặt vào ghế!',
+    '🦈 Short gang tập hợp! Thuyền trưởng dẫn đầu lặn sâu hơn nữa!',
+    '📉 Thuyền ngược sóng — thuyền trưởng bắt đỉnh, con dân đu theo!',
+    '⚓ Neo thả xuống! Cùng nhau xuống đáy… của giá — không phải tài khoản!',
+    '🐋 Cá voi short nổi lên! Con dân nhanh lên tàu, thuyền trưởng không chờ lâu đâu!',
+    '🌀 Thuyền trưởng phán: giá này bán được! Ai không tin thì xem lại sau!',
+    '🎯 Short team ra trận! Thuyền trưởng đã ngắm — bà con cứ yên tâm mà ngủ!',
+    '🔱 Thuyền trưởng hạ lệnh: SHORT là chân lý — ai long thì đó là vấn đề của bạn!',
+    '🌊 Thuyền lặn xuống, bà con nín thở — thuyền trưởng bảo đảm lên được!',
+    '😤 Thuyền trưởng nhìn chart xong đập bàn: SHORT ĐI BÀ CON ƠI!',
+  ];
+  const captions = direction === 'long' ? LONG_CAPTIONS : SHORT_CAPTIONS;
+  const caption = captions[Math.floor(Math.random() * captions.length)];
+
   const embed = new EmbedBuilder()
-    .setTitle(`🎯 Kèo mới: ${symbol} ${dirEmoji}`)
-    .setColor(direction === 'long' ? 0x2ecc71 : 0xe74c3c)
-    .setDescription([
-      `**Call Price:** $${price.toLocaleString('en-US')}`,
-      `**Leverage:** x${leverage}`,
-      `**Called by:** <@${interaction.user.id}>`,
-      `**Call ID:** \`...${shortId}\``,
-      ``,
-      `Dùng \`/follow\` để vào lệnh theo kèo này.`,
-    ].join('\n'))
+    .setTitle(`${dirEmoji} Kèo mới: **${symbol}** ${dirLabel} x${leverage}`)
+    .setColor(direction === 'long' ? 0x57f287 : 0xed4245)
+    .setDescription(caption)
+    .addFields(
+      { name: '💰 Call Price', value: `$${price.toLocaleString('en-US')}`, inline: true },
+      { name: '⚡ Leverage', value: `x${leverage}`, inline: true },
+      { name: '⚓ Thuyền trưởng', value: `<@${interaction.user.id}>`, inline: true },
+      { name: '🪪 Call ID', value: `\`...${shortId}\``, inline: true },
+      { name: '\u200b', value: `> Dùng \`/follow\` để vào lệnh theo kèo này.`, inline: false },
+    )
     .setTimestamp();
 
   await interaction.editReply({ content: '@everyone', embeds: [embed], allowedMentions: { parse: ['everyone'] } });
