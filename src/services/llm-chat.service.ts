@@ -1,4 +1,5 @@
 import { logger } from '../utils/logger.js';
+import type { ChatMessage } from './conversation-history.service.js';
 
 /** Một dòng cố định cho Discord; chi tiết chỉ trong log. */
 export const LLM_ERROR_USER_MESSAGE = 'Không trả lời được lúc này — thử lại sau.';
@@ -74,34 +75,41 @@ export class LlmChatService {
     this.lastUsed.set(`${guildId}:${userId}`, Date.now());
   }
 
-  async complete(userMessage: string): Promise<{ text: string } | { error: string }> {
-    return this.completeRaw(this.cfg.systemPrompt, userMessage);
+  async complete(
+    userMessage: string,
+    history: ChatMessage[] = [],
+    skillSystemPrompt?: string,
+  ): Promise<{ text: string } | { error: string }> {
+    return this.completeRaw(skillSystemPrompt ?? this.cfg.systemPrompt, userMessage, history);
   }
 
   /** Like complete() but with a custom system prompt — used for structured extraction. */
   async completeRaw(
     systemPrompt: string,
     userMessage: string,
+    history: ChatMessage[] = [],
   ): Promise<{ text: string } | { error: string }> {
     const base = this.cfg.baseUrl.replace(/\/$/, '');
 
     if (this.cfg.provider === 'anthropic') {
-      return this.completeAnthropic(base, userMessage, systemPrompt);
+      return this.completeAnthropic(base, userMessage, systemPrompt, history);
     }
     // deepseek and openai both use the OpenAI-compatible format
-    return this.completeOpenAiCompatible(base, userMessage, systemPrompt);
+    return this.completeOpenAiCompatible(base, userMessage, systemPrompt, history);
   }
 
   private async completeOpenAiCompatible(
     base: string,
     userMessage: string,
     systemPrompt: string,
+    history: ChatMessage[] = [],
   ): Promise<{ text: string } | { error: string }> {
     const url = `${base}/chat/completions`;
     const body = {
       model: this.cfg.model,
       messages: [
         { role: 'system' as const, content: systemPrompt },
+        ...history.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
         { role: 'user' as const, content: userMessage },
       ],
       max_tokens: this.cfg.maxTokens,
@@ -153,6 +161,7 @@ export class LlmChatService {
     base: string,
     userMessage: string,
     systemPrompt: string,
+    history: ChatMessage[] = [],
   ): Promise<{ text: string } | { error: string }> {
     const root = normalizeAnthropicBaseUrl(base);
     const url = `${root}/messages`;
@@ -160,7 +169,10 @@ export class LlmChatService {
       model: this.cfg.model,
       max_tokens: this.cfg.maxTokens,
       system: systemPrompt,
-      messages: [{ role: 'user' as const, content: userMessage }],
+      messages: [
+        ...history.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+        { role: 'user' as const, content: userMessage },
+      ],
     };
 
     try {

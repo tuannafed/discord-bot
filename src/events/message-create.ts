@@ -8,6 +8,8 @@ import {
 } from '../services/tavily-search.service.js';
 import { isChartRequest, parseChartIntent } from '../services/chart-intent.service.js';
 import { fetchOhlcv, renderCandlestickChart } from '../services/chart.service.js';
+import { detectSkill, getSkill } from '../services/llm-skills.js';
+import { ConversationHistoryService } from '../services/conversation-history.service.js';
 
 const DISCORD_MSG_MAX = 1900;
 
@@ -35,6 +37,8 @@ export function registerMessageCreateEvent(
   enableAiChat: boolean,
   tavilySearch: TavilySearchService | null = null,
 ): void {
+  const history = new ConversationHistoryService();
+
   client.on(Events.MessageCreate, async (message) => {
     if (message.author.bot || !message.guild || !client.user) return;
     if (!message.mentions.users.has(client.user.id)) return;
@@ -93,6 +97,11 @@ export function registerMessageCreateEvent(
         }
       }
 
+      // Detect skill from prompt
+      const skillName = detectSkill(prompt);
+      const skill = getSkill(skillName);
+      logger.info(`Skill detected: ${skillName} for prompt="${prompt.slice(0, 60)}"`);
+
       // Keyword-triggered web search — inject context into prompt if needed
       let enrichedPrompt = prompt;
       if (tavilySearch && shouldSearch(prompt)) {
@@ -104,7 +113,11 @@ export function registerMessageCreateEvent(
         }
       }
 
-      const result = await llmChat.complete(enrichedPrompt);
+      // Load conversation history for this channel
+      const channelHistory = history.getHistory(message.channelId);
+      history.addUserMessage(message.channelId, prompt);
+
+      const result = await llmChat.complete(enrichedPrompt, channelHistory, skill.systemPrompt);
       if ('error' in result) {
         await message.reply({
           content: LLM_ERROR_USER_MESSAGE,
@@ -112,6 +125,8 @@ export function registerMessageCreateEvent(
         });
         return;
       }
+
+      history.addAssistantMessage(message.channelId, result.text);
 
       await message.reply({
         content: truncateForDiscord(result.text),
