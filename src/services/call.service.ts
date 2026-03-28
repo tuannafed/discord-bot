@@ -334,4 +334,21 @@ export class CallService {
     const positions = await this.repo.findPositionsByCall(call.id);
     return { ...call, positions };
   }
+
+  /** Admin: xóa DB các position đã TP/CL/SL và reset trạng thái đóng của caller trên kèo. */
+  async adminCleanClosedTradeData(params: {
+    callId: string;
+    guildId: string;
+  }): Promise<
+    | { ok: true; positionsDeleted: number; callerCloseCleared: boolean }
+    | { error: string }
+  > {
+    const call = await this.repo.findCallById(params.callId);
+    if (!call) return { error: 'Kèo không tồn tại.' };
+    if (call.guildId !== params.guildId) return { error: 'Kèo không thuộc server này.' };
+
+    const positionsDeleted = await this.repo.deleteClosedPositionsForCall(params.callId);
+    const callerCloseCleared = await this.repo.clearCallerClose(params.callId);
+    return { ok: true, positionsDeleted, callerCloseCleared };
+  }
 }

@@ -136,6 +136,29 @@ export class PgCallRepository {
     await this.db.query('DELETE FROM calls WHERE id = $1', [id]);
   }
 
+  /** Xóa các position follower đã đóng (TP/CL/SL). */
+  async deleteClosedPositionsForCall(callId: string): Promise<number> {
+    const r = await this.db.query(
+      `DELETE FROM positions WHERE call_id = $1 AND closed_at IS NOT NULL`,
+      [callId],
+    );
+    return r.rowCount ?? 0;
+  }
+
+  /** Xóa trạng thái đóng lệnh của caller trên bảng calls (nếu có). */
+  async clearCallerClose(callId: string): Promise<boolean> {
+    const r = await this.db.query(
+      `UPDATE calls SET
+         caller_closed_at = NULL,
+         caller_close_type = NULL,
+         caller_close_price = NULL,
+         caller_pnl_pct = NULL
+       WHERE id = $1 AND caller_closed_at IS NOT NULL`,
+      [callId],
+    );
+    return (r.rowCount ?? 0) > 0;
+  }
+
   async checkAllPositionsClosed(callId: string): Promise<boolean> {
     const r = await this.db.query<{ count: string }>(
       `SELECT COUNT(*) AS count FROM positions WHERE call_id = $1 AND closed_at IS NULL`,

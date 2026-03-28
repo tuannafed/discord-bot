@@ -26,7 +26,14 @@ function calcPnl(pos: Position, call: CallWithPositions, currentPrice: number): 
   return { pct, status: 'open' };
 }
 
-function buildContent(positions: Position[], call: CallWithPositions, currentPrice: number): string {
+export type BuildPositionsTableOptions = { openOnly?: boolean };
+
+export function buildPositionsTableContent(
+  positions: Position[],
+  call: CallWithPositions,
+  currentPrice: number,
+  options?: BuildPositionsTableOptions,
+): string {
   const callerRow: Position = {
     id: '', callId: call.id, guildId: call.guildId, userId: call.calledById,
     username: call.calledBy, entryPrice: call.callPrice, leverage: call.leverage,
@@ -37,7 +44,19 @@ function buildContent(positions: Position[], call: CallWithPositions, currentPri
     pnlPct: call.callerPnlPct,
     notifiedMilestones: '', mutedMilestones: false,
   };
-  const allRows = [callerRow, ...positions.filter((p) => p.userId !== call.calledById)];
+
+  const followersAll = positions.filter((p) => p.userId !== call.calledById);
+  let allRows: Position[];
+  if (options?.openOnly) {
+    const followersOpen = followersAll.filter((p) => p.closedAt === null);
+    allRows = call.callerClosedAt === null ? [callerRow, ...followersOpen] : followersOpen;
+  } else {
+    allRows = [callerRow, ...followersAll];
+  }
+
+  if (options?.openOnly && allRows.length === 0) {
+    return '_Không còn ai đang mở lệnh._';
+  }
 
   const NAME_W = 6;
   const header = `${'Name'.padEnd(NAME_W)}  ${'Entry'.padStart(10)}  Lev  PnL`;
@@ -77,7 +96,7 @@ function buildContent(positions: Position[], call: CallWithPositions, currentPri
 }
 
 /** Một dòng trước bảng PnL — ví dụ: Funding: -0.0214% / 8h */
-function formatFundingSnippet(snap: LinearFundingSnapshot | null | undefined): string {
+export function formatFundingSnippet(snap: LinearFundingSnapshot | null | undefined): string {
   if (!snap) return '';
   const pctPeriod = snap.fundingRate * 100;
   const sign = pctPeriod >= 0 ? '+' : '';
@@ -86,7 +105,7 @@ function formatFundingSnippet(snap: LinearFundingSnapshot | null | undefined): s
 
 export const data = new SlashCommandBuilder()
   .setName('positions')
-  .setDescription('Xem tất cả kèo active và danh sách thành viên đang theo');
+  .setDescription('Kèo active — chỉ thành viên còn mở lệnh (đã TP/CL/SL không hiện)');
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   await interaction.deferReply();
@@ -107,7 +126,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   ]);
 
   const embed = new EmbedBuilder()
-    .setTitle('📊 Active Calls')
+    .setTitle('📊 Kèo active — lệnh còn mở')
     .setColor(0x5865f2)
     .setTimestamp();
 
@@ -117,7 +136,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     const priceStr = currentPrice > 0 ? ` · **${formatPrice(currentPrice)}**` : '';
     const fieldName = `${call.symbol} ${dirEmoji} x${call.leverage}${priceStr}`;
     const fundingDesc = formatFundingSnippet(fundingMap.get(call.symbol));
-    const body = buildContent(call.positions, call, currentPrice);
+    const body = buildPositionsTableContent(call.positions, call, currentPrice, { openOnly: true });
     embed.addFields({ name: fieldName, value: `${fundingDesc}${body}` });
   }
 

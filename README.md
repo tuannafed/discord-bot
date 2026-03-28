@@ -1,398 +1,356 @@
 # Discord Crypto Tracker Bot
 
-Discord bot for tracking crypto coins by market cap and daily growth. Built with discord.js v14, TypeScript, and Node.js 20+.
+Bot Discord theo dõi coin theo vốn hóa và biến động giá/ngày. Xây với discord.js v14, TypeScript, Node.js 20+.
 
-## Features
+## Tính năng
 
-- Real-time coin prices via **Bybit** + full market data via **CoinMarketCap**
-- Per-guild watchlists
-- Price and market cap alerts with cooldown
-- Auto-discovery of top gainers with target market cap tracking
-- Multi-timeframe price & cap change for individual coins (`/coin`) and movers (`/movers`)
-- Bybit USDT perpetual funding (`/funding` and a one-line **Funding:** preview on `/positions`)
-- **Group trading** — call kèo, theo dõi ai đang theo kèo nào, tính P&L% realtime khi TP/CL
+- Giá realtime qua **Bybit** + dữ liệu thị trường đầy đủ qua **CoinMarketCap**
+- Watchlist theo từng server
+- Cảnh báo giá / vốn hóa có thời gian chờ giữa các lần nhắc
+- Tự quét top tăng và theo dõi mục vốn hóa mục tiêu
+- Nhiều khung thời gian cho giá & vốn hóa từng coin (`/coin`) và top biến động (`/movers`)
+- Funding perpetual USDT Bybit (`/funding` và một dòng **Funding:** trên `/positions`)
+- **Kèo nhóm** — tạo kèo, theo dõi ai đang theo kèo, PnL% realtime khi TP/CL
 
-## Commands
+## Lệnh
 
 ### `/ping`
-Health check.
+Kiểm tra bot còn chạy.
 
 ---
 
 ### `/coin`
-Price, market cap, rank, change over a chosen timeframe, and supply info for a coin.
+Giá, vốn hóa, hạng, thay đổi theo khung thời gian chọn, và thông tin cung.
 
-| Param | Type | Required | Default | Description |
+| Tham số | Kiểu | Bắt buộc | Mặc định | Mô tả |
 |---|---|---|---|---|
-| `symbol` | string | Yes | — | Coin symbol (e.g. `btc`, `eth`) |
-| `timeframe` | choice | No | *(CMC 24h)* | `15 minutes` / `1 hour` / `4 hours` / `24 hours` |
+| `symbol` | chuỗi | Có | — | Ký hiệu coin (vd. `btc`, `eth`) |
+| `timeframe` | lựa chọn | Không | *(CMC 24h)* | `15 minutes` / `1 hour` / `4 hours` / `24 hours` |
 
-**Examples:**
+**Ví dụ:**
 ```
 /coin symbol:btc
 /coin symbol:eth timeframe:1 hour
 ```
 
-**Output (with timeframe):**
-```
-Price    : $0.3970
-Prev 1h  : $0.3800
-Price 1h : ▲ +4.47%
+**Đầu ra (có khung thời gian):** giá, vốn hóa, hạng, cung, v.v. theo format bot.
 
-MCap     : $176.8M
-Prev 1h  : $169.2M
-Cap  1h  : ▲ +4.47%
-
-Rank     : #145
-Circ.    : 450.0M
-Total    : 500.0M
-Max      : ∞
-```
-
-> **Note:** `15m / 1h / 4h` fetch kline data from Bybit (~2–5s). Default (no timeframe) uses CoinMarketCap 24h data.
+> **Lưu ý:** `15m` / `1h` / `4h` lấy kline từ Bybit (~2–5s). Không chọn khung thì dùng dữ liệu 24h của CoinMarketCap.
 
 ---
 
 ### `/top`
-Top coins ranked by market cap (Bybit-listed only).
+Top coin xếp theo vốn hóa (chỉ coin có trên Bybit).
 
-| Param | Type | Required | Default | Description |
+| Tham số | Kiểu | Bắt buộc | Mặc định | Mô tả |
 |---|---|---|---|---|
-| `limit` | integer | No | `10` | Number of coins to show (1–25) |
+| `limit` | số nguyên | Không | `10` | Số coin (1–25) |
 
-**Example:** `/top limit:20`
+**Ví dụ:** `/top limit:20`
 
 ---
 
 ### `/movers`
-Top gainers and losers ranked by price or market cap change over a chosen timeframe.
+Top tăng/giảm mạnh theo giá hoặc vốn hóa trong khung thời gian.
 
-| Param | Type | Required | Default | Description |
+| Tham số | Kiểu | Bắt buộc | Mặc định | Mô tả |
 |---|---|---|---|---|
-| `metric` | choice | No | `price` | `price` or `market_cap` — what to rank by |
-| `timeframe` | choice | No | `24h` | `15 minutes` / `1 hour` / `4 hours` / `24 hours` |
-| `type` | choice | No | `both` | `gainers` / `losers` / `both` |
-| `limit` | integer | No | `5` | Coins per category (1–10) |
+| `metric` | lựa chọn | Không | `price` | `price` hoặc `market_cap` |
+| `timeframe` | lựa chọn | Không | `24h` | `15 minutes` / `1 hour` / `4 hours` / `24 hours` |
+| `type` | lựa chọn | Không | `both` | `gainers` / `losers` / `both` |
+| `limit` | số nguyên | Không | `5` | Số coin mỗi nhóm (1–10) |
 
-**Examples:**
+**Ví dụ:**
 ```
 /movers
 /movers metric:price timeframe:15 minutes type:gainers limit:10
 /movers metric:cap timeframe:1 hour type:both limit:5
 ```
 
-**Output (metric:price, timeframe:15m):**
-```
-#   SYM    PREV 15m   NOW        CHG
--------------------------------------------
- 1. KAITO  $0.3800    $0.3970   ▲  +4.47%
- 2. ARIA   $0.2550    $0.3022   ▲ +18.51%
-```
-
-> **Note:** `15m / 1h / 4h` fetch kline data per-symbol (~5–10s). `24h` uses cached data and is instant.
+> **Lưu ý:** `15m` / `1h` / `4h` gọi kline từng coin (~5–10s). `24h` dùng cache, nhanh hơn.
 
 ---
 
 ### `/scan`
-Find Bybit-listed coins within a market cap range. Market cap from CoinMarketCap (scans top 500).
+Lọc coin có trên Bybit trong khoảng vốn hóa (CoinMarketCap, quét top 500).
 
-| Param | Type | Required | Default | Description |
+| Tham số | Kiểu | Bắt buộc | Mặc định | Mô tả |
 |---|---|---|---|---|
-| `min_cap` | number | Yes | — | Minimum market cap in USD |
-| `max_cap` | number | Yes | — | Maximum market cap in USD |
-| `limit` | integer | No | `10` | Max results (1–25) |
+| `min_cap` | số | Có | — | Vốn tối thiểu (USD) |
+| `max_cap` | số | Có | — | Vốn tối đa (USD) |
+| `limit` | số nguyên | Không | `10` | Tối đa kết quả (1–25) |
 
-**Example:** `/scan min_cap:70000000 max_cap:100000000`
-→ Finds Bybit-listed coins with market cap between $70M and $100M.
+**Ví dụ:** `/scan min_cap:70000000 max_cap:100000000`
 
 ---
 
 ### `/funding`
-By **Bybit** USDT perpetual (linear): current **rate**, **next funding** (giờ hiển thị **ICT UTC+7**), và **hai kỳ settle gần nhất** (`/v5/market/funding/history`). Không có APR quy năm.
+Perpetual USDT **Bybit** (linear): **rate** hiện tại, **lần funding tới** (giờ **ICT UTC+7**), **hai kỳ thanh toán gần nhất**. Không hiển thị APR năm.
 
-| Param | Type | Required | Description |
+| Tham số | Kiểu | Bắt buộc | Mô tả |
 |---|---|---|---|
-| `symbol` | string | Yes | Base symbol (e.g. `btc`, `eth`, `sol`) |
+| `symbol` | chuỗi | Có | Ký hiệu gốc (vd. `btc`, `eth`, `sol`) |
 
-**Example:** `/funding symbol:btc`
-
-**Output includes:**
-- Funding rate % per interval (e.g. 8h)
-- Next funding — absolute time in **ICT (UTC+7)** plus Discord relative `in X`
-- Last two **settled** intervals (rate + settle time in ICT), when history API returns data
+**Ví dụ:** `/funding symbol:btc`
 
 ---
 
 ### `/watch-add`
-Add a coin to the guild watchlist.
+Thêm coin vào watchlist của server.
 
-| Param | Type | Required | Description |
+| Tham số | Kiểu | Bắt buộc | Mô tả |
 |---|---|---|---|
-| `symbol` | string | Yes | Coin symbol |
+| `symbol` | chuỗi | Có | Ký hiệu coin |
 
-**Example:** `/watch-add symbol:eth`
+**Ví dụ:** `/watch-add symbol:eth`
 
 ---
 
 ### `/watch-remove`
-Remove a coin from the guild watchlist.
+Xóa coin khỏi watchlist.
 
-| Param | Type | Required | Description |
+| Tham số | Kiểu | Bắt buộc | Mô tả |
 |---|---|---|---|
-| `symbol` | string | Yes | Coin symbol |
+| `symbol` | chuỗi | Có | Ký hiệu coin |
 
-**Example:** `/watch-remove symbol:eth`
+**Ví dụ:** `/watch-remove symbol:eth`
 
 ---
 
 ### `/watch-list`
-View all watchlist coins with live prices, market cap, and 24h change.
+Xem toàn bộ watchlist kèm giá, vốn hóa, % 24h.
 
 ---
 
 ### `/alert-add`
-Create an alert that fires when price or market cap crosses a threshold. Alert is sent to the channel where the command is run.
+Tạo cảnh báo khi giá hoặc vốn hóa vượt ngưỡng. Tin nhắn cảnh báo gửi vào kênh nơi gõ lệnh.
 
-| Param | Type | Required | Description |
+| Tham số | Kiểu | Bắt buộc | Mô tả |
 |---|---|---|---|
-| `symbol` | string | Yes | Coin symbol |
-| `metric` | choice | Yes | `price` or `market_cap` |
-| `condition` | choice | Yes | `above` / `below` (fixed USD) or `change_up` / `change_down` (% from now) |
-| `threshold` | number | Yes | USD value for `above`/`below` — OR percent (1–100) for `change_up`/`change_down` |
+| `symbol` | chuỗi | Có | Ký hiệu coin |
+| `metric` | lựa chọn | Có | `price` hoặc `market_cap` |
+| `condition` | lựa chọn | Có | `above` / `below` (USD cố định) hoặc `change_up` / `change_down` (% so với lúc đặt) |
+| `threshold` | số | Có | USD (với above/below) hoặc % 1–100 (với change_up/down) |
 
-**Examples:**
+**Ví dụ:**
 ```
 /alert-add symbol:btc metric:price condition:above threshold:100000
 /alert-add symbol:eth metric:price condition:change_up threshold:3
 /alert-add symbol:sol metric:market_cap condition:change_down threshold:5
 ```
 
-> **`change_up` / `change_down`:** Takes the current price/cap at the moment you run the command and sets the target at `±N%`. E.g. if ETH is $3000 and you set `change_up 3`, the alert fires when ETH reaches $3090.
-
 ---
 
 ### `/alert-list`
-View all active alerts in the guild, with IDs for removal.
+Xem cảnh báo đang bật trong server (có `id` để xóa).
 
 ---
 
 ### `/alert-remove`
-Remove an alert by ID.
+Xóa cảnh báo theo `id`.
 
-| Param | Type | Required | Description |
+| Tham số | Kiểu | Bắt buộc | Mô tả |
 |---|---|---|---|
-| `id` | string | Yes | Alert ID (from `/alert-list`) |
+| `id` | chuỗi | Có | ID từ `/alert-list` |
 
-**Example:** `/alert-remove id:abc123`
+**Ví dụ:** `/alert-remove id:abc123`
 
 ---
 
 ### `/candidate-list`
-View coins being tracked for target market cap. Filter by status.
+Xem coin đang theo dõi theo mục vốn. Lọc theo trạng thái.
 
-| Param | Type | Required | Default | Description |
+| Tham số | Kiểu | Bắt buộc | Mặc định | Mô tả |
 |---|---|---|---|---|
-| `status` | choice | No | `tracking` | `tracking` / `hit_target` / `expired` |
+| `status` | lựa chọn | Không | `tracking` | `tracking` / `hit_target` / `expired` |
 
-**Example:** `/candidate-list status:tracking`
+**Ví dụ:** `/candidate-list status:tracking`
 
 ---
 
 ### `/candidate-remove`
-Remove a candidate from tracking.
+Xóa một candidate khỏi danh sách.
 
-| Param | Type | Required | Description |
+| Tham số | Kiểu | Bắt buộc | Mô tả |
 |---|---|---|---|
-| `id` | string | Yes | Candidate ID (from `/candidate-list`) |
+| `id` | chuỗi | Có | ID từ `/candidate-list` |
 
-**Example:** `/candidate-remove id:abc123`
+**Ví dụ:** `/candidate-remove id:abc123`
 
 ---
 
 ### `/unlock`
-Token supply & unlock overview for a coin.
+Tổng quan cung & unlock token.
 
-| Param | Type | Required | Description |
+| Tham số | Kiểu | Bắt buộc | Mô tả |
 |---|---|---|---|
-| `symbol` | string | Yes | Coin symbol (e.g. `apt`, `arb`) |
+| `symbol` | chuỗi | Có | Ký hiệu coin (vd. `apt`, `arb`) |
 
-**Example:** `/unlock symbol:apt`
-
-**Output:**
-```
-Circulating : 793.88M   (37.8% of max)
-Locked      : 406.30M   (19.3% of max)
-Total issued: 1,200.18M (57.1% of max)
-Max supply  : 2,100M
-Not issued  : 899.82M   (42.8% of max)
-
-Unlock progress (circ / max):
-[████████░░░░░░░░░░░░] 37.8%
-```
+**Ví dụ:** `/unlock symbol:apt`
 
 ---
 
 ### `/call`
-Tạo một kèo future mới cho cả nhóm theo dõi.
+Tạo kèo future cho cả nhóm.
 
-| Param | Type | Required | Description |
+| Tham số | Kiểu | Bắt buộc | Mô tả |
 |---|---|---|---|
-| `symbol` | string | Yes | Coin symbol (e.g. `BTC`, `ETH`) |
-| `direction` | choice | Yes | `long` hoặc `short` |
-| `price` | number | Yes | Giá call kèo (USD) |
+| `symbol` | chuỗi | Có | Ký hiệu (vd. `BTC`, `ETH`) |
+| `direction` | lựa chọn | Có | `long` hoặc `short` |
+| `price` | số | Có | Giá call (USD) |
 
-**Example:** `/call symbol:BTC direction:long price:70000`
+**Ví dụ:** `/call symbol:BTC direction:long price:70000`
 
 ---
 
 ### `/follow`
-Vào lệnh theo một kèo đang active. Kèo được chọn từ dropdown autocomplete.
+Vào lệnh theo kèo đang active (chọn kèo từ gợi ý).
 
-| Param | Type | Required | Description |
+| Tham số | Kiểu | Bắt buộc | Mô tả |
 |---|---|---|---|
-| `call_id` | string | Yes | Chọn kèo từ dropdown |
-| `entry` | number | Yes | Giá entry của bạn (USD) |
+| `call_id` | chuỗi | Có | Chọn từ danh sách |
+| `entry` | số | Có | Giá vào lệnh (USD) |
 
-**Example:** `/follow call_id:[chọn từ dropdown] entry:69500`
+**Ví dụ:** `/follow call_id:[chọn] entry:69500`
 
 ---
 
 ### `/positions`
-Xem tất cả kèo đang active, danh sách thành viên đang theo, và P&L% realtime.
-
-Mỗi kèo là một embed field: tiêu đề có **symbol · LONG/SHORT · đòn bẩy · giá hiện tại**; ngay dưới là **một dòng** funding perp (nếu Bybit trả dữ liệu), rồi bảng monospace Entry / Lev / PnL.
-
-**Ví dụ (rút gọn):**
-```
-BTC 📈 LONG x20 · $70,504
-Funding: +0.0100% / 8h
-
-Name    Entry      Lev  PnL
------------------------------
-🟢 alice  $69,500   20  +2%
-🔴 bob    $70,200   20  -1%
-```
+Kèo đang active, **chỉ hiển thị người còn mở lệnh**; mỗi kèo có dòng funding (nếu có) + bảng Entry / Lev / PnL.
 
 ---
 
-### `/tp`
-Take profit — đóng lệnh của bạn với kết quả dương. Giá đóng được fetch tự động từ Bybit.
-
-| Param | Type | Required | Description |
-|---|---|---|---|
-| `call_id` | string | Yes | Chọn kèo từ dropdown |
+### `/positions-history`
+Giống bố cục `/positions` nhưng **đủ mọi người**, kể cả đã TP/CL/SL.
 
 ---
 
-### `/cl`
-Cut loss — đóng lệnh của bạn với kết quả âm. Giá đóng được fetch tự động từ Bybit.
+### `/positions-clean`
+*(Quản trị — cần `ADMIN_LIST_ID` trong env)*  
+Xóa trong CSDL các bản ghi position đã đóng và xóa trạng thái đóng của caller trên kèo được chọn.
 
-| Param | Type | Required | Description |
+| Tham số | Kiểu | Bắt buộc | Mô tả |
 |---|---|---|---|
-| `call_id` | string | Yes | Chọn kèo từ dropdown |
+| `call_id` | chuỗi | Có | Chọn kèo từ gợi ý |
 
-> **Lưu ý:** P&L% được tính theo `entry` của từng người. Long: `(close - entry) / entry`. Short: `(entry - close) / entry`. Kèo tự đóng khi tất cả thành viên đã TP/CL.
+---
+
+### `/tp` / `/cl` / `/sl`
+Đóng lệnh (chốt lời / cắt lỗ / stop loss). Giá lấy từ Bybit.  
+Validation: TP chỉ khi PnL không âm; CL/SL chỉ khi PnL không dương (xem code).
+
+| Tham số | Kiểu | Bắt buộc | Mô tả |
+|---|---|---|---|
+| `call_id` | chuỗi | Có | Chọn kèo |
 
 ---
 
 ### `/help`
-Show all available commands (ephemeral — only visible to you).
+Chỉ các lệnh **nhóm kèo** (rút gọn). Tin nhắn chỉ mình bạn thấy.
+
+### `/help-full`
+Danh sách **đầy đủ** mọi lệnh bot (thị trường, watchlist, cảnh báo, kèo, candidate, …). Cũng chỉ mình bạn thấy.
 
 ---
 
-## Setup
+## Cài đặt
 
-### 1. Prerequisites
+### 1. Yêu cầu
 
 - Node.js 20+
-- A Discord application with bot token — [Discord Developer Portal](https://discord.com/developers/applications)
-- CoinMarketCap API key — [coinmarketcap.com/api](https://coinmarketcap.com/api/) (free tier works)
-- Bybit API key (optional, enables real-time price enrichment)
+- Ứng dụng Discord + bot token — [Discord Developer Portal](https://discord.com/developers/applications)
+- API key CoinMarketCap — [coinmarketcap.com/api](https://coinmarketcap.com/api/) (bản miễn phí dùng được)
+- API key Bybit (tùy chọn, làm giá realtime mượt hơn)
 
-### 2. Install dependencies
+### 2. Cài dependency
 
 ```bash
 yarn install
 ```
 
-### 3. Configure environment
+### 3. Biến môi trường
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` with your keys. See [Environment Variables](#environment-variables) below.
+Chỉnh `.env` — xem bảng **Biến môi trường** ở phần dưới.
 
-### 4. Register slash commands
+### 4. Đăng ký lệnh slash
 
 ```bash
 yarn register
 ```
 
-Run once after setup, and again whenever you add or change commands.
-With `DISCORD_GUILD_ID` set: instant registration to those guild(s) (comma-separated IDs).
-Without it: global registration (~1 hour propagation).
+Chạy sau khi cài, và mỗi khi thêm/sửa lệnh.  
+Có `DISCORD_GUILD_ID`: đăng ký ngay cho server đó (có thể nhiều ID, cách nhau dấu phẩy).  
+Không có: đăng ký global (~1 giờ mới lan hết).
 
-### 5. Run
+### 5. Chạy
 
 ```bash
-yarn dev                   # development (hot reload)
+yarn dev                   # dev (hot reload)
 yarn build && yarn start   # production
 ```
 
 ---
 
-## Deploying to Railway
+## Triển khai Railway
 
-1. Push code to GitHub
-2. Create a new Railway project → deploy from GitHub repo
-3. Add a **PostgreSQL** service → link `DATABASE_URL` to the bot service via Variable Reference
-4. Set required environment variables (see below)
-5. Deploy — bot auto-creates database tables on first start
+1. Đẩy code lên GitHub
+2. Tạo project Railway → deploy từ repo
+3. Thêm dịch vụ **PostgreSQL** → nối `DATABASE_URL` vào service bot (Variable Reference)
+4. Đặt biến môi trường bắt buộc
+5. Deploy — bot tự tạo bảng DB lần chạy đầu
 
 ---
 
-## Automated Jobs
+## Việc định kỳ (cron)
 
-| Schedule | Job |
+| Lịch | Việc |
 |---|---|
-| Every 5 min | Check alerts and send Discord notifications |
-| Every 6 hours | Refresh market data for tracked candidates |
-| Daily 8am UTC | Scan top gainers and auto-add new candidates |
+| Mỗi 5 phút | Kiểm tra cảnh báo, gửi thông báo Discord |
+| Mỗi 6 giờ | Làm mới dữ liệu candidate |
+| 8:00 UTC mỗi ngày | Quét top tăng, thêm candidate mới |
 
-Set `CANDIDATE_ALERT_CHANNEL_ID` to enable candidate notifications.
+Đặt `CANDIDATE_ALERT_CHANNEL_ID` để bật thông báo candidate.
 
 ---
 
-## Environment Variables
+## Biến môi trường
 
-| Variable | Required | Default | Description |
+| Biến | Bắt buộc | Mặc định | Mô tả |
 |---|---|---|---|
-| `DISCORD_TOKEN` | Yes | — | Bot token |
-| `DISCORD_CLIENT_ID` | Yes | — | Application ID |
-| `DISCORD_GUILD_ID` | No | — | Guild ID(s) for instant dev command registration; comma-separated for multiple |
-| `COINMARKETCAP_API_KEY` | Yes | — | CMC API key |
-| `BYBIT_API_KEY` | No | — | Bybit API key for real-time prices |
-| `DATABASE_URL` | No | — | PostgreSQL connection string (recommended for production) |
-| `DATA_DIR` | No | `src/data/` | Override JSON storage path (e.g. Railway Volume `/data`) |
-| `ALERT_COOLDOWN_MINUTES` | No | `60` | Minutes between repeated alert notifications |
-| `CANDIDATE_ALERT_CHANNEL_ID` | No | — | Channel for candidate hit/discovery notifications |
-| `CANDIDATE_TARGET_MARKET_CAP` | No | `1000000000` | Target market cap ($1B) for candidates |
-| `CANDIDATE_TRACKING_DAYS` | No | `7` | Days to track a candidate before expiry |
-| `CANDIDATE_MIN_CHANGE_24H` | No | `10` | Minimum 24h % change to qualify as a candidate |
-| `CANDIDATE_SCAN_SIZE` | No | `100` | Number of top gainers to scan daily |
+| `DISCORD_TOKEN` | Có | — | Token bot |
+| `DISCORD_CLIENT_ID` | Có | — | Application ID |
+| `DISCORD_GUILD_ID` | Không | — | ID server để đăng ký lệnh tức thì (nhiều ID cách phẩy) |
+| `ADMIN_LIST_ID` | Không | — | User ID Discord được dùng lệnh quản trị (vd. `/positions-clean`), cách phẩy |
+| `COINMARKETCAP_API_KEY` | Có | — | API key CMC |
+| `BYBIT_API_KEY` | Không | — | Giá realtime Bybit |
+| `DATABASE_URL` | Không | — | Chuỗi PostgreSQL (nên dùng production) |
+| `DATA_DIR` | Không | `src/data/` | Thư mục lưu JSON (vd. volume Railway `/data`) |
+| `ENABLE_AI_CHAT` | Không | `false` | Bật chat AI khi @bot (cần thêm `LLM_*`) |
+| `LLM_API_KEY` | Không | — | Chat AI (OpenAI-compatible hoặc Anthropic) |
+| `LLM_PROVIDER` | Không | openai | `anthropic` cho Claude |
+| `LLM_BASE_URL` / `LLM_MODEL` / … | Không | — | Xem `.env.example` |
+| `ALERT_COOLDOWN_MINUTES` | Không | `60` | Phút tối thiểu giữa hai lần nhắc cùng cảnh báo |
+| `CANDIDATE_ALERT_CHANNEL_ID` | Không | — | Kênh thông báo candidate |
+| `CANDIDATE_TARGET_MARKET_CAP` | Không | `1000000000` | Mục vốn ($1B) |
+| `CANDIDATE_TRACKING_DAYS` | Không | `7` | Ngày theo dõi candidate |
+| `CANDIDATE_MIN_CHANGE_24H` | Không | `10` | % tối thiểu 24h để vào candidate |
+| `CANDIDATE_SCAN_SIZE` | Không | `100` | Số top tăng quét mỗi ngày |
+
+Chi tiết đầy đủ: `.env.example`.
 
 ---
 
-## Data Storage
+## Lưu trữ dữ liệu
 
-Supports two storage backends:
-
-- **PostgreSQL** (recommended for production) — set `DATABASE_URL`. Tables are auto-created on startup.
-- **JSON files** (local dev) — data stored in `src/data/`. No setup needed.
+- **PostgreSQL** (khuyên dùng production) — đặt `DATABASE_URL`, bảng tự tạo khi khởi động.
+- **File JSON** (dev local) — dữ liệu trong `src/data/`, không cần DB.
 
 ---
 
-## License
+## Giấy phép
 
 MIT

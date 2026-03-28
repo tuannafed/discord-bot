@@ -8,6 +8,9 @@ const envSchema = z.object({
   DISCORD_CLIENT_ID: z.string().min(1, 'DISCORD_CLIENT_ID is required'),
   DISCORD_GUILD_ID: z.string().optional(),
 
+  /** Discord user id, phân tách bằng dấu phẩy — quyền dùng lệnh admin (vd. /positions-clean) */
+  ADMIN_LIST_ID: z.string().optional(),
+
   // CoinMarketCap (required for market data)
   COINMARKETCAP_API_KEY: z.string().min(1, 'COINMARKETCAP_API_KEY is required'),
 

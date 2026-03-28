@@ -22,9 +22,12 @@ import * as movers from './movers.js';
 import * as scan from './scan.js';
 import * as unlock from './unlock.js';
 import * as help from './help.js';
+import * as helpFull from './help-full.js';
 import * as call from './call.js';
 import * as follow from './follow.js';
 import * as positions from './positions.js';
+import * as positionsHistory from './positions-history.js';
+import * as positionsClean from './positions-clean.js';
 import * as tp from './tp.js';
 import * as cl from './cl.js';
 import * as sl from './sl.js';
@@ -52,6 +55,7 @@ export function buildCommands(
   coinGeckoProvider: CoinGeckoProvider,
   callService: CallService,
   client: Client,
+  adminUserIds: Set<string>,
 ): Map<string, Command> {
   coin.init(marketService);
   top.init(marketService);
@@ -69,6 +73,8 @@ export function buildCommands(
   call.init(callService);
   follow.init(callService);
   positions.init(callService, marketService);
+  positionsHistory.init(callService, marketService);
+  positionsClean.init(callService, adminUserIds);
   tp.init(callService, client);
   cl.init(callService, client);
   sl.init(callService, client);
@@ -99,6 +105,8 @@ export function buildCommands(
     call,
     follow,
     positions,
+    positionsHistory,
+    positionsClean,
     tp,
     cl,
     sl,
@@ -111,6 +119,7 @@ export function buildCommands(
     market,
     funding,
     help,
+    helpFull,
   ];
 
   const map = new Map<string, Command>();
@@ -139,6 +148,8 @@ export function getCommandBuilders(): (SlashCommandBuilder | SlashCommandOptions
     call.data,
     follow.data,
     positions.data,
+    positionsHistory.data,
+    positionsClean.data,
     tp.data,
     cl.data,
     sl.data,
@@ -151,5 +162,6 @@ export function getCommandBuilders(): (SlashCommandBuilder | SlashCommandOptions
     market.data,
     funding.data,
     help.data,
+    helpFull.data,
   ];
 }

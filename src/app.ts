@@ -12,6 +12,7 @@ import { CandidateService, ICandidateRepository } from './services/candidate.ser
 import { CallService } from './services/call.service.js';
 import { PollingService } from './services/polling.service.js';
 import { buildLlmChatServiceFromEnv } from './services/llm-chat.service.js';
+import { parseAdminListIds } from './utils/admin-list.js';
 
 import { WatchlistRepository } from './repositories/watchlist.repository.js';
 import { AlertRepository } from './repositories/alert.repository.js';
@@ -84,6 +85,7 @@ async function main(): Promise<void> {
     coinGeckoProvider,
     callService!,
     client,
+    parseAdminListIds(env.ADMIN_LIST_ID),
   );
 
   // Events
