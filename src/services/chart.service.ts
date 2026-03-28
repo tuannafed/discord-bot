@@ -1,26 +1,16 @@
 import axios from 'axios';
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
 import { registerFont } from 'canvas';
-import { existsSync } from 'fs';
+import { join } from 'path';
 import { logger } from '../utils/logger.js';
 
-// Register a system font that supports ASCII/numbers — fallback gracefully if not found
-const FONT_CANDIDATES = [
-  '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-  '/usr/share/fonts/dejavu/DejaVuSans.ttf',
-  '/System/Library/Fonts/Helvetica.ttc',
-  '/System/Library/Fonts/Arial.ttf',
-  'C:\\Windows\\Fonts\\arial.ttf',
-];
-for (const path of FONT_CANDIDATES) {
-  if (existsSync(path)) {
-    try {
-      registerFont(path, { family: 'ChartFont' });
-    } catch {
-      // ignore
-    }
-    break;
-  }
+// Bundle font shipped with the repo — works on any OS/platform including Railway
+// __dirname points to dist/services/ at runtime, so go up two levels to project root
+const BUNDLED_FONT = join(__dirname, '../../assets/fonts/DejaVuSans.ttf');
+try {
+  registerFont(BUNDLED_FONT, { family: 'ChartFont' });
+} catch (err) {
+  logger.warn('Failed to register bundled font, chart text may appear as boxes', err);
 }
 
 type OhlcCandle = {
