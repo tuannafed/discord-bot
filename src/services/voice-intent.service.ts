@@ -32,59 +32,95 @@ export const CONFIRM_REQUIRED = new Set<VoiceCommandName>([
   'call', 'follow', 'cl', 'tp', 'sl', 'follow-update', 'call-update',
 ]);
 
-const PARSE_SYSTEM_PROMPT = `Bạn là parser lệnh trading Discord bot. Phân tích câu nói tiếng Việt của user và trả về JSON.
+const PARSE_SYSTEM_PROMPT = `Bạn là parser lệnh trading Discord bot. Nhiệm vụ: nhận câu nói tiếng Việt (đã được speech-to-text), xác định intent và trả về JSON.
 
-=== TRADING COMMANDS (cần confirm) ===
-- call:          {"command":"call","symbol":"BTC","direction":"long|short","price":65000,"leverage":10}
-- follow:        {"command":"follow","symbol":"BTC","entry":64000,"leverage":10}
-- cl (cắt lỗ):  {"command":"cl","symbol":"BTC"}
-- tp (chốt lời):{"command":"tp","symbol":"BTC"}
-- sl (stop loss):{"command":"sl","symbol":"BTC"}
-- follow-update: {"command":"follow-update","symbol":"BTC","entry":64500,"leverage":15}
-- call-update:   {"command":"call-update","symbol":"BTC","price":65500,"leverage":20}
+Lưu ý: speech-to-text có thể viết sai dấu hoặc sai từ, hãy đoán intent theo ngữ nghĩa.
 
-=== READ-ONLY COMMANDS (không cần confirm) ===
-- positions: {"command":"positions"}
-  Trigger: "positions", "xem kèo", "xem lệnh", "lệnh đang chạy", "kèo đang mở", "xem vị thế", "chạy lệnh positions"
-- coin:      {"command":"coin","symbol":"BTC"}
-  Trigger: "giá BTC", "xem BTC", "coin BTC", "BTC bao nhiêu"
-- top:       {"command":"top"}
-  Trigger: "top coin", "xem top", "top gainers"
-- movers:    {"command":"movers"}
-  Trigger: "movers", "coin tăng mạnh", "biến động hôm nay"
-- watch-list:{"command":"watch-list"}
-  Trigger: "watchlist", "danh sách theo dõi", "watch list"
-- alert-list:{"command":"alert-list"}
-  Trigger: "alert", "cảnh báo", "danh sách alert"
-- funding:   {"command":"funding","symbol":"BTC"}
-  Trigger: "funding BTC", "phí funding", "funding rate"
+=== TRADING COMMANDS (cần confirm trước khi thực hiện) ===
 
-=== RULES — ĐỌC KỸ ===
+call — đặt kèo mới:
+  Output: {"command":"call","symbol":"BTC","direction":"long|short","price":65000,"leverage":20}
+  Cách nói: "call BTC long giá 65000", "kèo BTC short 65k đòn 20", "vào lệnh mua BTC 65000 x10",
+            "con kèo long BTC đồng bảy 20 giá 65000", "mở kèo ETH short giá 3000 leverage 10"
 
-**Số đọc bằng lời → convert sang số thực:**
-- "không phẩy hai ba sáu" → 0.236
-- "không chấm hai ba sáu" → 0.236
-- "không phẩy hai" → 0.2
-- "một nghìn năm trăm" → 1500
-- "sáu mươi lăm nghìn" → 65000
-- "hai trăm" → 200
-- Bỏ tất cả dấu phẩy ngăn cách hàng nghìn nếu có (65,000 → 65000)
+follow — vào theo kèo có sẵn:
+  Output: {"command":"follow","symbol":"BTC","entry":64000,"leverage":10}
+  Cách nói: "follow kèo BTC entry 64000", "vào theo kèo BTC giá 64000 x10",
+            "tôi follow BTC giá 64k đòn 10", "join kèo BTC 64000"
 
-**Đơn vị giá — luôn dùng USD (USDT = USD):**
-- Mọi giá trị price/entry đều là USD, không cần user nói đơn vị
-- "entry hai trăm đô" → 200, "giá 65k" → 65000
+cl — cắt lỗ:
+  Output: {"command":"cl","symbol":"BTC"}
+  Cách nói: "cắt lỗ BTC", "cl BTC", "cut loss BTC", "đóng lỗ kèo BTC", "thoát kèo BTC lỗ"
 
-**Symbol:**
-- PHẢI là uppercase ticker: BTC, ETH, SOL, ARIA, v.v.
-- "bitcoin" → BTC, "ethereum" → ETH, "solana" → SOL
+tp — chốt lời:
+  Output: {"command":"tp","symbol":"BTC"}
+  Cách nói: "chốt lời BTC", "tp BTC", "take profit BTC", "đóng lời kèo BTC", "thoát kèo BTC lời"
 
-**Direction:**
-- long: buy, mua, long, vào long
-- short: sell, bán, short, vào short
+sl — dừng lỗ:
+  Output: {"command":"sl","symbol":"BTC"}
+  Cách nói: "stop loss BTC", "sl BTC", "dừng lỗ BTC"
 
-**Nếu câu không phải lệnh trading/query** (vd: hỏi news, phân tích, chat) → {"command":"unknown"}
-**Nếu thiếu thông tin bắt buộc** ở trading commands → {"command":"unknown"}
-**Chỉ trả JSON thuần, không giải thích, không markdown**`;
+follow-update — sửa lệnh follow:
+  Output: {"command":"follow-update","symbol":"BTC","entry":64500,"leverage":15}
+  Cách nói: "sửa follow BTC entry 64500", "update follow BTC đòn 15", "đổi entry BTC thành 64500"
+
+call-update — sửa kèo:
+  Output: {"command":"call-update","symbol":"BTC","price":65500,"leverage":20}
+  Cách nói: "sửa kèo BTC giá 65500", "update kèo BTC đòn 20", "đổi giá call BTC thành 65500"
+
+=== READ-ONLY COMMANDS (thực hiện ngay, không cần confirm) ===
+
+positions — xem lệnh đang mở:
+  Output: {"command":"positions"}
+  Cách nói: "positions", "chạy lệnh positions", "xem positions", "xem kèo", "xem lệnh",
+            "lệnh đang chạy", "kèo đang mở", "tôi đang có kèo nào", "xem vị thế",
+            "kiểm tra lệnh", "tôi đang hold gì", "đang mở kèo gì"
+
+coin — xem giá coin:
+  Output: {"command":"coin","symbol":"BTC"}
+  Cách nói: "giá BTC", "BTC bao nhiêu", "xem BTC", "coin BTC", "bitcoin giá bao nhiêu",
+            "ETH đang ở đâu", "giá ethereum hôm nay"
+
+top — top coin theo market cap:
+  Output: {"command":"top"}
+  Cách nói: "top coin", "xem top", "top coins hôm nay", "top gainers", "coin top"
+
+movers — coin biến động mạnh:
+  Output: {"command":"movers"}
+  Cách nói: "movers", "coin tăng mạnh", "biến động hôm nay", "coin nào đang pump"
+
+watch-list — danh sách theo dõi:
+  Output: {"command":"watch-list"}
+  Cách nói: "watchlist", "danh sách theo dõi", "watch list", "xem watchlist"
+
+alert-list — danh sách cảnh báo:
+  Output: {"command":"alert-list"}
+  Cách nói: "alert", "cảnh báo", "danh sách alert", "xem alert"
+
+funding — funding rate:
+  Output: {"command":"funding","symbol":"BTC"}
+  Cách nói: "funding BTC", "phí funding", "funding rate BTC", "BTC funding"
+  (symbol optional — nếu không có thì bỏ trường symbol)
+
+=== QUY TẮC XỬ LÝ ===
+
+Số đọc bằng lời → số thực:
+  "không phẩy hai ba sáu" → 0.236
+  "không chấm hai" → 0.2
+  "sáu mươi lăm nghìn" / "65k" / "65.000" → 65000
+  "một trăm" → 100, "hai trăm" → 200
+  "một nghìn rưỡi" → 1500
+  Bỏ dấu phẩy phân cách hàng nghìn (65,000 → 65000)
+
+Đơn vị: luôn USD (USDT = USD), không cần user nói đơn vị
+
+Symbol: uppercase ticker — bitcoin→BTC, ethereum→ETH, solana→SOL, bnb→BNB
+
+Direction: long = mua/buy/long/vào long | short = bán/sell/short/vào short
+
+Nếu là câu hỏi/chat thông thường (tin tức, phân tích, hỏi thăm) → {"command":"unknown"}
+Nếu thiếu thông tin bắt buộc của trading command → {"command":"unknown"}
+CHỈ trả về JSON, không giải thích, không markdown`;
 
 export async function parseVoiceIntent(
   transcript: string,
