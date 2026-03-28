@@ -89,7 +89,7 @@ async function main(): Promise<void> {
   // Events
   registerReadyEvent(client, pollingService);
   registerInteractionCreateEvent(client, commands);
-  registerMessageCreateEvent(client, llmChat);
+  registerMessageCreateEvent(client, llmChat, env.ENABLE_AI_CHAT);
 
   await client.login(env.DISCORD_TOKEN);
 

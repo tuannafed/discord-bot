@@ -16,7 +16,17 @@ function truncateForDiscord(text: string): string {
   return `${text.slice(0, DISCORD_MSG_MAX - 20)}\n\n_(đã cắt bớt — quá dài)_`;
 }
 
-export function registerMessageCreateEvent(client: Client, llmChat: LlmChatService | null): void {
+const MSG_CHAT_HIDDEN =
+  'Hiện tại tính năng chat của mình đang **tắt**. Các lệnh slash vẫn dùng bình thường nhé.';
+
+const MSG_CHAT_NEED_CONFIG =
+  'Chat qua tag bot tạm chưa dùng được — thử lại sau hoặc nhờ admin kiểm tra cấu hình.';
+
+export function registerMessageCreateEvent(
+  client: Client,
+  llmChat: LlmChatService | null,
+  enableAiChat: boolean,
+): void {
   client.on(Events.MessageCreate, async (message) => {
     if (message.author.bot || !message.guild || !client.user) return;
     if (!message.mentions.users.has(client.user.id)) return;
@@ -25,9 +35,9 @@ export function registerMessageCreateEvent(client: Client, llmChat: LlmChatServi
 
     try {
       if (!llmChat) {
+        const content = enableAiChat ? MSG_CHAT_NEED_CONFIG : MSG_CHAT_HIDDEN;
         await message.reply({
-          content:
-            'Chào! Dùng **slash command** (`/help`). Chat AI khi tag bot: bật `ENABLE_AI_CHAT=true`, có `LLM_API_KEY` và (tuỳ chọn) `LLM_PROVIDER=anthropic`.',
+          content,
           allowedMentions: { repliedUser: true },
         });
         return;
@@ -44,8 +54,7 @@ export function registerMessageCreateEvent(client: Client, llmChat: LlmChatServi
 
       if (!prompt) {
         await message.reply({
-          content:
-            'Gõ thêm **câu hỏi** cùng dòng với tag bot, ví dụ: `@bot Cay hơn gì nhỉ` — hoặc dùng `/help`.',
+          content: 'Nhắn thêm nội dung cùng lúc tag mình nhé.',
           allowedMentions: { repliedUser: true },
         });
         return;
