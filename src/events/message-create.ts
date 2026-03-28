@@ -99,12 +99,8 @@ export function registerMessageCreateEvent(
   client.on(Events.MessageCreate, async (message) => {
     if (message.author.bot || !message.guild || !client.user) return;
 
-    // Handle voice messages — only when bot is mentioned
-    if (
-      voiceMessageService &&
-      VoiceMessageService.isVoiceMessage(message) &&
-      message.mentions.users.has(client.user.id)
-    ) {
+    // Handle voice messages — no mention required, keyword detection handles routing
+    if (voiceMessageService && VoiceMessageService.isVoiceMessage(message)) {
       await voiceMessageService.handle(message).catch((err) =>
         logger.warn(`Voice message handling failed: ${(err as Error).message}`),
       );
