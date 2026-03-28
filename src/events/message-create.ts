@@ -16,6 +16,8 @@ const EMBED_COLOR: Record<string, number> = {
   'crypto-analyst': 0x26cb7c,
   trader: 0xf0a500,
   'news-analyst': 0x5865f2,
+  'world-news': 0x1da1f2,
+  psychologist: 0xff6b9d,
   general: 0x2b2d31,
 };
 

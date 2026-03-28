@@ -1,4 +1,4 @@
-export type SkillName = 'crypto-analyst' | 'trader' | 'news-analyst' | 'general';
+export type SkillName = 'crypto-analyst' | 'trader' | 'news-analyst' | 'world-news' | 'psychologist' | 'general';
 
 export type Skill = {
   name: SkillName;
@@ -33,6 +33,27 @@ Trả lời tiếng Việt, số liệu rõ ràng. Luôn kèm disclaimer "Không
 - Phân tích sentiment: tích cực / tiêu cực / trung lập
 - Liên kết với các sự kiện liên quan nếu có
 Trả lời tiếng Việt, rõ ràng, không giật tít. Phân biệt rõ sự kiện đã xảy ra vs. suy đoán.`,
+  },
+  'world-news': {
+    name: 'world-news',
+    systemPrompt: `Bạn là phóng viên tổng hợp tin tức thế giới. Khi được hỏi hoặc cung cấp thông tin tìm kiếm:
+- Tóm tắt các tin tức nổi bật nhất trong ngày theo từng lĩnh vực: chính trị, kinh tế, công nghệ, xã hội
+- Mỗi tin: tiêu đề ngắn gọn + 1-2 câu nội dung chính + đánh giá mức độ quan trọng (cao/trung/thấp)
+- Ưu tiên tin có tác động toàn cầu hoặc ảnh hưởng đến Việt Nam
+- Trình bày khách quan, không thiên vị, không suy đoán quá mức
+- Phân biệt rõ tin đã xác nhận vs. tin đang phát triển
+Trả lời tiếng Việt, cấu trúc rõ ràng theo từng mục tin.`,
+  },
+  psychologist: {
+    name: 'psychologist',
+    systemPrompt: `Bạn là chuyên gia tâm lý với kinh nghiệm lắng nghe và hỗ trợ tinh thần. Khi trò chuyện:
+- Lắng nghe và thấu hiểu cảm xúc của người dùng trước khi đưa ra lời khuyên
+- Đặt câu hỏi mở để hiểu rõ hơn vấn đề nếu cần
+- Phản hồi với sự đồng cảm, không phán xét
+- Đưa ra góc nhìn tích cực và thực tế, tránh sáo rỗng
+- Gợi ý các kỹ thuật cụ thể: breathing, journaling, cognitive reframing khi phù hợp
+- Nếu vấn đề nghiêm trọng (tự làm hại, khủng hoảng), khuyên tìm chuyên gia hoặc đường dây hỗ trợ
+Giọng điệu ấm áp, nhẹ nhàng, chân thành. Trả lời tiếng Việt.`,
   },
   general: {
     name: 'general',
@@ -78,6 +99,36 @@ const SKILL_KEYWORDS: Record<SkillName, string[]> = {
     'sec', 'regulation', 'pháp lý',
     'hack', 'exploit',
   ],
+  'world-news': [
+    'tin thế giới', 'world news', 'global news',
+    'tin hôm nay', 'điểm tin', 'tóm tắt tin',
+    'tin quốc tế', 'international',
+    'chính trị', 'politics',
+    'chiến tranh', 'war', 'xung đột', 'conflict',
+    'bầu cử', 'election',
+    'kinh tế thế giới', 'gdp', 'lạm phát', 'inflation',
+    'thiên tai', 'disaster',
+    'công nghệ mới', 'ai news', 'tech news',
+    'tổng hợp', 'summary', 'digest',
+    'hằng ngày', 'daily', 'tuần này', 'this week',
+  ],
+  psychologist: [
+    'tâm lý', 'psychology',
+    'cảm xúc', 'emotion', 'feeling',
+    'stress', 'căng thẳng', 'áp lực',
+    'lo lắng', 'anxiety', 'lo âu',
+    'buồn', 'sad', 'depressed', 'trầm cảm',
+    'cô đơn', 'lonely',
+    'mối quan hệ', 'relationship',
+    'chia tay', 'breakup',
+    'gia đình', 'family',
+    'tự ti', 'insecure', 'confidence',
+    'động lực', 'motivation',
+    'tinh thần', 'mental', 'sức khỏe tâm thần',
+    'tức giận', 'anger',
+    'khó ngủ', 'insomnia',
+    'burn out', 'kiệt sức',
+  ],
   general: [],
 };
 
@@ -89,6 +140,8 @@ export function detectSkill(prompt: string): SkillName {
     'crypto-analyst': 0,
     trader: 0,
     'news-analyst': 0,
+    'world-news': 0,
+    psychologist: 0,
     general: 0,
   };
 
