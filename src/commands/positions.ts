@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder, APIEmbed } from 'discord.js';
 import { CallService } from '../services/call.service.js';
 import { MarketService } from '../services/market.service.js';
 import { CallWithPositions, Position } from '../types/call.js';
@@ -28,13 +28,9 @@ function calcPnl(pos: Position, call: CallWithPositions, currentPrice: number): 
 
 export type BuildPositionsTableOptions = { openOnly?: boolean };
 
-export function buildPositionsTableContent(
-  positions: Position[],
-  call: CallWithPositions,
-  currentPrice: number,
-  options?: BuildPositionsTableOptions,
-): string {
-  const callerRow: Position = {
+/** Caller PnL row (synthetic — not a real Position DB row) */
+function buildCallerPnlString(call: CallWithPositions, currentPrice: number): string {
+  const callerPos: Position = {
     id: '', callId: call.id, guildId: call.guildId, userId: call.calledById,
     username: call.calledBy, entryPrice: call.callPrice, leverage: call.leverage,
     joinedAt: call.calledAt,
@@ -44,25 +40,37 @@ export function buildPositionsTableContent(
     pnlPct: call.callerPnlPct,
     notifiedMilestones: '', mutedMilestones: false,
   };
+  const pnlResult = calcPnl(callerPos, call, currentPrice);
+  if (pnlResult.status === 'na') return 'PnL: N/A';
+  const { pct, status } = pnlResult as { pct: number; status: string };
+  const sign = pct >= 0 ? '+' : '';
+  const pctRounded = Math.round(pct);
+  if (status === 'TP') return `PnL: ✅ +${pctRounded}% TP`;
+  if (status === 'SL') return `PnL: 🟥 ${sign}${pctRounded}% SL`;
+  if (status === 'CL') return `PnL: ❌ ${sign}${pctRounded}% CL`;
+  return `PnL: ${pct >= 0 ? '🟢' : '🔴'} ${sign}${pctRounded}%`;
+}
 
+export function buildPositionsTableContent(
+  positions: Position[],
+  call: CallWithPositions,
+  currentPrice: number,
+  options?: BuildPositionsTableOptions,
+): string {
   const followersAll = positions.filter((p) => p.userId !== call.calledById);
-  let allRows: Position[];
-  if (options?.openOnly) {
-    const followersOpen = followersAll.filter((p) => p.closedAt === null);
-    allRows = call.callerClosedAt === null ? [callerRow, ...followersOpen] : followersOpen;
-  } else {
-    allRows = [callerRow, ...followersAll];
-  }
+  const followersFiltered = options?.openOnly
+    ? followersAll.filter((p) => p.closedAt === null)
+    : followersAll;
 
-  if (options?.openOnly && allRows.length === 0) {
-    return '_Không còn ai đang mở lệnh._';
+  if (followersFiltered.length === 0) {
+    return '_Chưa có ai follow kèo này._';
   }
 
   const NAME_W = 6;
   const header = `${'Name'.padEnd(NAME_W)}  ${'Entry'.padStart(10)}  Lev  PnL`;
-  const sep = '-'.repeat(header.length + 2); // +2 for emoji prefix width
+  const sep = '-'.repeat(header.length + 2);
 
-  const rows = allRows.map((pos) => {
+  const rows = followersFiltered.map((pos) => {
     const pnlResult = calcPnl(pos, call, currentPrice);
     const name = pos.username.slice(0, NAME_W).padEnd(NAME_W);
     const price = formatPrice(pos.entryPrice);
@@ -107,6 +115,34 @@ export const data = new SlashCommandBuilder()
   .setName('positions')
   .setDescription('Kèo đang chạy — chỉ người còn mở lệnh (đã TP/CL/SL không hiện)');
 
+/** Embed color based on call direction */
+function callEmbedColor(direction: string): number {
+  return direction === 'long' ? 0x57f287 : 0xed4245; // green / red
+}
+
+const CREW_CAPTIONS_LONG = [
+  '🚢 Con dân đã lên tàu, thuyền trưởng hô to: FULL STEAM AHEAD!',
+  '⛵ Thuyền trưởng mở kèo, bà con đu đỉnh không kịp thở!',
+  '🏝️ Tất cả hướng ra đảo! Ai không lên tàu thì ở lại bờ khóc!',
+  '🦜 Thuyền trưởng phán: "Đu hay không đu — đó là câu hỏi!" Bà con chọn đu!',
+  '⚓ Neo đã nhổ! Con thuyền lệnh đang lướt sóng về phía lợi nhuận!',
+  '🌊 Sóng to không sợ, bà con vẫn bám tàu kiên cường!',
+];
+
+const CREW_CAPTIONS_SHORT = [
+  '🔻 Thuyền trưởng bắt đỉnh, bà con đu short không chớp mắt!',
+  '📉 Thuyền đang lặn xuống đáy — bà con thắt dây an toàn chưa?',
+  '🦈 Short team tập hợp! Thuyền trưởng dẫn đầu lặn sâu hơn nữa!',
+  '⚓ Neo thả xuống! Chúng ta cùng nhau đến đáy… của giá!',
+  '🌊 Thuyền ngược sóng — short gang đang kiếm tiền trong bão!',
+  '🐋 Cá voi short xuất hiện! Thuyền trưởng và con dân bơi theo!',
+];
+
+function randomCrewCaption(direction: string): string {
+  const pool = direction === 'long' ? CREW_CAPTIONS_LONG : CREW_CAPTIONS_SHORT;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   await interaction.deferReply();
 
@@ -125,20 +161,41 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     ),
   ]);
 
-  const embed = new EmbedBuilder()
-    .setTitle('📊 Kèo active — lệnh còn mở')
-    .setColor(0x5865f2)
-    .setTimestamp();
+  const embeds: APIEmbed[] = [];
 
   for (const call of callsWithPositions) {
     const currentPrice = priceMap.get(call.symbol) ?? 0;
     const dirEmoji = call.direction === 'long' ? '📈 LONG' : '📉 SHORT';
     const priceStr = currentPrice > 0 ? ` · **${formatPrice(currentPrice)}**` : '';
-    const fieldName = `${call.symbol} ${dirEmoji} x${call.leverage}${priceStr}`;
+
+    // Caller line (above table)
+    const callerPnl = call.callerClosedAt === null
+      ? buildCallerPnlString(call, currentPrice)
+      : null;
+    const callerLine = callerPnl !== null
+      ? `⚓ **Thuyền trưởng:** ${call.calledBy} @ ${formatPrice(call.callPrice)} x${call.leverage} — ${callerPnl}`
+      : `⚓ **Thuyền trưởng:** ${call.calledBy} _(đã đóng)_`;
+
     const fundingDesc = formatFundingSnippet(fundingMap.get(call.symbol));
-    const body = buildPositionsTableContent(call.positions, call, currentPrice, { openOnly: true });
-    embed.addFields({ name: fieldName, value: `${fundingDesc}${body}` });
+    const table = buildPositionsTableContent(call.positions, call, currentPrice, { openOnly: true });
+    const caption = randomCrewCaption(call.direction);
+
+    const embed = new EmbedBuilder()
+      .setTitle(`${call.symbol} ${dirEmoji} x${call.leverage}${priceStr}`)
+      .setColor(callEmbedColor(call.direction))
+      .setDescription(`${callerLine}\n\n${caption}\n\n${fundingDesc}${table}`);
+
+    embeds.push(embed.toJSON());
   }
 
-  await interaction.editReply({ embeds: [embed] });
+  // Discord allows max 10 embeds per message; split if needed
+  const BATCH = 10;
+  for (let i = 0; i < embeds.length; i += BATCH) {
+    const batch = embeds.slice(i, i + BATCH);
+    if (i === 0) {
+      await interaction.editReply({ embeds: batch });
+    } else {
+      await interaction.followUp({ embeds: batch });
+    }
+  }
 }
