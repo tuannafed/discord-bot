@@ -137,11 +137,11 @@ export class VoiceMessageService {
       expiresAt: Date.now() + CONFIRM_TIMEOUT_MS,
     });
 
-    // Auto-cleanup after timeout
+    // Auto-delete after timeout (no action taken)
     setTimeout(() => {
       if (pendingConfirms.has(reply.id)) {
         pendingConfirms.delete(reply.id);
-        reply.reactions.removeAll().catch(() => undefined);
+        reply.delete().catch(() => undefined);
       }
     }, CONFIRM_TIMEOUT_MS);
   }
@@ -211,7 +211,9 @@ export class VoiceMessageService {
     pendingConfirms.delete(messageId);
 
     if (emoji === '❌') {
-      await channel.send({ content: '↩️ Đã huỷ lệnh.' });
+      // Delete the confirm message immediately
+      const confirmMessage = await channel.messages.fetch(messageId).catch(() => null);
+      await confirmMessage?.delete().catch(() => undefined);
       return;
     }
 
