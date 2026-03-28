@@ -7,34 +7,7 @@ import { MarketService } from './market.service.js';
 import { LlmChatService } from './llm-chat.service.js';
 import { parseVoiceIntent, buildConfirmMessage, CONFIRM_REQUIRED } from './voice-intent.service.js';
 import { executeVoiceIntent } from './voice-executor.service.js';
-import { detectSkill, getSkill } from './llm-skills.js';
-import { shouldSearch, formatSearchContext, type TavilySearchService } from './tavily-search.service.js';
-import { ConversationHistoryService } from './conversation-history.service.js';
 import { logger } from '../utils/logger.js';
-
-const SKILL_COLOR: Record<string, number> = {
-  'crypto-analyst': 0x26cb7c,
-  'trader': 0xf0a500,
-  'news-analyst': 0x5865f2,
-  'world-news': 0x1da1f2,
-  'psychologist': 0xff6b9d,
-  'astrology': 0x9b59b6,
-  'general': 0x2b2d31,
-};
-
-function splitIntoChunks(text: string, size: number): string[] {
-  if (text.length <= size) return [text];
-  const chunks: string[] = [];
-  let remaining = text;
-  while (remaining.length > 0) {
-    if (remaining.length <= size) { chunks.push(remaining); break; }
-    let cutAt = remaining.lastIndexOf('\n', size);
-    if (cutAt < size * 0.5) cutAt = size;
-    chunks.push(remaining.slice(0, cutAt));
-    remaining = remaining.slice(cutAt).trimStart();
-  }
-  return chunks;
-}
 
 // Discord voice message attachment flag
 const VOICE_MESSAGE_FLAG = 1 << 13; // MessageFlags.IsVoiceMessage = 8192
@@ -51,16 +24,27 @@ const pendingConfirms = new Map<string, {
 
 const CONFIRM_TIMEOUT_MS = 60_000; // 1 minute to confirm
 
+const UNKNOWN_EMBED_DESCRIPTION = [
+  '**Bot không nhận ra lệnh trong đoạn audio này.**',
+  '',
+  'Câu nói phải **bắt đầu bằng keyword lệnh**. Ví dụ:',
+  '',
+  '📈 **Trading:** `call`, `tạo kèo`, `follow`, `theo kèo`, `vào kèo`',
+  '🔴 **Đóng lệnh:** `cl`, `cắt lỗ`, `tp`, `chốt lời`, `sl`, `dừng lỗ`',
+  '✏️ **Sửa kèo:** `sửa kèo`, `cập nhật kèo`, `sửa follow`, `cập nhật follow`',
+  '📊 **Xem thông tin:** `positions`, `vị thế`, `coin`, `xem giá`, `top`, `movers`, `biến động`, `watchlist`, `alert`, `cảnh báo`, `funding`',
+  '',
+  'Gõ `/help-voice` để xem hướng dẫn đầy đủ.',
+].join('\n');
+
 export class VoiceMessageService {
   private readonly openai: OpenAI;
-  private readonly history = new ConversationHistoryService();
 
   constructor(
     private readonly llm: LlmChatService,
     private readonly callService: CallService,
     openaiApiKey: string,
     private readonly marketService?: MarketService,
-    private readonly tavilySearch?: TavilySearchService | null,
   ) {
     this.openai = new OpenAI({ apiKey: openaiApiKey });
   }
@@ -107,7 +91,7 @@ export class VoiceMessageService {
         file,
         language: 'vi',
         // Hint vocabulary so Whisper transcribes trading terms correctly
-        prompt: 'call, tạo kèo, follow, theo kèo, vào kèo, cl, cắt lỗ, tp, chốt lời, sl, stop loss, positions, xem kèo, watchlist, funding, long, short, BTC, ETH, SOL, BNB, entry, leverage, đòn bẩy, kèo, take profit, call update, follow update',
+        prompt: 'call, tạo kèo, follow, theo kèo, vào kèo, cl, cắt lỗ, cut loss, tp, chốt lời, take profit, sl, stop loss, dừng lỗ, follow update, call update, sửa kèo, cập nhật kèo, sửa follow, cập nhật follow, positions, vị thế, xem vị thế, lệnh đang mở, coin, xem giá, giá coin, top, top coin, movers, biến động, watchlist, danh sách theo dõi, alert, cảnh báo, funding, phí funding, funding rate, lãi suất, long, short, BTC, ETH, SOL, BNB, entry, leverage, đòn bẩy, kèo',
       });
       transcript = result.text?.trim() ?? '';
     } catch (err) {
@@ -123,8 +107,7 @@ export class VoiceMessageService {
     const intent = await parseVoiceIntent(transcript, this.llm);
 
     if (intent.command === 'unknown') {
-      // Not a trade command — fallback to LLM chat (same as text mention)
-      await this.handleAsChat(transcript, message);
+      await this.handleUnknown(transcript, message);
       return;
     }
 
@@ -172,51 +155,20 @@ export class VoiceMessageService {
     }, CONFIRM_TIMEOUT_MS);
   }
 
-  /** Fallback: treat transcript as a text chat message (skill + Tavily) */
-  private async handleAsChat(transcript: string, message: Message): Promise<void> {
-    const channelId = message.channel.id;
-    const skillName = detectSkill(transcript);
-    const skill = getSkill(skillName);
+  /** Show transcript + guidance embed when no command keyword detected */
+  private async handleUnknown(transcript: string, message: Message): Promise<void> {
+    const shortTranscript = transcript.length > 200
+      ? transcript.slice(0, 200) + '…'
+      : transcript;
 
-    let enrichedPrompt = transcript;
-    if (this.tavilySearch && shouldSearch(transcript)) {
-      const results = await this.tavilySearch.search(transcript);
-      const context = formatSearchContext(results);
-      if (context) enrichedPrompt = `${context}\n\nCâu hỏi: ${transcript}`;
-    }
+    const embed = new EmbedBuilder()
+      .setColor(0xed4245) // Discord red
+      .setTitle('🎙️ Không nhận ra lệnh')
+      .addFields({ name: 'Bot nghe được', value: `*"${shortTranscript}"*` })
+      .setDescription(UNKNOWN_EMBED_DESCRIPTION);
 
-    const channelHistory = this.history.getHistory(channelId);
-    this.history.addUserMessage(channelId, transcript);
-
-    const result = await this.llm.complete(enrichedPrompt, channelHistory, skill.systemPrompt);
-    if ('error' in result) {
-      await message.reply({ content: `🎙️ *"${transcript}"*\n\n❌ Không thể xử lý. Thử lại nhé.` });
-      return;
-    }
-
-    this.history.addAssistantMessage(channelId, result.text);
-    logger.info(`Voice chat skill=${skillName} for transcript="${transcript.slice(0, 60)}"`);
-
-    const EMBED_MAX = 4096;
-    const shortTranscript = transcript.slice(0, 80) + (transcript.length > 80 ? '…' : '');
-    const chunks = splitIntoChunks(result.text, EMBED_MAX);
-    const color = SKILL_COLOR[skillName] ?? SKILL_COLOR['general'];
-
-    const embeds = chunks.map((chunk, i) =>
-      new EmbedBuilder()
-        .setColor(color)
-        .setDescription(chunk)
-        .setFooter(
-          i === 0
-            ? { text: `🎙️ "${shortTranscript}" • ${skillName}` }
-            : { text: `(tiếp theo ${i + 1}/${chunks.length})` },
-        ),
-    );
-
-    await message.reply({ embeds: [embeds[0]], allowedMentions: { repliedUser: true } });
-    for (const embed of embeds.slice(1)) {
-      await (message.channel as TextChannel).send({ embeds: [embed] });
-    }
+    await message.reply({ embeds: [embed], allowedMentions: { repliedUser: true } });
+    logger.info(`Voice unknown command from ${message.author.username}: "${transcript.slice(0, 80)}"`);
   }
 
   /** Call this from messageReactionAdd event to handle ✅/❌ */

@@ -36,12 +36,18 @@ const PARSE_SYSTEM_PROMPT = `Bạn là parser lệnh trading Discord bot. Nhiệ
 
 === QUY TẮC QUAN TRỌNG NHẤT ===
 Câu nói PHẢI bắt đầu bằng một trong các keyword lệnh sau (có thể có 1-2 từ đệm không quan trọng trước):
-  Trading:   call, "tạo kèo", follow, "theo kèo", "vào kèo", cl, "cắt lỗ", tp, "chốt lời", sl, "stop loss", "follow update", "call update"
-  Read-only: positions, coin, top, movers, watchlist, "watch list", alert, funding
+  Trading:   call, "tạo kèo", follow, "theo kèo", "vào kèo", cl, "cắt lỗ", "cut loss", tp, "chốt lời", "take profit", sl, "stop loss", "dừng lỗ", "follow update", "call update", "sửa kèo", "cập nhật kèo", "sửa follow", "cập nhật follow"
+  Read-only: positions, "vị thế", "xem vị thế", "lệnh đang mở", "xem lệnh",
+             coin, "xem giá", "giá coin", "giá của",
+             top, "top coin", "xem top",
+             movers, "biến động", "coin biến động",
+             watchlist, "watch list", "danh sách theo dõi", "danh sách watch",
+             alert, "cảnh báo", "danh sách cảnh báo", "xem alert",
+             funding, "phí funding", "funding rate", "lãi suất"
 
 Nếu KHÔNG bắt đầu bằng keyword trên → {"command":"unknown"} (coi như chat thường)
 
-Ví dụ ĐÚNG: "call kèo BTC long x20 giá 65k", "tạo kèo BTC long 65k x20", "positions", "follow kèo BTC entry 64000", "theo kèo BTC entry 64000", "vào kèo BTC 64000"
+Ví dụ ĐÚNG: "call kèo BTC long x20 giá 65k", "tạo kèo BTC long 65k x20", "positions", "vị thế", "follow kèo BTC entry 64000", "theo kèo BTC entry 64000", "vào kèo BTC 64000", "xem giá BTC", "biến động hôm nay"
 Ví dụ SAI (→ unknown): "BTC đang ở đâu", "hôm nay thị trường thế nào", "chào bot"
 
 Lưu ý: speech-to-text có thể viết sai dấu hoặc sai từ, hãy đoán intent theo ngữ nghĩa.
@@ -74,45 +80,52 @@ sl — stop loss (bắt đầu bằng "sl" hoặc "stop loss" hoặc "dừng l�
   Output: {"command":"sl","symbol":"BTC"}
   Ví dụ: "sl BTC", "stop loss BTC", "dừng lỗ kèo BTC"
 
-follow update — sửa follow (bắt đầu bằng "follow update"):
+follow update — sửa follow (bắt đầu bằng "follow update" HOẶC "sửa follow" HOẶC "cập nhật follow"):
   Output: {"command":"follow-update","symbol":"BTC","entry":64500,"leverage":15}
   Ví dụ: "follow update kèo BTC giá 64500"
          "follow update BTC đòn 15"
+         "sửa follow BTC giá 64500"
+         "cập nhật follow BTC đòn 15"
 
-call update — sửa kèo (bắt đầu bằng "call update"):
+call update — sửa kèo (bắt đầu bằng "call update" HOẶC "sửa kèo" HOẶC "cập nhật kèo"):
   Output: {"command":"call-update","symbol":"BTC","price":65500,"leverage":20}
   Ví dụ: "call update kèo BTC giá 65500"
          "call update BTC đòn 20"
+         "sửa kèo BTC giá 65500"
+         "cập nhật kèo BTC đòn 20"
 
 === READ-ONLY COMMANDS (thực hiện ngay, không cần confirm) ===
 
-positions — xem lệnh đang mở (bắt đầu bằng "positions"):
+positions — xem lệnh đang mở (bắt đầu bằng "positions" HOẶC "vị thế" HOẶC "xem vị thế" HOẶC "lệnh đang mở" HOẶC "xem lệnh"):
   Output: {"command":"positions"}
-  Ví dụ: "positions", "positions đi", "chạy positions", "xem positions"
+  Ví dụ: "positions", "chạy positions", "xem positions"
+         "vị thế", "xem vị thế", "lệnh đang mở", "xem lệnh đang mở"
 
-coin — xem giá (bắt đầu bằng "coin"):
+coin — xem giá (bắt đầu bằng "coin" HOẶC "xem giá" HOẶC "giá coin" HOẶC "giá của"):
   Output: {"command":"coin","symbol":"BTC"}
   Ví dụ: "coin BTC", "coin ETH hôm nay"
+         "xem giá BTC", "giá coin ETH", "giá của BTC hôm nay"
 
-top — top coins (bắt đầu bằng "top"):
+top — top coins (bắt đầu bằng "top" HOẶC "top coin" HOẶC "xem top"):
   Output: {"command":"top"}
-  Ví dụ: "top", "top coin", "top coins"
+  Ví dụ: "top", "top coin", "top coins", "xem top"
 
-movers — coin biến động (bắt đầu bằng "movers"):
+movers — coin biến động (bắt đầu bằng "movers" HOẶC "biến động" HOẶC "coin biến động"):
   Output: {"command":"movers"}
-  Ví dụ: "movers", "movers hôm nay"
+  Ví dụ: "movers", "movers hôm nay", "biến động hôm nay", "coin biến động"
 
-watchlist — danh sách theo dõi (bắt đầu bằng "watchlist" hoặc "watch list"):
+watchlist — danh sách theo dõi (bắt đầu bằng "watchlist" HOẶC "watch list" HOẶC "danh sách theo dõi" HOẶC "danh sách watch"):
   Output: {"command":"watch-list"}
-  Ví dụ: "watchlist", "watch list"
+  Ví dụ: "watchlist", "watch list", "danh sách theo dõi", "danh sách watch"
 
-alert — cảnh báo (bắt đầu bằng "alert"):
+alert — cảnh báo (bắt đầu bằng "alert" HOẶC "cảnh báo" HOẶC "danh sách cảnh báo" HOẶC "xem alert"):
   Output: {"command":"alert-list"}
-  Ví dụ: "alert", "alert list"
+  Ví dụ: "alert", "alert list", "cảnh báo", "danh sách cảnh báo", "xem alert"
 
-funding — funding rate (bắt đầu bằng "funding"):
+funding — funding rate (bắt đầu bằng "funding" HOẶC "phí funding" HOẶC "funding rate" HOẶC "lãi suất"):
   Output: {"command":"funding","symbol":"BTC"}
   Ví dụ: "funding BTC", "funding" (symbol optional)
+         "phí funding BTC", "funding rate ETH", "lãi suất BTC"
 
 === QUY TẮC XỬ LÝ ===
 

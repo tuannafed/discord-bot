@@ -29,15 +29,15 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       },
       {
         name: '`cl` / `tp` / `sl` — Đóng lệnh',
-        value: '```\ncl BTC          (cắt lỗ)\ntp BTC          (chốt lời)\nsl BTC          (stop loss)\ncắt lỗ BTC\nchốt lời BTC\n```',
+        value: '```\ncl BTC          → cắt lỗ BTC\ntp BTC          → chốt lời BTC\nsl BTC          → dừng lỗ BTC\ncắt lỗ BTC / cut loss BTC\nchốt lời BTC / take profit BTC\nstop loss BTC / dừng lỗ BTC\n```',
       },
       {
         name: '`call update` — Sửa kèo',
-        value: '```\ncall update kèo BTC giá 65500\ncall update BTC đòn 20\n```',
+        value: '```\ncall update kèo BTC giá 65500\nsửa kèo BTC giá 65500\ncập nhật kèo BTC đòn 20\n```',
       },
       {
         name: '`follow update` — Sửa lệnh follow',
-        value: '```\nfollow update kèo BTC giá 64500\nfollow update BTC đòn 15\n```',
+        value: '```\nfollow update kèo BTC giá 64500\nsửa follow BTC giá 64500\ncập nhật follow BTC đòn 15\n```',
       },
     );
 
@@ -47,19 +47,19 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     .addFields(
       {
         name: '`positions` — Xem lệnh đang mở',
-        value: '```\npositions\nchạy positions\nxem positions\n```',
+        value: '```\npositions\nvị thế\nxem vị thế\nlệnh đang mở\nxem lệnh\n```',
       },
       {
         name: '`coin` — Xem giá coin',
-        value: '```\ncoin BTC\ncoin ETH hôm nay\n```',
+        value: '```\ncoin BTC\nxem giá BTC\ngiá coin ETH\ngiá của BTC\n```',
       },
       {
         name: '`top` / `movers` / `funding`',
-        value: '```\ntop\ntop coin\nmovers\nfunding BTC\n```',
+        value: '```\ntop / top coin / xem top\nmovers / biến động\nfunding BTC / phí funding BTC\n```',
       },
       {
         name: '`watchlist` / `alert`',
-        value: '```\nwatchlist\nalert\nalert list\n```',
+        value: '```\nwatchlist / danh sách theo dõi\nalert / cảnh báo / danh sách cảnh báo\n```',
       },
     );
 
