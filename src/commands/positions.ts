@@ -78,7 +78,7 @@ function buildCallerSection(call: CallWithPositions, currentPrice: number): stri
   }
 
   const line1 = `⚓ **Thuyền trưởng:** ${call.calledBy}`;
-  const line2 = `🎯 Đang đu giá: $${formatPrice(call.callPrice)} x${call.leverage} — ${pnlStr} _(${vibe})_`;
+  const line2 = `🎯 Đang đu giá: ${formatPrice(call.callPrice)} x${call.leverage} — ${pnlStr} _(${vibe})_`;
   return `${line1}\n${line2}`;
 }
 
