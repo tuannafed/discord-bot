@@ -95,18 +95,26 @@ export async function executeVoiceIntent(
 
     case 'positions': {
       const calls = await callService.getActiveCallsWithPositions(guildId);
-      const userPositions = calls.flatMap((c) =>
-        c.positions.filter((p) => p.userId === userId && !p.closedAt).map((p) => ({ p, c })),
-      );
-      if (userPositions.length === 0) {
-        return { success: true, message: '📭 Bạn chưa có lệnh nào đang mở.' };
+      if (calls.length === 0) {
+        return { success: true, message: '📭 Không có kèo nào đang active.' };
       }
-      const lines = userPositions.map(({ p, c }) => {
-        const dir = c.direction === 'long' ? '📈' : '📉';
-        const pnl = p.pnlPct != null ? ` | P&L: ${p.pnlPct >= 0 ? '+' : ''}${p.pnlPct.toFixed(2)}%` : '';
-        return `${dir} **${c.symbol}** x${p.leverage} @ $${p.entryPrice.toLocaleString()}${pnl}`;
-      });
-      return { success: true, message: `📊 **Lệnh đang mở (${userPositions.length}):**\n${lines.join('\n')}` };
+      const lines: string[] = [];
+      for (const c of calls) {
+        const dir = c.direction === 'long' ? '📈 LONG' : '📉 SHORT';
+        // Caller row
+        if (!c.callerClosedAt) {
+          lines.push(`${dir} **${c.symbol}** x${c.leverage} — ${c.calledBy} @ $${c.callPrice.toLocaleString()}`);
+        }
+        // Follower rows (open only)
+        for (const p of c.positions.filter((p) => p.userId !== c.calledById && !p.closedAt)) {
+          const pnl = p.pnlPct != null ? ` | P&L: ${p.pnlPct >= 0 ? '+' : ''}${p.pnlPct.toFixed(2)}%` : '';
+          lines.push(`  ↳ ${p.username} x${p.leverage} @ $${p.entryPrice.toLocaleString()}${pnl}`);
+        }
+      }
+      if (lines.length === 0) {
+        return { success: true, message: '📭 Không có ai đang mở lệnh.' };
+      }
+      return { success: true, message: `📊 **Kèo đang active (${calls.length}):**\n${lines.join('\n')}` };
     }
 
     case 'coin': {

@@ -6,6 +6,7 @@ import { CallService } from './call.service.js';
 import { MarketService } from './market.service.js';
 import { parseVoiceIntent, buildConfirmMessage, CONFIRM_REQUIRED } from './voice-intent.service.js';
 import { executeVoiceIntent } from './voice-executor.service.js';
+import { fixTranscript } from './voice-transcript-fix.service.js';
 import { logger } from '../utils/logger.js';
 
 // Discord voice message attachment flag
@@ -99,13 +100,18 @@ export class VoiceMessageService {
     }
 
     if (!transcript) return;
-    logger.info(`Voice transcript from ${message.author.username}: "${transcript}"`);
+
+    const fixed = fixTranscript(transcript);
+    if (fixed !== transcript) {
+      logger.info(`Voice transcript fixed: "${transcript}" → "${fixed}"`);
+    }
+    logger.info(`Voice transcript from ${message.author.username}: "${fixed}"`);
 
     // Parse intent: pre-match first (no LLM), then GPT-4o-mini for complex commands
-    const intent = await parseVoiceIntent(transcript, this.openai);
+    const intent = await parseVoiceIntent(fixed, this.openai);
 
     if (intent.command === 'unknown') {
-      await this.handleUnknown(transcript, message);
+      await this.handleUnknown(fixed, message);
       return;
     }
 
@@ -121,7 +127,7 @@ export class VoiceMessageService {
     // Read-only commands: execute immediately, no confirm needed
     if (!CONFIRM_REQUIRED.has(intent.command as never)) {
       const result = await executeVoiceIntent(intent, context);
-      await message.reply({ content: `🎙️ *"${transcript}"*\n\n${result.message}`, allowedMentions: { repliedUser: true } });
+      await message.reply({ content: `🎙️ *"${fixed}"*\n\n${result.message}`, allowedMentions: { repliedUser: true } });
       return;
     }
 
@@ -130,7 +136,7 @@ export class VoiceMessageService {
 
     // Trading commands: send confirmation with reactions
     const reply = await message.reply({
-      content: `🎙️ *"${transcript}"*\n\n${confirmMsg}\n\nReact ✅ để xác nhận hoặc ❌ để huỷ.`,
+      content: `🎙️ *"${fixed}"*\n\n${confirmMsg}\n\nReact ✅ để xác nhận hoặc ❌ để huỷ.`,
       allowedMentions: { repliedUser: true },
     });
 
