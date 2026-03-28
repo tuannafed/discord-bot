@@ -3,7 +3,7 @@ import { logger } from '../utils/logger.js';
 /** Một dòng cố định cho Discord; chi tiết chỉ trong log. */
 export const LLM_ERROR_USER_MESSAGE = 'Không trả lời được lúc này — thử lại sau.';
 
-export type LlmProvider = 'openai' | 'anthropic';
+export type LlmProvider = 'openai' | 'anthropic' | 'deepseek';
 
 export type LlmChatConfig = {
   provider: LlmProvider;
@@ -80,6 +80,7 @@ export class LlmChatService {
     if (this.cfg.provider === 'anthropic') {
       return this.completeAnthropic(base, userMessage);
     }
+    // deepseek and openai both use the OpenAI-compatible format
     return this.completeOpenAiCompatible(base, userMessage);
   }
 
@@ -201,7 +202,8 @@ export class LlmChatService {
 function normalizeProvider(raw: string | undefined): LlmProvider {
   const v = raw?.trim().toLowerCase();
   if (v === 'anthropic' || v === 'claude') return 'anthropic';
-  return 'openai';
+  if (v === 'openai') return 'openai';
+  return 'deepseek';
 }
 
 export function buildLlmChatServiceFromEnv(env: {
@@ -222,10 +224,18 @@ export function buildLlmChatServiceFromEnv(env: {
 
   const provider = normalizeProvider(env.LLM_PROVIDER);
   const defaultBase =
-    provider === 'anthropic' ? 'https://api.anthropic.com/v1' : 'https://api.openai.com/v1';
+    provider === 'anthropic'
+      ? 'https://api.anthropic.com/v1'
+      : provider === 'openai'
+        ? 'https://api.openai.com/v1'
+        : 'https://api.deepseek.com/v1';
   const baseUrl = (env.LLM_BASE_URL?.trim() || defaultBase).replace(/\/$/, '');
   const defaultModel =
-    provider === 'anthropic' ? 'claude-haiku-4-5-20251001' : 'gpt-4o-mini';
+    provider === 'anthropic'
+      ? 'claude-haiku-4-5-20251001'
+      : provider === 'openai'
+        ? 'gpt-4o-mini'
+        : 'deepseek-chat';
 
   return new LlmChatService({
     provider,

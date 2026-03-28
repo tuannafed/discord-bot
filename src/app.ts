@@ -12,6 +12,7 @@ import { CandidateService, ICandidateRepository } from './services/candidate.ser
 import { CallService } from './services/call.service.js';
 import { PollingService } from './services/polling.service.js';
 import { buildLlmChatServiceFromEnv } from './services/llm-chat.service.js';
+import { TavilySearchService } from './services/tavily-search.service.js';
 import { parseAdminListIds } from './utils/admin-list.js';
 
 import { WatchlistRepository } from './repositories/watchlist.repository.js';
@@ -75,6 +76,13 @@ async function main(): Promise<void> {
     logger.warn('ENABLE_AI_CHAT is on but LLM chat is disabled — set LLM_API_KEY (and LLM_PROVIDER if using Claude).');
   }
 
+  const tavilySearch = env.TAVILY_API_KEY
+    ? new TavilySearchService(env.TAVILY_API_KEY, env.TAVILY_MAX_RESULTS)
+    : null;
+  if (tavilySearch) {
+    logger.info('Tavily web search enabled');
+  }
+
   // Commands
   const commands = buildCommands(
     marketService,
@@ -91,7 +99,7 @@ async function main(): Promise<void> {
   // Events
   registerReadyEvent(client, pollingService);
   registerInteractionCreateEvent(client, commands);
-  registerMessageCreateEvent(client, llmChat, env.ENABLE_AI_CHAT);
+  registerMessageCreateEvent(client, llmChat, env.ENABLE_AI_CHAT, tavilySearch);
 
   await client.login(env.DISCORD_TOKEN);
 

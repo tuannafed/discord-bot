@@ -1,6 +1,11 @@
 import { Client, Events } from 'discord.js';
 import { logger } from '../utils/logger.js';
 import { LLM_ERROR_USER_MESSAGE, type LlmChatService } from '../services/llm-chat.service.js';
+import {
+  shouldSearch,
+  formatSearchContext,
+  type TavilySearchService,
+} from '../services/tavily-search.service.js';
 
 const DISCORD_MSG_MAX = 1900;
 
@@ -26,6 +31,7 @@ export function registerMessageCreateEvent(
   client: Client,
   llmChat: LlmChatService | null,
   enableAiChat: boolean,
+  tavilySearch: TavilySearchService | null = null,
 ): void {
   client.on(Events.MessageCreate, async (message) => {
     if (message.author.bot || !message.guild || !client.user) return;
@@ -63,7 +69,18 @@ export function registerMessageCreateEvent(
       llmChat.recordCooldown(message.guild.id, message.author.id);
       await message.channel.sendTyping().catch(() => undefined);
 
-      const result = await llmChat.complete(prompt);
+      // Keyword-triggered web search — inject context into prompt if needed
+      let enrichedPrompt = prompt;
+      if (tavilySearch && shouldSearch(prompt)) {
+        const results = await tavilySearch.search(prompt);
+        const context = formatSearchContext(results);
+        if (context) {
+          enrichedPrompt = `${context}\n\nCâu hỏi: ${prompt}`;
+          logger.info(`Tavily search returned ${results.length} results for prompt="${prompt.slice(0, 80)}"`);
+        }
+      }
+
+      const result = await llmChat.complete(enrichedPrompt);
       if ('error' in result) {
         await message.reply({
           content: LLM_ERROR_USER_MESSAGE,

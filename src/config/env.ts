@@ -47,6 +47,10 @@ const envSchema = z.object({
   LLM_COOLDOWN_MS: z.coerce.number().int().positive().default(8000),
   LLM_MAX_TOKENS: z.coerce.number().int().positive().max(4096).default(600),
   LLM_ANTHROPIC_VERSION: z.string().optional(),
+
+  // Tavily web search (optional — enables keyword-triggered search before LLM reply)
+  TAVILY_API_KEY: z.string().optional(),
+  TAVILY_MAX_RESULTS: z.coerce.number().int().min(1).max(5).default(3),
 });
 
 const parsed = envSchema.safeParse(process.env);
