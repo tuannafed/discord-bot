@@ -91,26 +91,52 @@ export async function renderCandlestickChart(
   const trendColor = isUp ? bullColor : bearColor;
 
   // Build candlestick bars using floating bar chart
-  const ohlcData = candles.map((c) => {
-    const isBull = c.close >= c.open;
-    return {
-      x: formatLabel(c.time, days),
-      y: [c.open, c.close] as [number, number],
-      backgroundColor: isBull ? bullColor : bearColor,
-      borderColor: isBull ? bullColor : bearColor,
-    };
-  });
-
-  // Wick lines as scatter
-  const wickData = candles.flatMap((c, i) => [
-    { x: i, y: c.high },
-    { x: i, y: c.low },
-  ]);
+  const isBullArr = candles.map((c) => c.close >= c.open);
+  const ohlcData = candles.map((c, i) => ({
+    y: [c.open, c.close] as [number, number],
+    backgroundColor: isBullArr[i] ? bullColor : bearColor,
+    borderColor: isBullArr[i] ? bullColor : bearColor,
+  }));
 
   const allPrices = candles.flatMap((c) => [c.high, c.low]);
   const minPrice = Math.min(...allPrices);
   const maxPrice = Math.max(...allPrices);
   const padding = (maxPrice - minPrice) * 0.05;
+
+  // Custom plugin: draw high/low wicks for each candle
+  const wickPlugin = {
+    id: 'wickPlugin',
+    afterDatasetsDraw(chart: any) {
+      const { ctx, scales } = chart;
+      const xScale = scales['x'];
+      const yScale = scales['y'];
+      if (!xScale || !yScale) return;
+
+      ctx.save();
+      ctx.lineWidth = 1.5;
+
+      candles.forEach((c, i) => {
+        const xCenter = xScale.getPixelForValue(i);
+        const yHigh = yScale.getPixelForValue(c.high);
+        const yLow = yScale.getPixelForValue(c.low);
+        const yOpen = yScale.getPixelForValue(c.open);
+        const yClose = yScale.getPixelForValue(c.close);
+        const isBull = c.close >= c.open;
+
+        ctx.strokeStyle = isBull ? bullColor : bearColor;
+        ctx.beginPath();
+        // Upper wick: from top of body to high
+        ctx.moveTo(xCenter, Math.min(yOpen, yClose));
+        ctx.lineTo(xCenter, yHigh);
+        // Lower wick: from bottom of body to low
+        ctx.moveTo(xCenter, Math.max(yOpen, yClose));
+        ctx.lineTo(xCenter, yLow);
+        ctx.stroke();
+      });
+
+      ctx.restore();
+    },
+  };
 
   const image = await canvas.renderToBuffer({
     type: 'bar',
@@ -128,6 +154,7 @@ export async function renderCandlestickChart(
         },
       ],
     },
+    plugins: [wickPlugin],
     options: {
       responsive: false,
       animation: false,
