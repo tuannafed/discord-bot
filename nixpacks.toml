@@ -1,0 +1,8 @@
+[phases.setup]
+aptPkgs = ["fonts-dejavu-core", "fontconfig"]
+
+[phases.build]
+cmds = ["fc-cache -fv", "yarn build"]
+
+[start]
+cmd = "node dist/app.js"
