@@ -163,8 +163,10 @@ export class CallService {
       };
     }
 
-    // Auto-close call only when the caller themselves closes — followers closing should not affect call status
-    if (isCaller) {
+    // Auto-close call when caller has closed AND all follower positions are closed
+    const callerClosed = isCaller || call.callerClosedAt != null;
+    const allFollowersClosed = await this.repo.checkAllPositionsClosed(params.callId);
+    if (callerClosed && allFollowersClosed) {
       await this.repo.closeCall(params.callId);
     }
 
