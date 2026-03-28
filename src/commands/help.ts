@@ -24,6 +24,26 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
         '> `/follow-update` `call_id` `[entry]` `[đòn_bẩy]` `[user]` — Sửa giá vào lệnh / đòn bẩy lệnh vào kèo',
         '> `/call-delete` `call_id` — *(Quản trị)* Xóa kèo nhầm (xóa luôn lệnh liên quan)',
       ].join('\n'),
+    }, {
+      name: '📌 Ví dụ',
+      value: [
+        '```',
+        '/call symbol:STG direction:short price:0.271 leverage:20',
+        '/call-delete call_id:[chọn]',
+        '/follow call_id:[chọn] entry:0.268',
+        '/follow call_id:[chọn] entry:0.268 user:@member',
+        '/follow-update call_id:[chọn] entry:0.270 leverage:10',
+        '/follow-update call_id:[chọn] leverage:50 user:@member',
+        '/follow-delete call_id:[chọn]',
+        '/call-update call_id:[chọn] price:0.275 leverage:25',
+        '/positions',
+        '/positions-history',
+        '/positions-clean call_id:[chọn]',
+        '/tp call_id:[chọn]',
+        '/cl call_id:[chọn]',
+        '/sl call_id:[chọn]',
+        '```',
+      ].join('\n'),
     })
     .setTimestamp();
 
