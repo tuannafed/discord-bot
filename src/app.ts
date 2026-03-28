@@ -87,8 +87,8 @@ async function main(): Promise<void> {
 
   // Voice message handler (optional — requires OPENAI_API_KEY + callService)
   const voiceMessageService =
-    env.OPENAI_API_KEY && callService && llmChat
-      ? new VoiceMessageService(llmChat, callService, env.OPENAI_API_KEY, marketService)
+    env.OPENAI_API_KEY && callService
+      ? new VoiceMessageService(callService, env.OPENAI_API_KEY, marketService)
       : null;
   if (voiceMessageService) {
     logger.info('Voice message handler enabled');

@@ -4,7 +4,6 @@ import OpenAI, { toFile } from 'openai';
 import { Readable } from 'stream';
 import { CallService } from './call.service.js';
 import { MarketService } from './market.service.js';
-import { LlmChatService } from './llm-chat.service.js';
 import { parseVoiceIntent, buildConfirmMessage, CONFIRM_REQUIRED } from './voice-intent.service.js';
 import { executeVoiceIntent } from './voice-executor.service.js';
 import { logger } from '../utils/logger.js';
@@ -41,7 +40,6 @@ export class VoiceMessageService {
   private readonly openai: OpenAI;
 
   constructor(
-    private readonly llm: LlmChatService,
     private readonly callService: CallService,
     openaiApiKey: string,
     private readonly marketService?: MarketService,
@@ -103,8 +101,8 @@ export class VoiceMessageService {
     if (!transcript) return;
     logger.info(`Voice transcript from ${message.author.username}: "${transcript}"`);
 
-    // Parse intent via LLM
-    const intent = await parseVoiceIntent(transcript, this.llm);
+    // Parse intent: pre-match first (no LLM), then GPT-4o-mini for complex commands
+    const intent = await parseVoiceIntent(transcript, this.openai);
 
     if (intent.command === 'unknown') {
       await this.handleUnknown(transcript, message);

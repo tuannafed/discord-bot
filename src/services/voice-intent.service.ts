@@ -1,4 +1,4 @@
-import { type LlmChatService } from './llm-chat.service.js';
+import OpenAI from 'openai';
 import { logger } from '../utils/logger.js';
 
 export type VoiceCommandName =
@@ -32,6 +32,115 @@ export const CONFIRM_REQUIRED = new Set<VoiceCommandName>([
   'call', 'follow', 'cl', 'tp', 'sl', 'follow-update', 'call-update',
 ]);
 
+// ---------------------------------------------------------------------------
+// Pre-LLM keyword matcher for simple read-only commands
+// Avoids an LLM round-trip for unambiguous phrases like "vị thế", "biến động"
+// ---------------------------------------------------------------------------
+
+/** Normalize for keyword matching: lowercase, strip diacritics */
+function normalize(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .trim();
+}
+
+function startsWith(norm: string, ...prefixes: string[]): boolean {
+  return prefixes.some((p) => norm === p || norm.startsWith(p + ' '));
+}
+
+/**
+ * Fast keyword pre-match for read-only commands (no LLM needed).
+ * Returns null if no match — falls through to LLM parser.
+ */
+function preMatchReadOnly(transcript: string): VoiceIntent | null {
+  const n = normalize(transcript);
+
+  // positions
+  if (startsWith(n, 'positions', 'vi the', 'xem vi the', 'lenh dang mo', 'xem lenh')) {
+    return { command: 'positions' };
+  }
+
+  // top
+  if (startsWith(n, 'top coin', 'top coins', 'xem top') || n === 'top') {
+    return { command: 'top' };
+  }
+
+  // movers
+  if (startsWith(n, 'movers', 'bien dong', 'coin bien dong')) {
+    return { command: 'movers' };
+  }
+
+  // watchlist
+  if (startsWith(n, 'watchlist', 'watch list', 'danh sach theo doi', 'danh sach watch')) {
+    return { command: 'watch-list' };
+  }
+
+  // alert-list
+  if (startsWith(n, 'alert', 'canh bao', 'danh sach canh bao', 'xem alert')) {
+    return { command: 'alert-list' };
+  }
+
+  // funding (may have symbol)
+  if (startsWith(n, 'funding', 'phi funding', 'funding rate', 'lai suat')) {
+    // Try to extract symbol after keyword
+    const symbol = extractSymbol(transcript);
+    return { command: 'funding', ...(symbol ? { symbol } : {}) };
+  }
+
+  // coin / xem giá (requires symbol — let LLM handle extraction if no clear symbol)
+  if (startsWith(n, 'xem gia', 'gia coin', 'gia cua', 'coin ')) {
+    const symbol = extractSymbol(transcript);
+    if (symbol) return { command: 'coin', symbol };
+    // No symbol found → fall through to LLM
+  }
+
+  return null;
+}
+
+/** Extract uppercase coin ticker from transcript (bitcoin→BTC etc.) */
+function extractSymbol(transcript: string): string | null {
+  const ALIASES: Record<string, string> = {
+    bitcoin: 'BTC', btc: 'BTC',
+    ethereum: 'ETH', eth: 'ETH',
+    solana: 'SOL', sol: 'SOL',
+    bnb: 'BNB', 'binance coin': 'BNB',
+    xrp: 'XRP', ripple: 'XRP',
+    doge: 'DOGE', dogecoin: 'DOGE',
+    ada: 'ADA', cardano: 'ADA',
+    avax: 'AVAX', avalanche: 'AVAX',
+    dot: 'DOT', polkadot: 'DOT',
+    link: 'LINK', chainlink: 'LINK',
+    matic: 'MATIC', polygon: 'MATIC',
+    ltc: 'LTC', litecoin: 'LTC',
+    uni: 'UNI', uniswap: 'UNI',
+    atom: 'ATOM', cosmos: 'ATOM',
+    near: 'NEAR',
+    apt: 'APT', aptos: 'APT',
+    sui: 'SUI',
+    op: 'OP', optimism: 'OP',
+    arb: 'ARB', arbitrum: 'ARB',
+    ton: 'TON',
+    pepe: 'PEPE',
+    shib: 'SHIB', 'shiba inu': 'SHIB',
+  };
+
+  const lower = transcript.toLowerCase();
+  for (const [alias, ticker] of Object.entries(ALIASES)) {
+    if (lower.includes(alias)) return ticker;
+  }
+
+  // Generic uppercase ticker (2-5 chars) in the original transcript
+  const match = transcript.match(/\b([A-Z]{2,5})\b/);
+  return match ? match[1] : null;
+}
+
+// ---------------------------------------------------------------------------
+// LLM-based intent parser (GPT gpt-4o-mini) — for complex trading commands
+// ---------------------------------------------------------------------------
+
 const PARSE_SYSTEM_PROMPT = `Bạn là parser lệnh trading Discord bot. Nhiệm vụ: nhận câu nói tiếng Việt (đã được speech-to-text), xác định intent và trả về JSON.
 
 === QUY TẮC QUAN TRỌNG NHẤT ===
@@ -41,14 +150,11 @@ Câu nói PHẢI bắt đầu bằng một trong các keyword lệnh sau (có th
              coin, "xem giá", "giá coin", "giá của",
              top, "top coin", "xem top",
              movers, "biến động", "coin biến động",
-             watchlist, "watch list", "danh sách theo dõi", "danh sách watch",
-             alert, "cảnh báo", "danh sách cảnh báo", "xem alert",
+             watchlist, "watch list", "danh sách theo dõi",
+             alert, "cảnh báo", "danh sách cảnh báo",
              funding, "phí funding", "funding rate", "lãi suất"
 
 Nếu KHÔNG bắt đầu bằng keyword trên → {"command":"unknown"} (coi như chat thường)
-
-Ví dụ ĐÚNG: "call kèo BTC long x20 giá 65k", "tạo kèo BTC long 65k x20", "positions", "vị thế", "follow kèo BTC entry 64000", "theo kèo BTC entry 64000", "vào kèo BTC 64000", "xem giá BTC", "biến động hôm nay"
-Ví dụ SAI (→ unknown): "BTC đang ở đâu", "hôm nay thị trường thế nào", "chào bot"
 
 Lưu ý: speech-to-text có thể viết sai dấu hoặc sai từ, hãy đoán intent theo ngữ nghĩa.
 
@@ -83,14 +189,12 @@ sl — stop loss (bắt đầu bằng "sl" hoặc "stop loss" hoặc "dừng l�
 follow update — sửa follow (bắt đầu bằng "follow update" HOẶC "sửa follow" HOẶC "cập nhật follow"):
   Output: {"command":"follow-update","symbol":"BTC","entry":64500,"leverage":15}
   Ví dụ: "follow update kèo BTC giá 64500"
-         "follow update BTC đòn 15"
          "sửa follow BTC giá 64500"
          "cập nhật follow BTC đòn 15"
 
 call update — sửa kèo (bắt đầu bằng "call update" HOẶC "sửa kèo" HOẶC "cập nhật kèo"):
   Output: {"command":"call-update","symbol":"BTC","price":65500,"leverage":20}
   Ví dụ: "call update kèo BTC giá 65500"
-         "call update BTC đòn 20"
          "sửa kèo BTC giá 65500"
          "cập nhật kèo BTC đòn 20"
 
@@ -98,34 +202,25 @@ call update — sửa kèo (bắt đầu bằng "call update" HOẶC "sửa kèo
 
 positions — xem lệnh đang mở (bắt đầu bằng "positions" HOẶC "vị thế" HOẶC "xem vị thế" HOẶC "lệnh đang mở" HOẶC "xem lệnh"):
   Output: {"command":"positions"}
-  Ví dụ: "positions", "chạy positions", "xem positions"
-         "vị thế", "xem vị thế", "lệnh đang mở", "xem lệnh đang mở"
 
 coin — xem giá (bắt đầu bằng "coin" HOẶC "xem giá" HOẶC "giá coin" HOẶC "giá của"):
   Output: {"command":"coin","symbol":"BTC"}
-  Ví dụ: "coin BTC", "coin ETH hôm nay"
-         "xem giá BTC", "giá coin ETH", "giá của BTC hôm nay"
 
-top — top coins (bắt đầu bằng "top" HOẶC "top coin" HOẶC "xem top"):
+top — top coins (bắt đầu bằng "top"):
   Output: {"command":"top"}
-  Ví dụ: "top", "top coin", "top coins", "xem top"
 
-movers — coin biến động (bắt đầu bằng "movers" HOẶC "biến động" HOẶC "coin biến động"):
+movers — coin biến động (bắt đầu bằng "movers" HOẶC "biến động"):
   Output: {"command":"movers"}
-  Ví dụ: "movers", "movers hôm nay", "biến động hôm nay", "coin biến động"
 
-watchlist — danh sách theo dõi (bắt đầu bằng "watchlist" HOẶC "watch list" HOẶC "danh sách theo dõi" HOẶC "danh sách watch"):
+watchlist — danh sách theo dõi (bắt đầu bằng "watchlist" HOẶC "watch list" HOẶC "danh sách theo dõi"):
   Output: {"command":"watch-list"}
-  Ví dụ: "watchlist", "watch list", "danh sách theo dõi", "danh sách watch"
 
-alert — cảnh báo (bắt đầu bằng "alert" HOẶC "cảnh báo" HOẶC "danh sách cảnh báo" HOẶC "xem alert"):
+alert — cảnh báo (bắt đầu bằng "alert" HOẶC "cảnh báo" HOẶC "danh sách cảnh báo"):
   Output: {"command":"alert-list"}
-  Ví dụ: "alert", "alert list", "cảnh báo", "danh sách cảnh báo", "xem alert"
 
-funding — funding rate (bắt đầu bằng "funding" HOẶC "phí funding" HOẶC "funding rate" HOẶC "lãi suất"):
+funding — funding rate (bắt đầu bằng "funding" HOẶC "phí funding" HOẶC "lãi suất"):
   Output: {"command":"funding","symbol":"BTC"}
-  Ví dụ: "funding BTC", "funding" (symbol optional)
-         "phí funding BTC", "funding rate ETH", "lãi suất BTC"
+  Ví dụ: "funding BTC", "phí funding ETH", "lãi suất" (symbol optional)
 
 === QUY TẮC XỬ LÝ ===
 
@@ -149,20 +244,34 @@ CHỈ trả về JSON, không giải thích, không markdown`;
 
 export async function parseVoiceIntent(
   transcript: string,
-  llm: LlmChatService,
+  openai: OpenAI,
 ): Promise<VoiceIntent> {
-  const result = await llm.completeRaw(PARSE_SYSTEM_PROMPT, transcript);
-  if ('error' in result) {
-    logger.warn(`parseVoiceIntent LLM error: ${result.error}`);
-    return { command: 'unknown' };
+  // Fast path: pre-match simple read-only commands without LLM round-trip
+  const preMatched = preMatchReadOnly(transcript);
+  if (preMatched) {
+    logger.info(`parseVoiceIntent pre-matched: ${JSON.stringify(preMatched)}`);
+    return preMatched;
   }
 
+  // Slow path: LLM for trading commands and complex read-only (e.g. "coin BTC")
   try {
-    const text = result.text.trim().replace(/```json|```/g, '').trim();
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: PARSE_SYSTEM_PROMPT },
+        { role: 'user', content: transcript },
+      ],
+      max_tokens: 150,
+      temperature: 0,
+    });
+
+    const text = response.choices[0]?.message?.content?.trim().replace(/```json|```/g, '').trim();
+    if (!text) return { command: 'unknown' };
+
     const parsed = JSON.parse(text) as VoiceIntent;
     return parsed;
-  } catch {
-    logger.warn(`parseVoiceIntent JSON parse failed: ${result.text.slice(0, 200)}`);
+  } catch (err) {
+    logger.warn(`parseVoiceIntent failed: ${(err as Error).message}`);
     return { command: 'unknown' };
   }
 }
