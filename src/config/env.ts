@@ -29,6 +29,13 @@ const envSchema = z.object({
   CANDIDATE_ALERT_CHANNEL_ID: z.string().optional(),
 
   // Optional — mention bot + text → LLM (OpenAI-compatible hoặc Anthropic Claude)
+  ENABLE_AI_CHAT: z
+    .preprocess((v) => {
+      if (v === undefined || v === '') return false;
+      const s = String(v).trim().toLowerCase();
+      return s === 'true' || s === '1' || s === 'yes';
+    }, z.boolean())
+    .default(false),
   LLM_API_KEY: z.string().optional(),
   LLM_PROVIDER: z.string().optional(),
   LLM_BASE_URL: z.string().optional(),

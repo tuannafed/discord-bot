@@ -205,6 +205,7 @@ function normalizeProvider(raw: string | undefined): LlmProvider {
 }
 
 export function buildLlmChatServiceFromEnv(env: {
+  ENABLE_AI_CHAT?: boolean | undefined;
   LLM_API_KEY?: string | undefined;
   LLM_PROVIDER?: string | undefined;
   LLM_BASE_URL?: string | undefined;
@@ -214,6 +215,8 @@ export function buildLlmChatServiceFromEnv(env: {
   LLM_MAX_TOKENS?: number | undefined;
   LLM_ANTHROPIC_VERSION?: string | undefined;
 }): LlmChatService | null {
+  if (!env.ENABLE_AI_CHAT) return null;
+
   const key = env.LLM_API_KEY?.trim();
   if (!key) return null;
 

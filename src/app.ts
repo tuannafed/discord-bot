@@ -70,6 +70,9 @@ async function main(): Promise<void> {
 
   const pollingService = new PollingService(client, alertService, candidateService, cryptoProvider, callService);
   const llmChat = buildLlmChatServiceFromEnv(env);
+  if (env.ENABLE_AI_CHAT && !llmChat) {
+    logger.warn('ENABLE_AI_CHAT is on but LLM chat is disabled — set LLM_API_KEY (and LLM_PROVIDER if using Claude).');
+  }
 
   // Commands
   const commands = buildCommands(

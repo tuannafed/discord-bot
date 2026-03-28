@@ -27,7 +27,7 @@ export function registerMessageCreateEvent(client: Client, llmChat: LlmChatServi
       if (!llmChat) {
         await message.reply({
           content:
-            'Chào! Dùng **slash command** (`/help`). Để bật chat khi tag bot, set `LLM_API_KEY` + `LLM_PROVIDER=anthropic` (Claude) hoặc OpenAI-compatible.',
+            'Chào! Dùng **slash command** (`/help`). Chat AI khi tag bot: bật `ENABLE_AI_CHAT=true`, có `LLM_API_KEY` và (tuỳ chọn) `LLM_PROVIDER=anthropic`.',
           allowedMentions: { repliedUser: true },
         });
         return;
