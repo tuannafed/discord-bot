@@ -1,4 +1,4 @@
-export type SkillName = 'crypto-analyst' | 'trader' | 'news-analyst' | 'world-news' | 'psychologist' | 'general';
+export type SkillName = 'crypto-analyst' | 'trader' | 'news-analyst' | 'world-news' | 'psychologist' | 'astrology' | 'general';
 
 export type Skill = {
   name: SkillName;
@@ -54,6 +54,18 @@ Trả lời tiếng Việt, cấu trúc rõ ràng theo từng mục tin.`,
 - Gợi ý các kỹ thuật cụ thể: breathing, journaling, cognitive reframing khi phù hợp
 - Nếu vấn đề nghiêm trọng (tự làm hại, khủng hoảng), khuyên tìm chuyên gia hoặc đường dây hỗ trợ
 Giọng điệu ấm áp, nhẹ nhàng, chân thành. Trả lời tiếng Việt.`,
+  },
+  astrology: {
+    name: 'astrology',
+    systemPrompt: `Bạn là thầy tử vi người Việt với kiến thức sâu về tử vi Á Đông, chiêm tinh học phương Đông và phương Tây. Khi xem tử vi:
+- Nếu user cung cấp ngày sinh (dương hoặc âm lịch), giờ sinh, giới tính: lập lá số tử vi đầy đủ (cung mệnh, thân, các sao chính)
+- Xem tử vi ngày/tuần/tháng: luận giải vận khí, may mắn, tình duyên, tài lộc, sức khỏe
+- Giải thích các sao (Tử Vi, Thiên Phủ, Thái Âm, v.v.) theo ngôn ngữ dễ hiểu
+- Đưa ra lời khuyên hành động cụ thể: nên/không nên làm gì trong giai đoạn này
+- Dùng 12 con giáp, ngũ hành, thiên can địa chi khi phù hợp
+- Giọng điệu huyền bí nhưng gần gũi, pha chút hài hước
+- Luôn kèm: "Tử vi chỉ mang tính tham khảo, vận mệnh do chính bạn tạo ra"
+Trả lời tiếng Việt, dùng emoji phù hợp (⭐🌙🔮✨).`,
   },
   general: {
     name: 'general',
@@ -129,6 +141,25 @@ const SKILL_KEYWORDS: Record<SkillName, string[]> = {
     'khó ngủ', 'insomnia',
     'burn out', 'kiệt sức',
   ],
+  astrology: [
+    'tử vi', 'xem tử vi', 'bói',
+    'vận mệnh', 'số mệnh', 'số phận',
+    'lá số', 'lập lá số',
+    'cung mệnh', 'thiên mệnh',
+    'con giáp', 'tuổi',
+    'ngũ hành', 'thiên can', 'địa chi',
+    'năm nay', 'tháng này', 'ngày hôm nay',
+    'vận khí', 'vận hạn',
+    'tình duyên', 'tình cảm',
+    'tài lộc', 'tài chính',
+    'sự nghiệp', 'công danh',
+    'sức khỏe',
+    'may mắn', 'xui xẻo',
+    'hợp tuổi', 'xung khắc',
+    'phong thủy', 'hướng nhà',
+    'tarot', 'chiêm tinh',
+    'cung hoàng đạo', 'bạch dương', 'kim ngưu', 'song tử',
+  ],
   general: [],
 };
 
@@ -142,6 +173,7 @@ export function detectSkill(prompt: string): SkillName {
     'news-analyst': 0,
     'world-news': 0,
     psychologist: 0,
+    astrology: 0,
     general: 0,
   };
 

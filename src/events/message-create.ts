@@ -18,6 +18,7 @@ const EMBED_COLOR: Record<string, number> = {
   'news-analyst': 0x5865f2,
   'world-news': 0x1da1f2,
   psychologist: 0xff6b9d,
+  astrology: 0x9b59b6,
   general: 0x2b2d31,
 };
 
