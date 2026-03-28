@@ -106,6 +106,8 @@ export class VoiceMessageService {
         model: 'whisper-1',
         file,
         language: 'vi',
+        // Hint vocabulary so Whisper transcribes trading terms correctly
+        prompt: 'call, follow, cl, tp, sl, positions, watchlist, funding, long, short, BTC, ETH, SOL, BNB, entry, leverage, đòn bẩy, kèo, chốt lời, cắt lỗ, stop loss, take profit, call update, follow update',
       });
       transcript = result.text?.trim() ?? '';
     } catch (err) {
