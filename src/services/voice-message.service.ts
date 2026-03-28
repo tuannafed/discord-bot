@@ -7,6 +7,9 @@ import { MarketService } from './market.service.js';
 import { LlmChatService } from './llm-chat.service.js';
 import { parseVoiceIntent, buildConfirmMessage, CONFIRM_REQUIRED } from './voice-intent.service.js';
 import { executeVoiceIntent } from './voice-executor.service.js';
+import { detectSkill, getSkill } from './llm-skills.js';
+import { shouldSearch, formatSearchContext, type TavilySearchService } from './tavily-search.service.js';
+import { ConversationHistoryService } from './conversation-history.service.js';
 import { logger } from '../utils/logger.js';
 
 // Discord voice message attachment flag
@@ -26,12 +29,14 @@ const CONFIRM_TIMEOUT_MS = 60_000; // 1 minute to confirm
 
 export class VoiceMessageService {
   private readonly openai: OpenAI;
+  private readonly history = new ConversationHistoryService();
 
   constructor(
     private readonly llm: LlmChatService,
     private readonly callService: CallService,
     openaiApiKey: string,
     private readonly marketService?: MarketService,
+    private readonly tavilySearch?: TavilySearchService | null,
   ) {
     this.openai = new OpenAI({ apiKey: openaiApiKey });
   }
@@ -92,7 +97,8 @@ export class VoiceMessageService {
     const intent = await parseVoiceIntent(transcript, this.llm);
 
     if (intent.command === 'unknown') {
-      // Not a recognized command — ignore silently
+      // Not a trade command — fallback to LLM chat (same as text mention)
+      await this.handleAsChat(transcript, message);
       return;
     }
 
@@ -138,6 +144,47 @@ export class VoiceMessageService {
         reply.reactions.removeAll().catch(() => undefined);
       }
     }, CONFIRM_TIMEOUT_MS);
+  }
+
+  /** Fallback: treat transcript as a text chat message (skill + Tavily) */
+  private async handleAsChat(transcript: string, message: Message): Promise<void> {
+    const channelId = message.channel.id;
+    const skillName = detectSkill(transcript);
+    const skill = getSkill(skillName);
+
+    let enrichedPrompt = transcript;
+    if (this.tavilySearch && shouldSearch(transcript)) {
+      const results = await this.tavilySearch.search(transcript);
+      const context = formatSearchContext(results);
+      if (context) enrichedPrompt = `${context}\n\nCâu hỏi: ${transcript}`;
+    }
+
+    const channelHistory = this.history.getHistory(channelId);
+    this.history.addUserMessage(channelId, transcript);
+
+    const result = await this.llm.complete(enrichedPrompt, channelHistory, skill.systemPrompt);
+    if ('error' in result) {
+      await message.reply({ content: `🎙️ *"${transcript}"*\n\n❌ Không thể xử lý. Thử lại nhé.` });
+      return;
+    }
+
+    this.history.addAssistantMessage(channelId, result.text);
+    logger.info(`Voice chat skill=${skillName} for transcript="${transcript.slice(0, 60)}"`);
+
+    // Split if > 4096 chars
+    const MAX = 4000;
+    const text = result.text;
+    const prefix = `🎙️ *"${transcript.slice(0, 80)}${transcript.length > 80 ? '…' : ''}"*\n\n`;
+    if (prefix.length + text.length <= MAX) {
+      await message.reply({ content: prefix + text, allowedMentions: { repliedUser: true } });
+    } else {
+      await message.reply({ content: prefix + text.slice(0, MAX - prefix.length), allowedMentions: { repliedUser: true } });
+      let remaining = text.slice(MAX - prefix.length);
+      while (remaining.length > 0) {
+        await (message.channel as TextChannel).send({ content: remaining.slice(0, MAX) });
+        remaining = remaining.slice(MAX);
+      }
+    }
   }
 
   /** Call this from messageReactionAdd event to handle ✅/❌ */

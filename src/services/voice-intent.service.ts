@@ -44,28 +44,47 @@ const PARSE_SYSTEM_PROMPT = `Bạn là parser lệnh trading Discord bot. Phân 
 - call-update:   {"command":"call-update","symbol":"BTC","price":65500,"leverage":20}
 
 === READ-ONLY COMMANDS (không cần confirm) ===
-- positions (xem vị thế, kèo, lệnh đang mở): {"command":"positions"}
+- positions: {"command":"positions"}
   Trigger: "positions", "xem kèo", "xem lệnh", "lệnh đang chạy", "kèo đang mở", "xem vị thế", "chạy lệnh positions"
-- coin (xem giá coin):   {"command":"coin","symbol":"BTC"}
+- coin:      {"command":"coin","symbol":"BTC"}
   Trigger: "giá BTC", "xem BTC", "coin BTC", "BTC bao nhiêu"
-- top (top coin):        {"command":"top"}
+- top:       {"command":"top"}
   Trigger: "top coin", "xem top", "top gainers"
-- movers (biến động):    {"command":"movers"}
+- movers:    {"command":"movers"}
   Trigger: "movers", "coin tăng mạnh", "biến động hôm nay"
-- watch-list:            {"command":"watch-list"}
+- watch-list:{"command":"watch-list"}
   Trigger: "watchlist", "danh sách theo dõi", "watch list"
-- alert-list:            {"command":"alert-list"}
+- alert-list:{"command":"alert-list"}
   Trigger: "alert", "cảnh báo", "danh sách alert"
-- funding:               {"command":"funding","symbol":"BTC"}
+- funding:   {"command":"funding","symbol":"BTC"}
   Trigger: "funding BTC", "phí funding", "funding rate"
-  symbol là optional, nếu không có thì bỏ
 
-=== RULES ===
-- symbol PHẢI là uppercase ticker (BTC, ETH, SOL, v.v.)
-- price/entry/leverage là số, bỏ dấu phẩy nếu có
-- direction: "long" hoặc "short" (buy/mua = long, sell/bán/short = short)
-- Nếu thiếu thông tin bắt buộc ở trading commands → {"command":"unknown"}
-- Chỉ trả JSON thuần, không giải thích, không markdown`;
+=== RULES — ĐỌC KỸ ===
+
+**Số đọc bằng lời → convert sang số thực:**
+- "không phẩy hai ba sáu" → 0.236
+- "không chấm hai ba sáu" → 0.236
+- "không phẩy hai" → 0.2
+- "một nghìn năm trăm" → 1500
+- "sáu mươi lăm nghìn" → 65000
+- "hai trăm" → 200
+- Bỏ tất cả dấu phẩy ngăn cách hàng nghìn nếu có (65,000 → 65000)
+
+**Đơn vị giá — luôn dùng USD (USDT = USD):**
+- Mọi giá trị price/entry đều là USD, không cần user nói đơn vị
+- "entry hai trăm đô" → 200, "giá 65k" → 65000
+
+**Symbol:**
+- PHẢI là uppercase ticker: BTC, ETH, SOL, ARIA, v.v.
+- "bitcoin" → BTC, "ethereum" → ETH, "solana" → SOL
+
+**Direction:**
+- long: buy, mua, long, vào long
+- short: sell, bán, short, vào short
+
+**Nếu câu không phải lệnh trading/query** (vd: hỏi news, phân tích, chat) → {"command":"unknown"}
+**Nếu thiếu thông tin bắt buộc** ở trading commands → {"command":"unknown"}
+**Chỉ trả JSON thuần, không giải thích, không markdown**`;
 
 export async function parseVoiceIntent(
   transcript: string,
