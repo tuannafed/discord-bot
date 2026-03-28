@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@discordjs/opus": "^0.10.0",
-    "@discordjs/voice": "^0.19.2",
+    "@discordjs/voice": "0.18.0",
     "axios": "^1.6.0",
     "chart.js": "^4.5.1",
     "chartjs-node-canvas": "^5.0.0",
