@@ -36,29 +36,31 @@ const PARSE_SYSTEM_PROMPT = `Bạn là parser lệnh trading Discord bot. Nhiệ
 
 === QUY TẮC QUAN TRỌNG NHẤT ===
 Câu nói PHẢI bắt đầu bằng một trong các keyword lệnh sau (có thể có 1-2 từ đệm không quan trọng trước):
-  Trading:   call, follow, cl, tp, sl, "follow update", "call update"
+  Trading:   call, "tạo kèo", follow, "theo kèo", "vào kèo", cl, "cắt lỗ", tp, "chốt lời", sl, "stop loss", "follow update", "call update"
   Read-only: positions, coin, top, movers, watchlist, "watch list", alert, funding
 
 Nếu KHÔNG bắt đầu bằng keyword trên → {"command":"unknown"} (coi như chat thường)
 
-Ví dụ ĐÚNG: "call kèo BTC long x20 giá 65k", "positions", "follow kèo BTC entry 64000"
+Ví dụ ĐÚNG: "call kèo BTC long x20 giá 65k", "tạo kèo BTC long 65k x20", "positions", "follow kèo BTC entry 64000", "theo kèo BTC entry 64000", "vào kèo BTC 64000"
 Ví dụ SAI (→ unknown): "BTC đang ở đâu", "hôm nay thị trường thế nào", "chào bot"
 
 Lưu ý: speech-to-text có thể viết sai dấu hoặc sai từ, hãy đoán intent theo ngữ nghĩa.
 
 === TRADING COMMANDS (cần confirm trước khi thực hiện) ===
 
-call — đặt kèo mới (bắt đầu bằng "call"):
+call — đặt kèo mới (bắt đầu bằng "call" HOẶC "tạo kèo"):
   Output: {"command":"call","symbol":"BTC","direction":"long|short","price":65000,"leverage":20}
   Ví dụ: "call BTC long x20 giá 65k"
          "call kèo ETH short giá 3000 đòn 10"
-         "call BTC long giá 65.000 leverage 20"
+         "tạo kèo BTC long giá 65000 x20"
+         "tạo kèo ETH short 3000 đòn 10"
 
-follow — vào theo kèo (bắt đầu bằng "follow"):
+follow — vào theo kèo (bắt đầu bằng "follow" HOẶC "theo kèo" HOẶC "vào kèo"):
   Output: {"command":"follow","symbol":"BTC","entry":64000,"leverage":10}
   Ví dụ: "follow kèo BTC entry 64000"
          "follow BTC giá của tôi là 64000 đòn 10"
-         "follow long BTC entry 64k x10"
+         "theo kèo BTC entry 64000 x10"
+         "vào kèo BTC giá 64000"
 
 cl — cắt lỗ (bắt đầu bằng "cl" hoặc "cắt lỗ" hoặc "cut loss"):
   Output: {"command":"cl","symbol":"BTC"}
