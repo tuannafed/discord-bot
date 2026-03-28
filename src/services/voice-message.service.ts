@@ -1,10 +1,11 @@
-import { Message, TextChannel, MessageFlags } from 'discord.js';
+import { Message, TextChannel } from 'discord.js';
 import axios from 'axios';
 import OpenAI, { toFile } from 'openai';
 import { Readable } from 'stream';
 import { CallService } from './call.service.js';
+import { MarketService } from './market.service.js';
 import { LlmChatService } from './llm-chat.service.js';
-import { parseVoiceIntent, buildConfirmMessage } from './voice-intent.service.js';
+import { parseVoiceIntent, buildConfirmMessage, CONFIRM_REQUIRED } from './voice-intent.service.js';
 import { executeVoiceIntent } from './voice-executor.service.js';
 import { logger } from '../utils/logger.js';
 
@@ -30,6 +31,7 @@ export class VoiceMessageService {
     private readonly llm: LlmChatService,
     private readonly callService: CallService,
     openaiApiKey: string,
+    private readonly marketService?: MarketService,
   ) {
     this.openai = new OpenAI({ apiKey: openaiApiKey });
   }
@@ -90,16 +92,32 @@ export class VoiceMessageService {
     const intent = await parseVoiceIntent(transcript, this.llm);
 
     if (intent.command === 'unknown') {
-      // Not a trade command — ignore silently (might be normal chat)
+      // Not a recognized command — ignore silently
+      return;
+    }
+
+    const context = {
+      guildId: message.guild!.id,
+      userId: message.author.id,
+      username: message.member?.displayName ?? message.author.username,
+      channel: message.channel as TextChannel,
+      callService: this.callService,
+      marketService: this.marketService,
+    };
+
+    // Read-only commands: execute immediately, no confirm needed
+    if (!CONFIRM_REQUIRED.has(intent.command as never)) {
+      const result = await executeVoiceIntent(intent, context);
+      await message.reply({ content: `🎙️ *"${transcript}"*\n\n${result.message}`, allowedMentions: { repliedUser: true } });
       return;
     }
 
     const confirmMsg = buildConfirmMessage(intent);
     if (!confirmMsg) return;
 
-    // Send confirmation and add reactions
+    // Trading commands: send confirmation with reactions
     const reply = await message.reply({
-      content: `🎙️ *"${transcript}"*\n\n${confirmMsg}`,
+      content: `🎙️ *"${transcript}"*\n\n${confirmMsg}\n\nReact ✅ để xác nhận hoặc ❌ để huỷ.`,
       allowedMentions: { repliedUser: true },
     });
 
@@ -158,6 +176,7 @@ export class VoiceMessageService {
       username,
       channel,
       callService: this.callService,
+      marketService: this.marketService,
     });
 
     await channel.send({ content: result.message });
