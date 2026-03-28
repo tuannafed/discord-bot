@@ -75,24 +75,33 @@ export class LlmChatService {
   }
 
   async complete(userMessage: string): Promise<{ text: string } | { error: string }> {
+    return this.completeRaw(this.cfg.systemPrompt, userMessage);
+  }
+
+  /** Like complete() but with a custom system prompt — used for structured extraction. */
+  async completeRaw(
+    systemPrompt: string,
+    userMessage: string,
+  ): Promise<{ text: string } | { error: string }> {
     const base = this.cfg.baseUrl.replace(/\/$/, '');
 
     if (this.cfg.provider === 'anthropic') {
-      return this.completeAnthropic(base, userMessage);
+      return this.completeAnthropic(base, userMessage, systemPrompt);
     }
     // deepseek and openai both use the OpenAI-compatible format
-    return this.completeOpenAiCompatible(base, userMessage);
+    return this.completeOpenAiCompatible(base, userMessage, systemPrompt);
   }
 
   private async completeOpenAiCompatible(
     base: string,
     userMessage: string,
+    systemPrompt: string,
   ): Promise<{ text: string } | { error: string }> {
     const url = `${base}/chat/completions`;
     const body = {
       model: this.cfg.model,
       messages: [
-        { role: 'system' as const, content: this.cfg.systemPrompt },
+        { role: 'system' as const, content: systemPrompt },
         { role: 'user' as const, content: userMessage },
       ],
       max_tokens: this.cfg.maxTokens,
@@ -143,13 +152,14 @@ export class LlmChatService {
   private async completeAnthropic(
     base: string,
     userMessage: string,
+    systemPrompt: string,
   ): Promise<{ text: string } | { error: string }> {
     const root = normalizeAnthropicBaseUrl(base);
     const url = `${root}/messages`;
     const body = {
       model: this.cfg.model,
       max_tokens: this.cfg.maxTokens,
-      system: this.cfg.systemPrompt,
+      system: systemPrompt,
       messages: [{ role: 'user' as const, content: userMessage }],
     };
 

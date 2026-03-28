@@ -1,4 +1,4 @@
-import { Client, Events } from 'discord.js';
+import { AttachmentBuilder, Client, Events } from 'discord.js';
 import { logger } from '../utils/logger.js';
 import { LLM_ERROR_USER_MESSAGE, type LlmChatService } from '../services/llm-chat.service.js';
 import {
@@ -6,6 +6,8 @@ import {
   formatSearchContext,
   type TavilySearchService,
 } from '../services/tavily-search.service.js';
+import { isChartRequest, parseChartIntent } from '../services/chart-intent.service.js';
+import { fetchOhlcv, renderCandlestickChart } from '../services/chart.service.js';
 
 const DISCORD_MSG_MAX = 1900;
 
@@ -68,6 +70,28 @@ export function registerMessageCreateEvent(
 
       llmChat.recordCooldown(message.guild.id, message.author.id);
       await message.channel.sendTyping().catch(() => undefined);
+
+      // Keyword-triggered chart generation
+      if (isChartRequest(prompt)) {
+        const intent = await parseChartIntent(prompt, llmChat);
+        if (intent) {
+          try {
+            const candles = await fetchOhlcv(intent.symbol, intent.days);
+            const imageBuffer = await renderCandlestickChart(intent.symbol, candles, intent.days);
+            const attachment = new AttachmentBuilder(imageBuffer, {
+              name: `chart-${intent.symbol.toLowerCase()}.png`,
+            });
+            await message.reply({ files: [attachment], allowedMentions: { users: [] } });
+          } catch (chartErr) {
+            logger.warn(`Chart generation failed for ${intent.symbol}`, chartErr);
+            await message.reply({
+              content: `Không lấy được dữ liệu chart cho **${intent.symbol}** — symbol có thể không có trên Bybit.`,
+              allowedMentions: { repliedUser: true },
+            });
+          }
+          return;
+        }
+      }
 
       // Keyword-triggered web search — inject context into prompt if needed
       let enrichedPrompt = prompt;
