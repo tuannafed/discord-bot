@@ -10,11 +10,11 @@ export function init(service: MarketService): void {
 
 export const data = new SlashCommandBuilder()
   .setName('top')
-  .setDescription('Show top coins by market cap')
+  .setDescription('Top coin theo vốn hóa')
   .addIntegerOption((opt) =>
     opt
       .setName('limit')
-      .setDescription('Number of coins to show (1-25, default 10)')
+      .setDescription('Số coin hiển thị (1–25, mặc định 10)')
       .setMinValue(1)
       .setMaxValue(25)
   );

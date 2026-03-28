@@ -20,7 +20,7 @@ export function init(service: CallService, client: Client): void {
 
 export const data = new SlashCommandBuilder()
   .setName('cl')
-  .setDescription('Cut loss — đóng lệnh của bạn với kết quả âm')
+  .setDescription('Cắt lỗ — đóng lệnh khi PnL âm hoặc bằng 0')
   .addStringOption((opt) =>
     opt
       .setName('call_id')

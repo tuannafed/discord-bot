@@ -9,7 +9,7 @@ export function init(service: CallService): void {
 
 export const data = new SlashCommandBuilder()
   .setName('position-fix')
-  .setDescription('Xóa các position bị dup do caller lỡ join lại kèo của chính mình');
+  .setDescription('Xóa lệnh vào kèo trùng khi người call lỡ join kèo của chính mình');
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });

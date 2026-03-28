@@ -9,28 +9,28 @@ export function init(provider: CoinGeckoProvider): void {
 }
 
 const TIMEFRAME_CHOICES = [
-  { name: '1 hour',    value: '1h' },
-  { name: '2 hours',   value: '2h' },
-  { name: '4 hours',   value: '4h' },
-  { name: '6 hours',   value: '6h' },
-  { name: '12 hours',  value: '12h' },
-  { name: '1 day',     value: '1d' },
-  { name: '2 days',    value: '2d' },
-  { name: '3 days',    value: '3d' },
-  { name: '7 days',    value: '7d' },
-  { name: '1 month',   value: '1mon' },
-  { name: '2 months',  value: '2mon' },
-  { name: '3 months',  value: '3mon' },
-  { name: '6 months',  value: '6mon' },
+  { name: '1 giờ', value: '1h' },
+  { name: '2 giờ', value: '2h' },
+  { name: '4 giờ', value: '4h' },
+  { name: '6 giờ', value: '6h' },
+  { name: '12 giờ', value: '12h' },
+  { name: '1 ngày', value: '1d' },
+  { name: '2 ngày', value: '2d' },
+  { name: '3 ngày', value: '3d' },
+  { name: '7 ngày', value: '7d' },
+  { name: '1 tháng', value: '1mon' },
+  { name: '2 tháng', value: '2mon' },
+  { name: '3 tháng', value: '3mon' },
+  { name: '6 tháng', value: '6mon' },
 ];
 
 export const data = new SlashCommandBuilder()
   .setName('market')
-  .setDescription('Tổng quan thị trường crypto: TOTAL, BTC.D, TOTAL2, TOTAL3, OTHERS')
+  .setDescription('Tổng quan thị trường (TOTAL, BTC.D, TOTAL2, TOTAL3, OTHERS)')
   .addStringOption((opt) =>
     opt
       .setName('timeframe')
-      .setDescription('So sánh với thời điểm trước đó (default: 1h)')
+      .setDescription('Khung so sánh với trước đó (mặc định: 1 giờ)')
       .addChoices(...TIMEFRAME_CHOICES)
   );
 
@@ -103,8 +103,8 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const chgSign = (chg: string) => chg.startsWith('+') || chg.startsWith('▲') ? '🟢' : chg.startsWith('-') || chg.startsWith('▼') ? '🔴' : '⚪';
 
   const embed = new EmbedBuilder()
-    .setTitle('🌐 Global Market Overview')
-    .setDescription(`Timeframe: **${tfLabel}**`)
+    .setTitle('🌐 Tổng quan thị trường')
+    .setDescription(`Khung thời gian: **${tfLabel}**`)
     .setColor(0x5865f2)
     .addFields(
       ...rows.map((r) => ({
@@ -113,7 +113,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
         inline: false,
       }))
     )
-    .setFooter({ text: 'Data from CoinGecko · BTC.D change in percentage points (pp)' })
+    .setFooter({ text: 'Dữ liệu CoinGecko · BTC.D thay đổi theo điểm phần trăm (pp)' })
     .setTimestamp();
 
   await interaction.editReply({ embeds: [embed] });

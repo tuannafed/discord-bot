@@ -9,9 +9,9 @@ export function init(service: AlertService): void {
 
 export const data = new SlashCommandBuilder()
   .setName('alert-remove')
-  .setDescription('Xoá một alert')
+  .setDescription('Xóa một cảnh báo')
   .addStringOption((opt) =>
-    opt.setName('id').setDescription('Chọn alert cần xoá').setRequired(true).setAutocomplete(true)
+    opt.setName('id').setDescription('Chọn cảnh báo cần xóa').setRequired(true).setAutocomplete(true)
   );
 
 export async function autocomplete(interaction: AutocompleteInteraction): Promise<void> {

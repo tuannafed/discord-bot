@@ -10,9 +10,9 @@ export function init(service: MarketService): void {
 
 export const data = new SlashCommandBuilder()
   .setName('unlock')
-  .setDescription('Token supply & unlock overview for a coin')
+  .setDescription('Cung cấp token & lịch mở khóa (unlock) tổng quan')
   .addStringOption((opt) =>
-    opt.setName('symbol').setDescription('Coin symbol (e.g. apt, arb)').setRequired(true)
+    opt.setName('symbol').setDescription('Ký hiệu coin (vd: apt, arb)').setRequired(true)
   );
 
 function pct(part: number, total: number): string {

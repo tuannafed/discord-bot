@@ -29,9 +29,9 @@ function formatRatePct(raw: number): string {
 
 export const data = new SlashCommandBuilder()
   .setName('funding')
-  .setDescription('Funding rate Bybit USDT perpetual (linear)')
+  .setDescription('Phí funding hợp đồng vĩnh cửu USDT Bybit (linear)')
   .addStringOption((opt) =>
-    opt.setName('symbol').setDescription('Ticker (vd: btc, eth, sol)').setRequired(true),
+    opt.setName('symbol').setDescription('Ký hiệu (vd: btc, eth, sol)').setRequired(true),
   );
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {

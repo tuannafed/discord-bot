@@ -10,7 +10,7 @@ export function init(service: AlertService): void {
 
 export const data = new SlashCommandBuilder()
   .setName('alert-list')
-  .setDescription('List all alerts for this server');
+  .setDescription('Danh sách cảnh báo của server');
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   const guildId = interaction.guildId;

@@ -14,7 +14,7 @@ export function init(cService: CallService, mService: MarketService): void {
 
 export const data = new SlashCommandBuilder()
   .setName('positions-history')
-  .setDescription('Kèo active — đầy đủ mọi thành viên (kể cả đã TP / CL / SL)');
+  .setDescription('Kèo đang chạy — đủ mọi thành viên (kể cả đã TP / CL / SL)');
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   await interaction.deferReply();

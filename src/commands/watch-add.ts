@@ -9,9 +9,9 @@ export function init(service: WatchlistService): void {
 
 export const data = new SlashCommandBuilder()
   .setName('watch-add')
-  .setDescription('Add a coin to your guild watchlist')
+  .setDescription('Thêm coin vào danh sách theo dõi của server')
   .addStringOption((opt) =>
-    opt.setName('symbol').setDescription('Coin symbol (e.g. btc)').setRequired(true)
+    opt.setName('symbol').setDescription('Ký hiệu coin (vd: btc)').setRequired(true)
   );
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {

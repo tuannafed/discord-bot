@@ -18,53 +18,53 @@ const TIMEFRAME_LABEL: Record<string, string> = {
 
 export const data = new SlashCommandBuilder()
   .setName('movers')
-  .setDescription('Top gainers and losers by timeframe')
+  .setDescription('Top tăng/giảm mạnh theo khung thời gian')
   .addStringOption((opt) =>
     opt
       .setName('metric')
-      .setDescription('What to rank by (default: price)')
+      .setDescription('Xếp hạng theo (mặc định: giá)')
       .addChoices(
-        { name: 'Price',      value: 'price' },
-        { name: 'Market Cap', value: 'cap' }
+        { name: 'Giá', value: 'price' },
+        { name: 'Vốn hóa', value: 'cap' }
       )
   )
   .addStringOption((opt) =>
     opt
       .setName('timeframe')
-      .setDescription('Timeframe for % change (default: 24h)')
+      .setDescription('Khung % thay đổi (mặc định: 24h)')
       .addChoices(
-        { name: '15 minutes', value: '15' },
-        { name: '1 hour',     value: '60' },
-        { name: '4 hours',    value: '240' },
-        { name: '24 hours',   value: 'D' }
+        { name: '15 phút', value: '15' },
+        { name: '1 giờ', value: '60' },
+        { name: '4 giờ', value: '240' },
+        { name: '24 giờ', value: 'D' }
       )
   )
   .addStringOption((opt) =>
     opt
       .setName('type')
-      .setDescription('Show gainers, losers, or both (default: both)')
+      .setDescription('Tăng, giảm, hoặc cả hai (mặc định: cả hai)')
       .addChoices(
-        { name: 'Both',    value: 'both' },
-        { name: 'Gainers', value: 'gainers' },
-        { name: 'Losers',  value: 'losers' }
+        { name: 'Cả hai', value: 'both' },
+        { name: 'Tăng mạnh', value: 'gainers' },
+        { name: 'Giảm mạnh', value: 'losers' }
       )
   )
   .addIntegerOption((opt) =>
     opt
       .setName('limit')
-      .setDescription('Number of coins per category (1-10, default 5)')
+      .setDescription('Số coin mỗi nhóm (1–10, mặc định 5)')
       .setMinValue(1)
       .setMaxValue(10)
   )
   .addNumberOption((opt) =>
     opt
       .setName('min_cap')
-      .setDescription('Lọc theo market cap tối thiểu, tính bằng triệu $ (e.g. 30 = $30M)')
+      .setDescription('Lọc vốn hóa tối thiểu (triệu USD, vd: 30 = 30M$)')
   )
   .addNumberOption((opt) =>
     opt
       .setName('max_cap')
-      .setDescription('Lọc theo market cap tối đa, tính bằng triệu $ (e.g. 500 = $500M)')
+      .setDescription('Lọc vốn hóa tối đa (triệu USD, vd: 500 = 500M$)')
   );
 
 function getPrev(current: number, pct: number): number {

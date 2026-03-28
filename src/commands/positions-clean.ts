@@ -16,7 +16,7 @@ export function init(service: CallService, admins: Set<string>): void {
 
 export const data = new SlashCommandBuilder()
   .setName('positions-clean')
-  .setDescription('Admin: xóa dữ liệu đã đóng lệnh (TP/CL/SL) trên một kèo')
+  .setDescription('Quản trị: xóa dữ liệu đã đóng lệnh (TP/CL/SL) trên một kèo')
   .addStringOption((opt) =>
     opt
       .setName('call_id')

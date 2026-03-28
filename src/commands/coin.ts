@@ -17,19 +17,19 @@ const TIMEFRAME_LABEL: Record<string, string> = {
 
 export const data = new SlashCommandBuilder()
   .setName('coin')
-  .setDescription('Get market data for a coin')
+  .setDescription('Dữ liệu thị trường một coin (giá, vốn hóa, hạng, …)')
   .addStringOption((opt) =>
-    opt.setName('symbol').setDescription('Coin symbol (e.g. btc, eth)').setRequired(true)
+    opt.setName('symbol').setDescription('Ký hiệu coin (vd: btc, eth)').setRequired(true)
   )
   .addStringOption((opt) =>
     opt
       .setName('timeframe')
-      .setDescription('Price change timeframe (default: 24h)')
+      .setDescription('Khung % thay đổi giá (mặc định: 24h)')
       .addChoices(
-        { name: '15 minutes', value: '15' },
-        { name: '1 hour',     value: '60' },
-        { name: '4 hours',    value: '240' },
-        { name: '24 hours',   value: 'D' },
+        { name: '15 phút', value: '15' },
+        { name: '1 giờ', value: '60' },
+        { name: '4 giờ', value: '240' },
+        { name: '24 giờ', value: 'D' },
       )
   );
 

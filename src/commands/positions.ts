@@ -105,7 +105,7 @@ export function formatFundingSnippet(snap: LinearFundingSnapshot | null | undefi
 
 export const data = new SlashCommandBuilder()
   .setName('positions')
-  .setDescription('Kèo active — chỉ thành viên còn mở lệnh (đã TP/CL/SL không hiện)');
+  .setDescription('Kèo đang chạy — chỉ người còn mở lệnh (đã TP/CL/SL không hiện)');
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   await interaction.deferReply();

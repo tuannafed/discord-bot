@@ -13,7 +13,7 @@ export function init(service: CallService): void {
 
 export const data = new SlashCommandBuilder()
   .setName('call-delete')
-  .setDescription('Xóa kèo ghi sai (xóa cả positions liên quan)')
+  .setDescription('Xóa kèo nhầm (xóa luôn các lệnh vào kèo liên quan)')
   .addStringOption((opt) =>
     opt
       .setName('call_id')

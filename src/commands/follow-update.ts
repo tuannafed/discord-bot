@@ -14,7 +14,7 @@ export function init(service: CallService): void {
 
 export const data = new SlashCommandBuilder()
   .setName('follow-update')
-  .setDescription('Sửa entry hoặc leverage của lệnh follow')
+  .setDescription('Sửa giá vào lệnh hoặc đòn bẩy của lệnh vào kèo')
   .addStringOption((opt) =>
     opt
       .setName('call_id')
@@ -31,7 +31,7 @@ export const data = new SlashCommandBuilder()
   .addIntegerOption((opt) =>
     opt
       .setName('leverage')
-      .setDescription('Leverage mới')
+      .setDescription('Đòn bẩy mới')
       .setRequired(false)
       .setMinValue(1)
       .setMaxValue(100)

@@ -14,11 +14,11 @@ export function init(service: CallService): void {
 
 export const data = new SlashCommandBuilder()
   .setName('follow')
-  .setDescription('Vào lệnh theo một kèo đang active')
+  .setDescription('Vào lệnh theo kèo đang mở')
   .addStringOption((opt) =>
     opt
       .setName('call_id')
-      .setDescription('Chọn kèo để follow')
+      .setDescription('Chọn kèo để vào lệnh')
       .setRequired(true)
       .setAutocomplete(true)
   )
@@ -39,7 +39,7 @@ export const data = new SlashCommandBuilder()
   .addUserOption((opt) =>
     opt
       .setName('user')
-      .setDescription('Follow cho member khác (chỉ admin)')
+      .setDescription('Vào lệnh hộ member khác (chỉ admin)')
       .setRequired(false)
   );
 

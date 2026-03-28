@@ -17,15 +17,15 @@ const STATUS_EMOJI: Record<CandidateStatus, string> = {
 
 export const data = new SlashCommandBuilder()
   .setName('candidate-list')
-  .setDescription('List tracked coin candidates')
+  .setDescription('Danh sách coin tiềm năng đang theo dõi')
   .addStringOption((opt) =>
     opt
       .setName('status')
-      .setDescription('Filter by status (default: tracking)')
+      .setDescription('Lọc trạng thái (mặc định: đang theo)')
       .addChoices(
-        { name: 'Tracking', value: 'tracking' },
-        { name: 'Hit Target', value: 'hit_target' },
-        { name: 'Expired', value: 'expired' }
+        { name: 'Đang theo', value: 'tracking' },
+        { name: 'Đạt mục tiêu', value: 'hit_target' },
+        { name: 'Hết hạn', value: 'expired' }
       )
   );
 

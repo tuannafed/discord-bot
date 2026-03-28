@@ -10,19 +10,22 @@ export function init(service: CallService): void {
 
 export const data = new SlashCommandBuilder()
   .setName('call')
-  .setDescription('Tạo kèo future mới')
+  .setDescription('Tạo kèo mới (mua long / bán short)')
   .addStringOption((opt) =>
     opt
       .setName('symbol')
-      .setDescription('Symbol coin (vd: BTC, ETH)')
+      .setDescription('Ký hiệu coin (vd: BTC, ETH)')
       .setRequired(true)
   )
   .addStringOption((opt) =>
     opt
       .setName('direction')
-      .setDescription('Long hay Short')
+      .setDescription('Hướng lệnh')
       .setRequired(true)
-      .addChoices({ name: 'Long', value: 'long' }, { name: 'Short', value: 'short' })
+      .addChoices(
+        { name: 'Mua (long)', value: 'long' },
+        { name: 'Bán (short)', value: 'short' }
+      )
   )
   .addStringOption((opt) =>
     opt

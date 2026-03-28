@@ -9,9 +9,9 @@ export function init(service: CandidateService): void {
 
 export const data = new SlashCommandBuilder()
   .setName('candidate-remove')
-  .setDescription('Remove a candidate by ID')
+  .setDescription('Xóa một coin khỏi danh sách tiềm năng')
   .addStringOption((opt) =>
-    opt.setName('id').setDescription('Candidate ID').setRequired(true)
+    opt.setName('id').setDescription('Mã ID (từ danh sách tiềm năng)').setRequired(true)
   );
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {

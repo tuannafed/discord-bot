@@ -100,7 +100,6 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
         ].join('\n'),
       },
     )
-    .setFooter({ text: 'Nguồn dữ liệu: Bybit + CoinMarketCap' })
     .setTimestamp();
 
   await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });

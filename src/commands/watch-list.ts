@@ -13,7 +13,7 @@ export function init(wl: WatchlistService, p: CryptoDataProvider): void {
 
 export const data = new SlashCommandBuilder()
   .setName('watch-list')
-  .setDescription('Show your guild watchlist with current prices');
+  .setDescription('Danh sách theo dõi của server kèm giá hiện tại');
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   const guildId = interaction.guildId;

@@ -10,23 +10,23 @@ export function init(service: MarketService): void {
 
 export const data = new SlashCommandBuilder()
   .setName('scan')
-  .setDescription('Find coins within a market cap range')
+  .setDescription('Lọc coin theo khoảng vốn hóa')
   .addNumberOption((opt) =>
     opt
       .setName('min_cap')
-      .setDescription('Minimum market cap in triệu $ (e.g. 30 = $30M)')
+      .setDescription('Vốn hóa tối thiểu (triệu USD, vd: 30 = 30M$)')
       .setRequired(true)
   )
   .addNumberOption((opt) =>
     opt
       .setName('max_cap')
-      .setDescription('Maximum market cap in triệu $ (e.g. 100 = $100M)')
+      .setDescription('Vốn hóa tối đa (triệu USD, vd: 100 = 100M$)')
       .setRequired(true)
   )
   .addIntegerOption((opt) =>
     opt
       .setName('limit')
-      .setDescription('Max results to show (1–25, default 10)')
+      .setDescription('Tối đa kết quả (1–25, mặc định 10)')
       .setMinValue(1)
       .setMaxValue(25)
   );

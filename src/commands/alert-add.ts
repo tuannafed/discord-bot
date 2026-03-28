@@ -11,36 +11,36 @@ export function init(service: AlertService): void {
 
 export const data = new SlashCommandBuilder()
   .setName('alert-add')
-  .setDescription('Add a price or market cap alert')
+  .setDescription('Thêm cảnh báo giá hoặc vốn hóa')
   .addStringOption((opt) =>
-    opt.setName('symbol').setDescription('Coin symbol (e.g. btc)').setRequired(true)
+    opt.setName('symbol').setDescription('Ký hiệu coin (vd: btc)').setRequired(true)
   )
   .addStringOption((opt) =>
     opt
       .setName('metric')
-      .setDescription('What to watch')
+      .setDescription('Giá hay vốn hóa')
       .setRequired(true)
       .addChoices(
-        { name: 'Price', value: 'price' },
-        { name: 'Market Cap', value: 'market_cap' }
+        { name: 'Giá', value: 'price' },
+        { name: 'Vốn hóa', value: 'market_cap' }
       )
   )
   .addStringOption((opt) =>
     opt
       .setName('condition')
-      .setDescription('Trigger condition')
+      .setDescription('Điều kiện kích hoạt')
       .setRequired(true)
       .addChoices(
-        { name: 'Above (fixed value)', value: 'above' },
-        { name: 'Below (fixed value)', value: 'below' },
-        { name: 'Change Up % (from now)', value: 'change_up' },
-        { name: 'Change Down % (from now)', value: 'change_down' }
+        { name: 'Trên ngưỡng (USD cố định)', value: 'above' },
+        { name: 'Dưới ngưỡng (USD cố định)', value: 'below' },
+        { name: 'Tăng % so với hiện tại', value: 'change_up' },
+        { name: 'Giảm % so với hiện tại', value: 'change_down' }
       )
   )
   .addStringOption((opt) =>
     opt
       .setName('threshold')
-      .setDescription('USD value for above/below — OR % for change_up/change_down (e.g. 3 = 3%). Supports 0,27 or 0.27')
+      .setDescription('USD (với trên/dưới) hoặc % (với tăng/giảm, vd 3 = 3%). Hỗ trợ 0,27 hoặc 0.27')
       .setRequired(true)
   );
 

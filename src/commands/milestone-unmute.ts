@@ -12,7 +12,7 @@ export function init(service: CallService): void {
 
 export const data = new SlashCommandBuilder()
   .setName('milestone-unmute')
-  .setDescription('Bật lại thông báo milestone PnL cho kèo của bạn')
+  .setDescription('Bật lại thông báo mốc PnL cho kèo của bạn')
   .addStringOption((opt) =>
     opt
       .setName('call_id')
