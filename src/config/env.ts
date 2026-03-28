@@ -54,6 +54,15 @@ const envSchema = z.object({
 
   // Voice bot (optional — enables voice command recognition via Whisper)
   OPENAI_API_KEY: z.string().optional(),
+
+  // Milestone PnL notifications (default: enabled)
+  ENABLE_MILESTONE_NOTIFICATIONS: z
+    .preprocess((v) => {
+      if (v === undefined || v === '') return true;
+      const s = String(v).trim().toLowerCase();
+      return !(s === 'false' || s === '0' || s === 'no');
+    }, z.boolean())
+    .default(true),
 });
 
 const parsed = envSchema.safeParse(process.env);

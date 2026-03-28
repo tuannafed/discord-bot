@@ -187,6 +187,8 @@ export class PollingService {
 
       const newMilestones = await this.callService.checkAndUpdateMilestones(position, call, currentPrice);
 
+      if (!env.ENABLE_MILESTONE_NOTIFICATIONS) continue;
+
       for (const milestone of newMilestones) {
         const rawPct = call.direction === 'long'
           ? ((currentPrice - position.entryPrice) / position.entryPrice) * 100
