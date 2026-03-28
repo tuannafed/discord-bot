@@ -65,8 +65,10 @@ export async function sendMilestoneNotification(
       ? (params.direction === 'long' ? '📈 LONG' : '📉 SHORT')
       : params.direction;
     const isLoss = params.pnlPct < 0;
+    // Show milestone threshold instead of exact PnL to avoid confusion when price fluctuates between polling cycles
+    const milestoneSign = params.milestone >= 0 ? '+' : '';
     const action = params.live
-      ? `đang giữ lệnh **${params.symbol} ${dirLabel}** với P&L **${sign}${params.pnlPct.toFixed(2)}%** ${isLoss ? '📉' : '🔥'}`
+      ? `đang giữ lệnh **${params.symbol} ${dirLabel}** với P&L **${milestoneSign}${params.milestone}%** ${isLoss ? '📉' : '🔥'}`
       : `vừa chốt **${params.symbol} ${dirLabel}** với P&L **${sign}${params.pnlPct.toFixed(2)}%** ${isLoss ? '😢' : '🤑'}`;
 
     const embed = new EmbedBuilder()
