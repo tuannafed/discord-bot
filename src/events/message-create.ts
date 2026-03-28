@@ -1,4 +1,4 @@
-import { AttachmentBuilder, Client, EmbedBuilder, Events } from 'discord.js';
+import { AttachmentBuilder, Client, EmbedBuilder, Events, TextChannel } from 'discord.js';
 import { logger } from '../utils/logger.js';
 import { LLM_ERROR_USER_MESSAGE, type LlmChatService } from '../services/llm-chat.service.js';
 import {
@@ -10,6 +10,7 @@ import { isChartRequest, parseChartIntent } from '../services/chart-intent.servi
 import { fetchOhlcv, renderCandlestickChart } from '../services/chart.service.js';
 import { detectSkill, getSkill } from '../services/llm-skills.js';
 import { ConversationHistoryService } from '../services/conversation-history.service.js';
+import { VoiceMessageService } from '../services/voice-message.service.js';
 
 const EMBED_DESC_MAX = 4096;
 const EMBED_COLOR: Record<string, number> = {
@@ -73,11 +74,39 @@ export function registerMessageCreateEvent(
   llmChat: LlmChatService | null,
   enableAiChat: boolean,
   tavilySearch: TavilySearchService | null = null,
+  voiceMessageService: VoiceMessageService | null = null,
 ): void {
   const history = new ConversationHistoryService();
 
+  // Handle reaction confirmations for voice message intents
+  if (voiceMessageService) {
+    client.on(Events.MessageReactionAdd, async (reaction, user) => {
+      if (user.bot) return;
+      const message = reaction.message.partial ? await reaction.message.fetch() : reaction.message;
+      if (!message.guild || !message.channel) return;
+      const member = await message.guild.members.fetch(user.id).catch(() => null);
+      await voiceMessageService.handleReaction(
+        message.id,
+        reaction.emoji.name ?? '',
+        user.id,
+        message.channel as TextChannel,
+        message.guild.id,
+        member?.displayName ?? user.username ?? 'unknown',
+      );
+    });
+  }
+
   client.on(Events.MessageCreate, async (message) => {
     if (message.author.bot || !message.guild || !client.user) return;
+
+    // Handle voice messages (audio attachments) — no need to mention bot
+    if (voiceMessageService && VoiceMessageService.isVoiceMessage(message)) {
+      await voiceMessageService.handle(message).catch((err) =>
+        logger.warn(`Voice message handling failed: ${(err as Error).message}`),
+      );
+      return;
+    }
+
     if (!message.mentions.users.has(client.user.id)) return;
 
     const prompt = stripBotMention(message.content, client.user.id);

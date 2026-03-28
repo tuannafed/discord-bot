@@ -28,7 +28,7 @@ import { buildCommands } from './commands/index.js';
 import { registerReadyEvent } from './events/ready.js';
 import { registerInteractionCreateEvent } from './events/interaction-create.js';
 import { registerMessageCreateEvent } from './events/message-create.js';
-import { VoiceBotService } from './services/voice-bot.service.js';
+import { VoiceMessageService } from './services/voice-message.service.js';
 
 async function main(): Promise<void> {
   const client = new Client({
@@ -36,7 +36,7 @@ async function main(): Promise<void> {
       GatewayIntentBits.Guilds,
       GatewayIntentBits.GuildMessages,
       GatewayIntentBits.MessageContent,
-      GatewayIntentBits.GuildVoiceStates,
+      GatewayIntentBits.GuildMessageReactions,
     ],
   });
 
@@ -85,13 +85,13 @@ async function main(): Promise<void> {
     logger.info('Tavily web search enabled');
   }
 
-  // Voice bot (optional — requires OPENAI_API_KEY + callService)
-  const voiceBot =
+  // Voice message handler (optional — requires OPENAI_API_KEY + callService)
+  const voiceMessageService =
     env.OPENAI_API_KEY && callService && llmChat
-      ? new VoiceBotService(client, llmChat, callService, env.OPENAI_API_KEY)
-      : undefined;
-  if (voiceBot) {
-    logger.info('Voice bot enabled');
+      ? new VoiceMessageService(llmChat, callService, env.OPENAI_API_KEY)
+      : null;
+  if (voiceMessageService) {
+    logger.info('Voice message handler enabled');
   }
 
   // Commands
@@ -105,13 +105,12 @@ async function main(): Promise<void> {
     callService!,
     client,
     parseAdminListIds(env.ADMIN_LIST_ID),
-    voiceBot,
   );
 
   // Events
   registerReadyEvent(client, pollingService);
   registerInteractionCreateEvent(client, commands);
-  registerMessageCreateEvent(client, llmChat, env.ENABLE_AI_CHAT, tavilySearch);
+  registerMessageCreateEvent(client, llmChat, env.ENABLE_AI_CHAT, tavilySearch, voiceMessageService);
 
   await client.login(env.DISCORD_TOKEN);
 
