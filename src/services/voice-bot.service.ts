@@ -105,6 +105,14 @@ export class VoiceBotService {
   private async transcribe(audioBuffer: Buffer): Promise<string | null> {
     if (audioBuffer.length < 1000) return null; // too short — skip noise
 
+    // Discord Opus PCM: 48kHz stereo 16-bit = 192,000 bytes/s
+    // Reject if audio exceeds 30s to avoid Whisper timeout / cost spike
+    const MAX_AUDIO_BYTES = 192_000 * 30; // ~5.76 MB
+    if (audioBuffer.length > MAX_AUDIO_BYTES) {
+      logger.warn(`Voice audio too long (${(audioBuffer.length / 192_000).toFixed(1)}s), skipping transcription`);
+      return null;
+    }
+
     const file = await toFile(Readable.from(audioBuffer), 'audio.pcm', { type: 'audio/wav' });
     const response = await this.openai.audio.transcriptions.create({
       model: 'whisper-1',
