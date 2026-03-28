@@ -6,6 +6,7 @@ import { CandidateService } from '../services/candidate.service.js';
 import { CryptoDataProvider } from '../providers/crypto-data.provider.js';
 import { CoinGeckoProvider } from '../providers/coingecko.provider.js';
 import { CallService } from '../services/call.service.js';
+import { VoiceBotService } from '../services/voice-bot.service.js';
 
 import * as ping from './ping.js';
 import * as coin from './coin.js';
@@ -39,6 +40,8 @@ import * as milestoneUnmute from './milestone-unmute.js';
 import * as positionFix from './position-fix.js';
 import * as market from './market.js';
 import * as funding from './funding.js';
+import * as voiceJoin from './voice-join.js';
+import * as voiceLeave from './voice-leave.js';
 
 export interface Command {
   data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder;
@@ -56,6 +59,7 @@ export function buildCommands(
   callService: CallService,
   client: Client,
   adminUserIds: Set<string>,
+  voiceBotService?: VoiceBotService,
 ): Map<string, Command> {
   coin.init(marketService);
   top.init(marketService);
@@ -86,6 +90,10 @@ export function buildCommands(
   positionFix.init(callService);
   market.init(coinGeckoProvider);
   funding.init(marketService);
+  if (voiceBotService) {
+    voiceJoin.init(voiceBotService);
+    voiceLeave.init(voiceBotService);
+  }
 
   const commands: Command[] = [
     ping,
@@ -118,6 +126,8 @@ export function buildCommands(
     positionFix,
     market,
     funding,
+    voiceJoin,
+    voiceLeave,
     help,
     helpFull,
   ];
@@ -161,6 +171,8 @@ export function getCommandBuilders(): (SlashCommandBuilder | SlashCommandOptions
     positionFix.data,
     market.data,
     funding.data,
+    voiceJoin.data,
+    voiceLeave.data,
     help.data,
     helpFull.data,
   ];

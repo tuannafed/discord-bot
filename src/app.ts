@@ -28,6 +28,7 @@ import { buildCommands } from './commands/index.js';
 import { registerReadyEvent } from './events/ready.js';
 import { registerInteractionCreateEvent } from './events/interaction-create.js';
 import { registerMessageCreateEvent } from './events/message-create.js';
+import { VoiceBotService } from './services/voice-bot.service.js';
 
 async function main(): Promise<void> {
   const client = new Client({
@@ -35,6 +36,7 @@ async function main(): Promise<void> {
       GatewayIntentBits.Guilds,
       GatewayIntentBits.GuildMessages,
       GatewayIntentBits.MessageContent,
+      GatewayIntentBits.GuildVoiceStates,
     ],
   });
 
@@ -83,6 +85,15 @@ async function main(): Promise<void> {
     logger.info('Tavily web search enabled');
   }
 
+  // Voice bot (optional — requires OPENAI_API_KEY + callService)
+  const voiceBot =
+    env.OPENAI_API_KEY && callService && llmChat
+      ? new VoiceBotService(client, llmChat, callService, env.OPENAI_API_KEY)
+      : undefined;
+  if (voiceBot) {
+    logger.info('Voice bot enabled');
+  }
+
   // Commands
   const commands = buildCommands(
     marketService,
@@ -94,6 +105,7 @@ async function main(): Promise<void> {
     callService!,
     client,
     parseAdminListIds(env.ADMIN_LIST_ID),
+    voiceBot,
   );
 
   // Events

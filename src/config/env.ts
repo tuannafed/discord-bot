@@ -51,6 +51,9 @@ const envSchema = z.object({
   // Tavily web search (optional — enables keyword-triggered search before LLM reply)
   TAVILY_API_KEY: z.string().optional(),
   TAVILY_MAX_RESULTS: z.coerce.number().int().min(1).max(5).default(3),
+
+  // Voice bot (optional — enables voice command recognition via Whisper)
+  OPENAI_API_KEY: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
