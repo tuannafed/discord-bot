@@ -1,6 +1,27 @@
 import axios from 'axios';
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
+import { registerFont } from 'canvas';
+import { existsSync } from 'fs';
 import { logger } from '../utils/logger.js';
+
+// Register a system font that supports ASCII/numbers — fallback gracefully if not found
+const FONT_CANDIDATES = [
+  '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+  '/usr/share/fonts/dejavu/DejaVuSans.ttf',
+  '/System/Library/Fonts/Helvetica.ttc',
+  '/System/Library/Fonts/Arial.ttf',
+  'C:\\Windows\\Fonts\\arial.ttf',
+];
+for (const path of FONT_CANDIDATES) {
+  if (existsSync(path)) {
+    try {
+      registerFont(path, { family: 'ChartFont' });
+    } catch {
+      // ignore
+    }
+    break;
+  }
+}
 
 type OhlcCandle = {
   time: number; // unix ms
@@ -57,9 +78,9 @@ function formatLabel(time: number, days: number): string {
 }
 
 function formatPrice(price: number): string {
-  if (price >= 1000) return price.toLocaleString('en-US', { maximumFractionDigits: 0 });
-  if (price >= 1) return price.toLocaleString('en-US', { maximumFractionDigits: 2 });
-  return price.toLocaleString('en-US', { maximumFractionDigits: 6 });
+  if (price >= 1000) return Math.round(price).toString();
+  if (price >= 1) return price.toFixed(2);
+  return price.toFixed(6);
 }
 
 export async function renderCandlestickChart(
@@ -124,16 +145,16 @@ export async function renderCandlestickChart(
         legend: { display: false },
         title: {
           display: true,
-          text: `${symbol}/USDT — ${days === 1 ? '24h' : `${days}d`} candlestick`,
+          text: `${symbol}/USDT - ${days === 1 ? '24h' : `${days}d`} candlestick`,
           color: '#e0e0e0',
-          font: { size: 16, weight: 'bold' },
+          font: { size: 16, weight: 'bold', family: 'ChartFont' },
           padding: { bottom: 12 },
         },
         subtitle: {
           display: true,
           text: `Last: $${formatPrice(lastClose)}`,
           color: trendColor,
-          font: { size: 13 },
+          font: { size: 13, family: 'ChartFont' },
           padding: { bottom: 8 },
         },
       },
@@ -142,7 +163,7 @@ export async function renderCandlestickChart(
           ticks: {
             color: '#aaaaaa',
             maxTicksLimit: 12,
-            font: { size: 11 },
+            font: { size: 11, family: 'ChartFont' },
           },
           grid: { color: 'rgba(255,255,255,0.05)' },
         },
@@ -152,7 +173,7 @@ export async function renderCandlestickChart(
           position: 'right' as const,
           ticks: {
             color: '#aaaaaa',
-            font: { size: 11 },
+            font: { size: 11, family: 'ChartFont' },
             callback: (v: unknown) => `$${formatPrice(Number(v))}`,
           },
           grid: { color: 'rgba(255,255,255,0.08)' },
