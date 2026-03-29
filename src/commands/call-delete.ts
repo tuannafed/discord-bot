@@ -4,6 +4,7 @@ import {
   EmbedBuilder,
   AutocompleteInteraction, MessageFlags} from 'discord.js';
 import { CallService } from '../services/call.service.js';
+import { formatPrice } from '../utils/format.js';
 
 let callService: CallService;
 
@@ -25,7 +26,7 @@ export const data = new SlashCommandBuilder()
 export async function autocomplete(interaction: AutocompleteInteraction): Promise<void> {
   const calls = await callService.getAllCalls(interaction.guildId!);
   const choices = calls.map((c) => ({
-    name: `[${c.status.toUpperCase()}] ${c.symbol} ${c.direction.toUpperCase()} @ ${c.callPrice.toLocaleString('en-US')} (${c.id.slice(0, 8)})`,
+    name: `[${c.status.toUpperCase()}] ${c.symbol} ${c.direction.toUpperCase()} @ ${formatPrice(c.callPrice)} x${c.leverage} (${c.id.slice(0, 8)})`,
     value: c.id,
   }));
   await interaction.respond(choices.slice(0, 25));
@@ -51,7 +52,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     .setColor(0xe74c3c)
     .addFields(
       { name: 'Symbol', value: `${call.symbol} ${dirEmoji}`, inline: true },
-      { name: 'Call Price', value: `$${call.callPrice.toLocaleString('en-US')}`, inline: true },
+      { name: 'Call Price', value: formatPrice(call.callPrice), inline: true },
       { name: 'Deleted by', value: `<@${interaction.user.id}>`, inline: true },
     )
     .setTimestamp();

@@ -4,7 +4,7 @@ import {
   EmbedBuilder,
   AutocompleteInteraction, MessageFlags} from 'discord.js';
 import { CallService } from '../services/call.service.js';
-import { parseDecimalInput } from '../utils/format.js';
+import { parseDecimalInput, formatPrice } from '../utils/format.js';
 
 let callService: CallService;
 
@@ -46,7 +46,7 @@ export const data = new SlashCommandBuilder()
 export async function autocomplete(interaction: AutocompleteInteraction): Promise<void> {
   const calls = await callService.getActiveCalls(interaction.guildId!);
   const choices = calls.map((c) => ({
-    name: `${c.symbol} ${c.direction.toUpperCase()} @ ${c.callPrice.toLocaleString('en-US')} x${c.leverage} (${c.id.slice(0, 8)})`,
+    name: `${c.symbol} ${c.direction.toUpperCase()} @ ${formatPrice(c.callPrice)} x${c.leverage} (${c.id.slice(0, 8)})`,
     value: c.id,
   }));
   await interaction.respond(choices.slice(0, 25));
@@ -84,7 +84,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       return;
     }
     lastCall = result.call;
-    fields.push({ name: 'Entry mới', value: `$${entry.toLocaleString('en-US')}`, inline: true });
+    fields.push({ name: 'Entry mới', value: formatPrice(entry), inline: true });
   }
 
   if (leverage !== null) {

@@ -47,7 +47,7 @@ export async function autocomplete(interaction: AutocompleteInteraction): Promis
   const guildId = interaction.guildId!;
   const calls = await callService.getActiveCalls(guildId);
   const choices = calls.map((c) => ({
-    name: `${c.symbol} ${c.direction.toUpperCase()} @ ${c.callPrice.toLocaleString('en-US')} (${c.id.slice(0, 8)})`,
+    name: `${c.symbol} ${c.direction.toUpperCase()} @ ${formatPrice(c.callPrice)} x${c.leverage} (${c.id.slice(0, 8)})`,
     value: c.id,
   }));
   await interaction.respond(choices.slice(0, 25));
