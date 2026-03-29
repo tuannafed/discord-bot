@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder, MessageFlags} from 'discord.js';
 import { CallService } from '../services/call.service.js';
-import { parseDecimalInput } from '../utils/format.js';
+import { parseDecimalInput, formatPrice } from '../utils/format.js';
 
 let callService: CallService;
 
@@ -103,7 +103,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     .setColor(direction === 'long' ? 0x57f287 : 0xed4245)
     .setDescription(caption)
     .addFields(
-      { name: '💰 Call Price', value: `$${price.toLocaleString('en-US')}`, inline: true },
+      { name: '💰 Call Price', value: formatPrice(price), inline: true },
       { name: '⚡ Leverage', value: `x${leverage}`, inline: true },
       { name: '⚓ Thuyền trưởng', value: `<@${interaction.user.id}>`, inline: true },
       { name: '🪪 Call ID', value: `\`...${shortId}\``, inline: true },

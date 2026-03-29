@@ -4,7 +4,7 @@ import {
   EmbedBuilder,
   AutocompleteInteraction, MessageFlags} from 'discord.js';
 import { CallService } from '../services/call.service.js';
-import { parseDecimalInput } from '../utils/format.js';
+import { parseDecimalInput, formatPrice } from '../utils/format.js';
 
 let callService: CallService;
 
@@ -117,9 +117,9 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     .setDescription(caption)
     .addFields(
       { name: '⚓ Thuyền trưởng', value: `<@${call.calledById}>`, inline: true },
-      { name: '💰 Call Price', value: `$${call.callPrice.toLocaleString('en-US')}`, inline: true },
+      { name: '💰 Call Price', value: formatPrice(call.callPrice), inline: true },
       { name: '\u200b', value: '\u200b', inline: true },
-      { name: '🎯 Entry của bạn', value: `$${entry.toLocaleString('en-US')}`, inline: true },
+      { name: '🎯 Entry của bạn', value: formatPrice(entry), inline: true },
       { name: '⚡ Leverage', value: `x${position.leverage}`, inline: true },
       { name: '👤 Con dân', value: `<@${userId}>`, inline: true },
       { name: '🪪 Call ID', value: `\`...${shortId}\``, inline: true },
