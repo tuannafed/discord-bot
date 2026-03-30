@@ -77,7 +77,7 @@ function randomItem(arr: string[]): string {
 }
 
 /** Caller section: 2 lines — name line + đu giá line */
-function buildCallerSection(call: CallWithPositions, currentPrice: number): string {
+export function buildCallerSection(call: CallWithPositions, currentPrice: number): string {
   if (call.callerClosedAt !== null) {
     return `⚓ **Thuyền trưởng:** ${call.calledBy} _(đã đóng lệnh)_`;
   }
@@ -173,7 +173,7 @@ export function formatFundingSnippet(snap: LinearFundingSnapshot | null | undefi
 }
 
 export const data = new SlashCommandBuilder()
-  .setName('positions')
+  .setName('positions-list')
   .setDescription('Kèo đang chạy — chỉ người còn mở lệnh (đã TP/CL/SL không hiện)');
 
 const LONG_COLORS = [
@@ -198,7 +198,7 @@ const SHORT_COLORS = [
   0xff7675, // salmon
 ];
 
-function callEmbedColor(direction: string): number {
+export function callEmbedColor(direction: string): number {
   const pool = direction === 'long' ? LONG_COLORS : SHORT_COLORS;
   return pool[Math.floor(Math.random() * pool.length)];
 }
