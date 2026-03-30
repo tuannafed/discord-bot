@@ -26,8 +26,8 @@ import * as helpFull from './help-full.js';
 import * as helpVoice from './help-voice.js';
 import * as call from './call.js';
 import * as follow from './follow.js';
+import * as positionsList from './positions-list.js';
 import * as positions from './positions.js';
-import * as positionsSymbol from './positions-symbol.js';
 import * as positionsHistory from './positions-history.js';
 import * as positionsClean from './positions-clean.js';
 import * as tp from './tp.js';
@@ -74,8 +74,8 @@ export function buildCommands(
   unlock.init(marketService);
   call.init(callService);
   follow.init(callService);
+  positionsList.init(callService, marketService);
   positions.init(callService, marketService);
-  positionsSymbol.init(callService, marketService);
   positionsHistory.init(callService, marketService);
   positionsClean.init(callService, adminUserIds);
   tp.init(callService, client);
@@ -106,8 +106,8 @@ export function buildCommands(
     unlock,
     call,
     follow,
+    positionsList,
     positions,
-    positionsSymbol,
     positionsHistory,
     positionsClean,
     tp,
@@ -151,8 +151,8 @@ export function getCommandBuilders(): (SlashCommandBuilder | SlashCommandOptions
     unlock.data,
     call.data,
     follow.data,
+    positionsList.data,
     positions.data,
-    positionsSymbol.data,
     positionsHistory.data,
     positionsClean.data,
     tp.data,

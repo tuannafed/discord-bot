@@ -2,7 +2,7 @@ import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from '
 import { CallService } from '../services/call.service.js';
 import { MarketService } from '../services/market.service.js';
 import { formatPrice } from '../utils/format.js';
-import { buildPositionsTableContent, formatFundingSnippet } from './positions.js';
+import { buildPositionsTableContent, formatFundingSnippet } from './positions-list.js';
 
 let callService: CallService;
 let marketService: MarketService;
