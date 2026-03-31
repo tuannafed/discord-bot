@@ -321,6 +321,18 @@ export class CallService {
     return this.repo.findOpenPositionsByCall(callId);
   }
 
+  async getActivePositionsByUser(guildId: string, userId: string): Promise<{ position: Position; call: Call }[]> {
+    const positions = await this.repo.findOpenPositionsByUser(guildId, userId);
+    const result: { position: Position; call: Call }[] = [];
+    for (const position of positions) {
+      const call = await this.repo.findCallById(position.callId);
+      if (call && call.status === 'active') {
+        result.push({ position, call });
+      }
+    }
+    return result;
+  }
+
   async fixCallerDuplicatePositions(guildId: string): Promise<number> {
     return this.repo.deleteCallerDuplicatePositions(guildId);
   }

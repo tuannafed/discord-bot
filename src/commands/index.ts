@@ -30,6 +30,7 @@ import * as positionsList from './positions-list.js';
 import * as positions from './positions.js';
 import * as positionsHistory from './positions-history.js';
 import * as positionsClean from './positions-clean.js';
+import * as positionsUser from './positions-user.js';
 import * as tp from './tp.js';
 import * as cl from './cl.js';
 import * as sl from './sl.js';
@@ -78,6 +79,7 @@ export function buildCommands(
   positions.init(callService, marketService);
   positionsHistory.init(callService, marketService);
   positionsClean.init(callService, adminUserIds);
+  positionsUser.init(callService, marketService);
   tp.init(callService, client);
   cl.init(callService, client);
   sl.init(callService, client);
@@ -110,6 +112,7 @@ export function buildCommands(
     positions,
     positionsHistory,
     positionsClean,
+    positionsUser,
     tp,
     cl,
     sl,
@@ -155,6 +158,7 @@ export function getCommandBuilders(): (SlashCommandBuilder | SlashCommandOptions
     positions.data,
     positionsHistory.data,
     positionsClean.data,
+    positionsUser.data,
     tp.data,
     cl.data,
     sl.data,

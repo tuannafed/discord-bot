@@ -270,6 +270,21 @@ Giống bố cục `/positions` nhưng **đủ mọi người**, kể cả đã 
 
 ---
 
+### `/positions-user`
+Xem tất cả lệnh đang active của một user (entry, leverage, PnL realtime từ Bybit).
+
+| Tham số | Kiểu | Bắt buộc | Mô tả |
+|---|---|---|---|
+| `user` | user | Không | User cần xem. Bỏ trống = bản thân |
+
+**Ví dụ:**
+```
+/positions-user
+/positions-user user:@member
+```
+
+---
+
 ### `/positions-clean`
 *(Quản trị — cần `ADMIN_LIST_ID` trong env)*  
 Xóa trong CSDL các bản ghi position đã đóng và xóa trạng thái đóng của caller trên kèo được chọn.
