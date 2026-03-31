@@ -77,28 +77,24 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const symbols = [...new Set(entries.map(({ call }) => call.symbol))];
   const priceMap = await marketService.getLivePrices(symbols);
 
-  // Build table rows
-  const SYM_W = 6;
-  const header = `${'Symbol'.padEnd(SYM_W)}  Dir    Entry         Lev   PnL       Role`;
-  const sep = '─'.repeat(header.length);
-
+  // Build table rows — compact for mobile
   let totalPnl = 0;
   let hasNa = false;
   const rows: string[] = [];
 
   for (const { position, call, isCaller } of entries) {
     const currentPrice = priceMap.get(call.symbol) ?? 0;
-    const sym = call.symbol.slice(0, SYM_W).padEnd(SYM_W);
-    const dir = call.direction === 'long' ? 'LONG ' : 'SHORT';
-    const entry = formatPrice(position.entryPrice).padStart(10);
-    const lev = `x${position.leverage}`.padEnd(4);
-    const role = isCaller ? '⚓ caller' : '🚢 follow';
+    const sym = call.symbol.slice(0, 5).padEnd(5);
+    const dir = call.direction === 'long' ? 'L' : 'S';
+    const entry = formatPrice(position.entryPrice).padStart(9);
+    const lev = `x${position.leverage}`.padEnd(3);
+    const roleIcon = isCaller ? '⚓' : '🚢';
 
     let pnlStr: string;
     let rowEmoji: string;
 
     if (currentPrice <= 0) {
-      pnlStr = 'N/A     ';
+      pnlStr = 'N/A  ';
       rowEmoji = '⬜';
       hasNa = true;
     } else {
@@ -109,14 +105,14 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
       const pnl = rawPct * position.leverage;
       totalPnl += pnl;
       const sign = pnl >= 0 ? '+' : '';
-      pnlStr = `${sign}${Math.round(pnl)}%`.padEnd(8);
+      pnlStr = `${sign}${Math.round(pnl)}%`.padEnd(5);
       rowEmoji = pnl >= 0 ? '🟢' : '🔴';
     }
 
-    rows.push(`${rowEmoji} ${sym}  ${dir}  ${entry}  ${lev}  ${pnlStr}  ${role}`);
+    rows.push(`${rowEmoji}${roleIcon}${sym} ${dir} ${entry} ${lev} ${pnlStr}`);
   }
 
-  const table = '```\n' + [header, sep, ...rows].join('\n') + '\n```';
+  const table = '```\n' + rows.join('\n') + '\n```';
   const caption = pickCaption(totalPnl, hasNa);
 
   const embed = new EmbedBuilder()
