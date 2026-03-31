@@ -99,6 +99,14 @@ export class PgCallRepository {
     return r.rows;
   }
 
+  async findActiveCallsByCaller(guildId: string, userId: string): Promise<Call[]> {
+    const r = await this.db.query<Call>(
+      `SELECT ${CALL_SELECT} FROM calls WHERE guild_id = $1 AND called_by_id = $2 AND status = 'active' AND caller_closed_at IS NULL`,
+      [guildId, userId]
+    );
+    return r.rows;
+  }
+
   async closePosition(id: string, closedAt: string, closeType: 'tp' | 'cl' | 'sl', closePrice: number, pnlPct: number): Promise<void> {
     await this.db.query(
       `UPDATE positions SET closed_at=$1, close_type=$2, close_price=$3, pnl_pct=$4 WHERE id=$5`,

@@ -321,15 +321,40 @@ export class CallService {
     return this.repo.findOpenPositionsByCall(callId);
   }
 
-  async getActivePositionsByUser(guildId: string, userId: string): Promise<{ position: Position; call: Call }[]> {
-    const positions = await this.repo.findOpenPositionsByUser(guildId, userId);
-    const result: { position: Position; call: Call }[] = [];
-    for (const position of positions) {
+  async getActivePositionsByUser(guildId: string, userId: string): Promise<{ position: Position; call: Call; isCaller: boolean }[]> {
+    const result: { position: Position; call: Call; isCaller: boolean }[] = [];
+
+    // Lệnh follow (có row trong positions)
+    const followPositions = await this.repo.findOpenPositionsByUser(guildId, userId);
+    for (const position of followPositions) {
       const call = await this.repo.findCallById(position.callId);
       if (call && call.status === 'active') {
-        result.push({ position, call });
+        result.push({ position, call, isCaller: false });
       }
     }
+
+    // Kèo user là caller và chưa đóng lệnh của mình
+    const callerCalls = await this.repo.findActiveCallsByCaller(guildId, userId);
+    for (const call of callerCalls) {
+      const syntheticPosition: Position = {
+        id: `caller-${call.id}`,
+        callId: call.id,
+        guildId: call.guildId,
+        userId: call.calledById,
+        username: call.calledBy,
+        entryPrice: call.callPrice,
+        leverage: call.leverage,
+        joinedAt: call.calledAt,
+        closedAt: null,
+        closeType: null,
+        closePrice: null,
+        pnlPct: null,
+        notifiedMilestones: '',
+        mutedMilestones: false,
+      };
+      result.push({ position: syntheticPosition, call, isCaller: true });
+    }
+
     return result;
   }
 
