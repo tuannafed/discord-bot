@@ -1,4 +1,5 @@
 import { Client, EmbedBuilder } from 'discord.js';
+import { env } from '../config/env.js';
 import { logger } from './logger.js';
 import { CallService } from '../services/call.service.js';
 
@@ -18,6 +19,8 @@ export function startCloseReminder(
   direction: string,
   closeType: 'tp' | 'cl' | 'sl',
 ): void {
+  if (!env.ENABLE_CLOSE_REMINDER) return;
+
   // Không chạy 2 reminder cho cùng 1 call
   if (activeReminders.has(callId)) return;
 
