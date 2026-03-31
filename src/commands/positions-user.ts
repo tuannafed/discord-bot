@@ -117,7 +117,6 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   const embed = new EmbedBuilder()
     .setTitle(`📋 Lệnh active của ${target.displayName}`)
     .setColor(0x5865f2)
-    .setThumbnail(target.displayAvatarURL())
     .setDescription(`_${caption}_\n\n${table}`)
     .setFooter({ text: `${entries.length} lệnh đang mở` })
     .setTimestamp();
